@@ -69,3 +69,25 @@ body,
 .resize-handle:hover, .resize-handle.active {
   background: #818cf8;
 }
+
+/* World mention chips in the editor */
+.world-mention {
+  display: inline-flex;
+  align-items: center;
+  background-color: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 5px;
+  padding: 0 5px;
+  font-size: 0.9em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.world-mention:hover {
+  background-color: rgba(99, 102, 241, 0.32);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #c7d2fe;
+}
