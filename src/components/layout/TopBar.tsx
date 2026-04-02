@@ -44,7 +44,8 @@ export function TopBar() {
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-all shrink-0"
       >
         <ArrowLeft size={14} />
-        <span className="hidden sm:inline">Library</span>
+        <img src="/logo.svg" alt="" className="w-5 h-5 opacity-70" />
+        <span className="hidden sm:inline font-medium">Wizards Playground</span>
       </button>
 
       <span className="text-slate-700 text-sm">/</span>

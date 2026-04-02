@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, BookOpen, Download } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
 import { useWritingStore } from '../../store/writingStore';
@@ -40,12 +40,18 @@ export function Library() {
       {/* Header */}
       <header className="border-b border-slate-800 px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/50">
-            <span className="text-white font-bold text-base font-serif">S</span>
-          </div>
+          <img
+            src="/logo.svg"
+            alt="Wizards Playground"
+            className="w-10 h-10 drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+          />
           <div>
-            <h1 className="text-lg font-bold text-slate-100 leading-none">Scriptorium</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Your writing workspace</p>
+            <h1 className="text-lg font-bold text-slate-100 leading-none tracking-wide">
+              Wizards Playground
+            </h1>
+            <p className="text-xs text-indigo-400/80 mt-0.5 tracking-widest uppercase font-medium">
+              World-Builder's Toolkit
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -79,13 +85,15 @@ export function Library() {
         {books.length === 0 ? (
           /* Empty state */
           <div className="flex flex-col items-center justify-center py-24 gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-              <BookOpen size={36} className="text-slate-600" />
-            </div>
+            <img
+              src="/logo.svg"
+              alt="Wizards Playground"
+              className="w-24 h-24 opacity-60 drop-shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+            />
             <div className="text-center">
               <h3 className="text-xl font-semibold text-slate-300 mb-2">Your library is empty</h3>
               <p className="text-slate-500 text-sm mb-6 max-w-xs">
-                Create your first book to start building your world and writing your story.
+                Add your first book to begin crafting your world and telling your story.
               </p>
               <button
                 onClick={() => setShowNewModal(true)}

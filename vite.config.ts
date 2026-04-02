@@ -7,16 +7,17 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'icons/*.svg'],
+      includeAssets: ['icons/*.png', 'icons/*.svg', 'logo.svg'],
       manifest: {
-        name: 'Scriptorium',
-        short_name: 'Scriptorium',
-        description: 'World-building and novel writing studio for authors',
+        name: 'Wizards Playground',
+        short_name: 'Wizards Playground',
+        description: "World-Builder's Toolkit for authors and storytellers",
         theme_color: '#1e1b4b',
         background_color: '#0f172a',
         display: 'standalone',
         start_url: '/',
         icons: [
+          { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {
