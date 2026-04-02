@@ -8,8 +8,16 @@ interface WorldState {
   entries: WorldEntry[];
   activeSectionId: string | null;
   activeEntryId: string | null;
+  /** The ID of the book or world bible currently being edited. Used by world components instead of hardcoding libraryStore. */
+  editingContextId: string | null;
+  /** Entries from a linked world bible (for @mention cross-reference in writing). */
+  linkedSections: WorldSection[];
+  linkedEntries: WorldEntry[];
 
   loadFromDB: (bookId: string) => Promise<void>;
+  /** Load a world bible's data alongside the current book for @mention lookup. */
+  loadLinked: (worldBibleId: string) => Promise<void>;
+  clearLinked: () => void;
   addSection: (bookId: string, name: string, icon?: string) => Promise<void>;
   updateSection: (id: string, updates: Partial<WorldSection>) => Promise<void>;
   deleteSection: (id: string) => Promise<void>;
@@ -32,6 +40,9 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   entries: [],
   activeSectionId: null,
   activeEntryId: null,
+  editingContextId: null,
+  linkedSections: [],
+  linkedEntries: [],
 
   loadFromDB: async (bookId) => {
     await worldRepository.seedDefaultSections(bookId);
@@ -42,10 +53,21 @@ export const useWorldStore = create<WorldState>((set, get) => ({
     set({
       sections,
       entries,
+      editingContextId: bookId,
       activeSectionId: sections[0]?.id ?? null,
       activeEntryId: null,
     });
   },
+
+  loadLinked: async (worldBibleId) => {
+    const [linkedSections, linkedEntries] = await Promise.all([
+      worldRepository.getAllSections(worldBibleId),
+      worldRepository.getAllEntries(worldBibleId),
+    ]);
+    set({ linkedSections, linkedEntries });
+  },
+
+  clearLinked: () => set({ linkedSections: [], linkedEntries: [] }),
 
   addSection: async (bookId, name, icon) => {
     const section = await worldRepository.addSection(bookId, name, icon);

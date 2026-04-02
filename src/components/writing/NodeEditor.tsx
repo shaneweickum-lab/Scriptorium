@@ -15,6 +15,12 @@ export function NodeEditor() {
   const activeBook = useLibraryStore((s) => s.activeBook);
   const sections = useWorldStore((s) => s.sections);
   const entries = useWorldStore((s) => s.entries);
+  const linkedSections = useWorldStore((s) => s.linkedSections);
+  const linkedEntries = useWorldStore((s) => s.linkedEntries);
+
+  // Merge book's own world entries with linked world bible entries for @mention
+  const allSections = linkedSections.length > 0 ? [...sections, ...linkedSections] : sections;
+  const allEntries = linkedEntries.length > 0 ? [...entries, ...linkedEntries] : entries;
 
   const node = nodes.find((n) => n.id === activeNodeId);
   const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
@@ -73,8 +79,8 @@ export function NodeEditor() {
             onChange={debouncedSave}
             placeholder={`Write your ${typeLabel.toLowerCase()} here...`}
             autoFocus
-            worldEntries={entries}
-            worldSections={sections}
+            worldEntries={allEntries}
+            worldSections={allSections}
             onMentionClick={setReferencedEntryId}
           />
         </div>

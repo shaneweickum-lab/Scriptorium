@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Plus, Trash2, Search } from 'lucide-react';
 import { useWorldStore } from '../../store/worldStore';
-import { useLibraryStore } from '../../store/libraryStore';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { EmptyState } from '../common/EmptyState';
 import type { WorldEntry } from '../../types';
@@ -15,7 +14,7 @@ export function EntryList() {
   const setActiveEntry = useWorldStore((s) => s.setActiveEntry);
   const addEntry = useWorldStore((s) => s.addEntry);
   const deleteEntry = useWorldStore((s) => s.deleteEntry);
-  const bookId = useLibraryStore((s) => s.activeBook?.id ?? '');
+  const bookId = useWorldStore((s) => s.editingContextId ?? '');
 
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<WorldEntry | null>(null);

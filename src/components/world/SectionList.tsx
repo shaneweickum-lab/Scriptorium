@@ -4,7 +4,6 @@ import {
   Plus, Pencil, Trash2, GripVertical,
 } from 'lucide-react';
 import { useWorldStore } from '../../store/worldStore';
-import { useLibraryStore } from '../../store/libraryStore';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Input';
@@ -76,7 +75,7 @@ export function SectionList() {
   const addSection = useWorldStore((s) => s.addSection);
   const updateSection = useWorldStore((s) => s.updateSection);
   const deleteSection = useWorldStore((s) => s.deleteSection);
-  const bookId = useLibraryStore((s) => s.activeBook?.id ?? '');
+  const bookId = useWorldStore((s) => s.editingContextId ?? '');
 
   const [editingSection, setEditingSection] = useState<WorldSection | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);

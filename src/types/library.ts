@@ -18,6 +18,7 @@ export interface Book {
   synopsis: string;
   coverColor: string;
   hierarchyLabels: HierarchyLabels;
+  worldBibleId?: string; // optional link to a shared WorldBible for series
   createdAt: number;
   updatedAt: number;
 }

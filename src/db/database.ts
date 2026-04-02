@@ -1,12 +1,13 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
-import type { WorldSection, WorldEntry, WritingNode, Assembly, Book } from '../types';
+import type { WorldSection, WorldEntry, WritingNode, Assembly, Book, WorldBible } from '../types';
 import { generateId } from '../utils/id';
 import { DEFAULT_HIERARCHY_LABELS } from '../types';
 import { BOOK_COLORS } from '../types';
 
 export class ScriptoriumDB extends Dexie {
   books!: Table<Book, string>;
+  worldBibles!: Table<WorldBible, string>;
   worldSections!: Table<WorldSection, string>;
   worldEntries!: Table<WorldEntry, string>;
   writingNodes!: Table<WritingNode, string>;
@@ -32,7 +33,7 @@ export class ScriptoriumDB extends Dexie {
         worldEntries: 'id, bookId, sectionId, updatedAt',
         writingNodes: 'id, bookId, parentId, order, type',
         assemblies: 'id, bookId',
-        projectMeta: null, // drop old table
+        projectMeta: null,
       })
       .upgrade(async (tx) => {
         // Migrate any existing v1 data into a default book
@@ -61,6 +62,11 @@ export class ScriptoriumDB extends Dexie {
           await tx.table('assemblies').put({ ...oldAssembly, id: defaultBookId, bookId: defaultBookId });
         }
       });
+
+    // v3 schema - add worldBibles table (no migration needed, fresh table)
+    this.version(3).stores({
+      worldBibles: 'id',
+    });
   }
 }
 
