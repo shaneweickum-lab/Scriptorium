@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Download, Globe2 } from 'lucide-react';
+import { Plus, Download, Globe2, X, Share } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
 import { useWritingStore } from '../../store/writingStore';
@@ -14,6 +14,69 @@ import { NewWorldModal } from './NewWorldModal';
 import { BOOK_COLORS, WORLD_COLORS } from '../../types';
 import type { Book, WorldBible } from '../../types';
 
+function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safari-ios'; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-slate-100">Install Wizards Playground</h2>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+
+        {method === 'safari-ios' ? (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-400">To install on your iPhone or iPad:</p>
+            <ol className="space-y-3 text-sm text-slate-300">
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
+                <span>Tap the <Share size={14} className="inline mx-1 text-blue-400" /> <strong>Share</strong> button in Safari's toolbar (bottom of screen)</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">2</span>
+                <span>Scroll down and tap <strong>"Add to Home Screen"</strong></span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">3</span>
+                <span>Tap <strong>"Add"</strong> in the top-right corner</span>
+              </li>
+            </ol>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-400">To install on your Mac with Safari:</p>
+            <ol className="space-y-3 text-sm text-slate-300">
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
+                <span>Click the <Share size={14} className="inline mx-1 text-blue-400" /> <strong>Share</strong> button in Safari's toolbar</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">2</span>
+                <span>Click <strong>"Add to Dock"</strong></span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">3</span>
+                <span>Click <strong>"Add"</strong> to confirm</span>
+              </li>
+            </ol>
+            <p className="text-xs text-slate-500 pt-1 border-t border-slate-700">
+              Tip: On Mac you can also install via <strong>Chrome</strong> or <strong>Edge</strong> using the install button in the address bar for a one-click install.
+            </p>
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          className="mt-5 w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-colors"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Library() {
   const { books, createBook, updateBook, deleteBook, openBook } = useLibraryStore();
   const loadWorld = useWorldStore((s) => s.loadFromDB);
@@ -21,12 +84,13 @@ export function Library() {
   const loadAssembly = useAssemblyStore((s) => s.loadFromDB);
   const { worldBibles, createWorldBible, updateWorldBible, deleteWorldBible, openWorldBible } = useWorldBibleStore();
   const loadWorldBibleData = useWorldStore((s) => s.loadFromDB);
-  const { canInstall, install } = usePWAInstall();
+  const { canInstall, install, installMethod } = usePWAInstall();
 
   const [showNewBookModal, setShowNewBookModal] = useState(false);
   const [editBookTarget, setEditBookTarget] = useState<Book | null>(null);
   const [showNewWorldModal, setShowNewWorldModal] = useState(false);
   const [editWorldTarget, setEditWorldTarget] = useState<WorldBible | null>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   const handleOpenBook = async (id: string) => {
     await openBook(id);
@@ -74,7 +138,11 @@ export function Library() {
         <div className="flex items-center gap-2">
           {canInstall && (
             <button
-              onClick={install}
+              onClick={
+                installMethod === 'safari-mac' || installMethod === 'safari-ios'
+                  ? () => setShowInstallModal(true)
+                  : install
+              }
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
             >
               <Download size={13} />
@@ -210,6 +278,9 @@ export function Library() {
           }
           initialColor={editWorldTarget.coverColor}
         />
+      )}
+      {showInstallModal && (installMethod === 'safari-mac' || installMethod === 'safari-ios') && (
+        <SafariInstallModal method={installMethod} onClose={() => setShowInstallModal(false)} />
       )}
     </div>
   );

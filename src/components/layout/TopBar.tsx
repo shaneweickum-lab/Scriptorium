@@ -1,16 +1,14 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Download, Settings } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useProject } from '../../hooks/useProject';
-import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 export function TopBar() {
   const { activeBook, updateBook, closeBook } = useLibraryStore();
   const activeView = useUIStore((s) => s.activeView);
   const setShowExportModal = useUIStore((s) => s.setShowExportModal);
   const { saveProject, loadProject } = useProject();
-  const { canInstall, install } = usePWAInstall();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
@@ -73,7 +71,6 @@ export function TopBar() {
             {activeBook?.title || 'Untitled'}
           </button>
         )}
-        {/* Color dot */}
         {activeBook && (
           <div
             className="w-2 h-2 rounded-full shrink-0"
@@ -110,15 +107,6 @@ export function TopBar() {
           <Download size={14} />
           <span className="hidden md:inline">Export</span>
         </button>
-        {canInstall && (
-          <button
-            onClick={install}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition-all"
-          >
-            <Settings size={14} />
-            <span className="hidden md:inline">Install</span>
-          </button>
-        )}
       </div>
 
       <input
