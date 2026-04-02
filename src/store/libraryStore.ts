@@ -27,10 +27,15 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   isLoaded: false,
 
   loadLibrary: async () => {
-    const books = await libraryRepository.getAllBooks();
-    const savedBookId = localStorage.getItem(ACTIVE_BOOK_KEY);
-    const activeBook = savedBookId ? books.find((b) => b.id === savedBookId) ?? null : null;
-    set({ books, activeBook, isLoaded: true });
+    try {
+      const books = await libraryRepository.getAllBooks();
+      const savedBookId = localStorage.getItem(ACTIVE_BOOK_KEY);
+      const activeBook = savedBookId ? books.find((b) => b.id === savedBookId) ?? null : null;
+      set({ books, activeBook, isLoaded: true });
+    } catch (err) {
+      console.error('Failed to load library:', err);
+      set({ books: [], activeBook: null, isLoaded: true });
+    }
   },
 
   createBook: async (title, author = '', synopsis = '') => {

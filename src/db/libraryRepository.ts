@@ -3,7 +3,8 @@ import type { Book } from '../types';
 
 export const libraryRepository = {
   async getAllBooks(): Promise<Book[]> {
-    return db.books.orderBy('createdAt').toArray();
+    const books = await db.books.toArray();
+    return books.sort((a, b) => a.createdAt - b.createdAt);
   },
 
   async getBook(id: string): Promise<Book | undefined> {
