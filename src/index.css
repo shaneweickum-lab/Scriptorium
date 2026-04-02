@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TipTap editor prose styles */
+.ProseMirror {
+  outline: none;
+  min-height: 100%;
+  padding: 2rem;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #e2e8f0;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #4b5563;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #f1f5f9; }
+.ProseMirror h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f1f5f9; }
+.ProseMirror h3 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #f1f5f9; }
+.ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; margin: 0.75rem 0; }
+.ProseMirror li { margin: 0.25rem 0; }
+.ProseMirror blockquote {
+  border-left: 3px solid #818cf8;
+  padding-left: 1rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 1rem 0;
+}
+.ProseMirror hr { border: none; border-top: 1px solid #334155; margin: 2rem 0; }
+.ProseMirror mark { background-color: rgba(129, 140, 248, 0.25); border-radius: 2px; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* Resize handle */
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.resize-handle:hover, .resize-handle.active {
+  background: #818cf8;
+}
