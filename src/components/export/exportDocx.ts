@@ -2,7 +2,7 @@ import {
   Document, Packer, Paragraph, TextRun, HeadingLevel,
   AlignmentType,
 } from 'docx';
-import type { Assembly, WritingNode, ProjectMeta } from '../../types';
+import type { Assembly, WritingNode, Book } from '../../types';
 import { tiptapJsonToDocxParagraphs } from '../../utils/tiptapToDocx';
 
 function triggerDownload(blob: Blob, filename: string): void {
@@ -23,7 +23,7 @@ function slugify(str: string): string {
 export async function exportDocx(
   assembly: Assembly,
   nodeMap: Map<string, WritingNode>,
-  projectMeta: ProjectMeta | null
+  projectMeta: Book | null
 ): Promise<void> {
   const title = projectMeta?.title || 'Untitled';
   const author = projectMeta?.author || '';

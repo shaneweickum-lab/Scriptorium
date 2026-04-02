@@ -1,10 +1,10 @@
-import type { Assembly, WritingNode, ProjectMeta } from '../../types';
+import type { Assembly, WritingNode, Book } from '../../types';
 import { tiptapJsonToHtml } from '../../utils/tiptapToHtml';
 
 export function exportHtml(
   assembly: Assembly,
   nodeMap: Map<string, WritingNode>,
-  projectMeta: ProjectMeta | null
+  projectMeta: Book | null
 ): void {
   const items = [...assembly.items].sort((a, b) => a.order - b.order);
   const title = projectMeta?.title || 'Untitled';

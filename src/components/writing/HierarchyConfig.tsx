@@ -2,18 +2,17 @@ import { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
-import { useWritingStore } from '../../store/writingStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import type { HierarchyLabels } from '../../types';
 
 export function HierarchyConfig() {
-  const projectMeta = useWritingStore((s) => s.projectMeta);
-  const updateHierarchyLabels = useWritingStore((s) => s.updateHierarchyLabels);
+  const { activeBook, updateHierarchyLabels } = useLibraryStore();
   const setShowHierarchyConfig = useUIStore((s) => s.setShowHierarchyConfig);
   const addToast = useUIStore((s) => s.addToast);
 
   const [labels, setLabels] = useState<HierarchyLabels>(
-    projectMeta?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' }
+    activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' }
   );
 
   const handleSave = async () => {

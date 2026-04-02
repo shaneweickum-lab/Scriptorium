@@ -1,11 +1,12 @@
 import { useAssemblyStore } from '../../store/assemblyStore';
 import { useWritingStore } from '../../store/writingStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { tiptapJsonToHtml } from '../../utils/tiptapToHtml';
 
 export function ManuscriptPreview() {
   const assembly = useAssemblyStore((s) => s.assembly);
   const nodes = useWritingStore((s) => s.nodes);
-  const projectMeta = useWritingStore((s) => s.projectMeta);
+  const activeBook = useLibraryStore((s) => s.activeBook);
 
   const items = [...(assembly?.items || [])].sort((a, b) => a.order - b.order);
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
@@ -16,10 +17,10 @@ export function ManuscriptPreview() {
         {/* Title page */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold font-prose text-slate-100 mb-3">
-            {projectMeta?.title || 'Untitled'}
+            {activeBook?.title || 'Untitled'}
           </h1>
-          {projectMeta?.author && (
-            <p className="text-slate-400 font-prose text-lg">{projectMeta.author}</p>
+          {activeBook?.author && (
+            <p className="text-slate-400 font-prose text-lg">{activeBook.author}</p>
           )}
         </div>
 

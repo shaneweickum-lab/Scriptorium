@@ -2,6 +2,7 @@ export type NodeType = 'part' | 'chapter' | 'scene' | 'note';
 
 export interface WritingNode {
   id: string;
+  bookId: string;
   parentId: string | null;
   type: NodeType;
   title: string;
@@ -26,12 +27,3 @@ export const DEFAULT_HIERARCHY_LABELS: HierarchyLabels = {
   scene: 'Scene',
   note: 'Note',
 };
-
-export interface ProjectMeta {
-  id: string;
-  title: string;
-  author: string;
-  hierarchyLabels: HierarchyLabels;
-  createdAt: number;
-  updatedAt: number;
-}

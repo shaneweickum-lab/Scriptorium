@@ -3,11 +3,12 @@ import type { Assembly, AssemblyItem } from '../types';
 import { generateId } from '../utils/id';
 
 export const assemblyRepository = {
-  async getAssembly(): Promise<Assembly> {
-    const assembly = await db.assemblies.get('main');
+  async getAssembly(bookId: string): Promise<Assembly> {
+    const assembly = await db.assemblies.get(bookId);
     if (assembly) return assembly;
     const newAssembly: Assembly = {
-      id: 'main',
+      id: bookId,
+      bookId,
       name: 'Manuscript',
       items: [],
       createdAt: Date.now(),
@@ -17,16 +18,16 @@ export const assemblyRepository = {
     return newAssembly;
   },
 
-  async updateAssembly(updates: Partial<Assembly>): Promise<void> {
-    await db.assemblies.update('main', { ...updates, updatedAt: Date.now() });
+  async updateAssembly(bookId: string, updates: Partial<Assembly>): Promise<void> {
+    await db.assemblies.update(bookId, { ...updates, updatedAt: Date.now() });
   },
 
-  async setItems(items: AssemblyItem[]): Promise<void> {
-    await db.assemblies.update('main', { items, updatedAt: Date.now() });
+  async setItems(bookId: string, items: AssemblyItem[]): Promise<void> {
+    await db.assemblies.update(bookId, { items, updatedAt: Date.now() });
   },
 
-  async addNodeItem(nodeId: string): Promise<void> {
-    const assembly = await assemblyRepository.getAssembly();
+  async addNodeItem(bookId: string, nodeId: string): Promise<void> {
+    const assembly = await assemblyRepository.getAssembly(bookId);
     const maxOrder = assembly.items.length > 0 ? Math.max(...assembly.items.map((i) => i.order)) : -1;
     const item: AssemblyItem = {
       id: generateId(),
@@ -34,14 +35,14 @@ export const assemblyRepository = {
       type: 'node',
       order: maxOrder + 1,
     };
-    await db.assemblies.update('main', {
+    await db.assemblies.update(bookId, {
       items: [...assembly.items, item],
       updatedAt: Date.now(),
     });
   },
 
-  async addBreakItem(): Promise<void> {
-    const assembly = await assemblyRepository.getAssembly();
+  async addBreakItem(bookId: string): Promise<void> {
+    const assembly = await assemblyRepository.getAssembly(bookId);
     const maxOrder = assembly.items.length > 0 ? Math.max(...assembly.items.map((i) => i.order)) : -1;
     const item: AssemblyItem = {
       id: generateId(),
@@ -50,15 +51,15 @@ export const assemblyRepository = {
       content: '* * *',
       order: maxOrder + 1,
     };
-    await db.assemblies.update('main', {
+    await db.assemblies.update(bookId, {
       items: [...assembly.items, item],
       updatedAt: Date.now(),
     });
   },
 
-  async removeItem(itemId: string): Promise<void> {
-    const assembly = await assemblyRepository.getAssembly();
-    await db.assemblies.update('main', {
+  async removeItem(bookId: string, itemId: string): Promise<void> {
+    const assembly = await assemblyRepository.getAssembly(bookId);
+    await db.assemblies.update(bookId, {
       items: assembly.items.filter((i) => i.id !== itemId),
       updatedAt: Date.now(),
     });

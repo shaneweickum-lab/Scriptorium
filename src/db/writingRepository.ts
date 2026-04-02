@@ -1,19 +1,19 @@
 import { db } from './database';
-import type { WritingNode, NodeType, ProjectMeta } from '../types';
-import { DEFAULT_HIERARCHY_LABELS } from '../types';
+import type { WritingNode, NodeType } from '../types';
 import { generateId } from '../utils/id';
 import { getNextOrder, getDescendantIds } from '../utils/sortableTree';
 
 export const writingRepository = {
-  async getAllNodes(): Promise<WritingNode[]> {
-    return db.writingNodes.toArray();
+  async getNodesByBook(bookId: string): Promise<WritingNode[]> {
+    return db.writingNodes.where('bookId').equals(bookId).toArray();
   },
 
-  async addNode(parentId: string | null, type: NodeType, title?: string): Promise<WritingNode> {
-    const allNodes = await db.writingNodes.toArray();
+  async addNode(bookId: string, parentId: string | null, type: NodeType, title?: string): Promise<WritingNode> {
+    const allNodes = await db.writingNodes.where('bookId').equals(bookId).toArray();
     const order = getNextOrder(allNodes, parentId);
     const node: WritingNode = {
       id: generateId(),
+      bookId,
       parentId,
       type,
       title: title || `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
@@ -42,31 +42,11 @@ export const writingRepository = {
     await db.writingNodes.update(id, { parentId: newParentId, order: newOrder, updatedAt: Date.now() });
   },
 
-  async reorderSiblings(parentId: string | null, orderedIds: string[]): Promise<void> {
-    void parentId;
+  async reorderSiblings(orderedIds: string[]): Promise<void> {
     await db.transaction('rw', db.writingNodes, async () => {
       for (let i = 0; i < orderedIds.length; i++) {
         await db.writingNodes.update(orderedIds[i], { order: i });
       }
     });
-  },
-
-  async getProjectMeta(): Promise<ProjectMeta> {
-    const meta = await db.projectMeta.get('main');
-    if (meta) return meta;
-    const newMeta: ProjectMeta = {
-      id: 'main',
-      title: 'My Novel',
-      author: '',
-      hierarchyLabels: DEFAULT_HIERARCHY_LABELS,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    await db.projectMeta.add(newMeta);
-    return newMeta;
-  },
-
-  async updateProjectMeta(updates: Partial<ProjectMeta>): Promise<void> {
-    await db.projectMeta.update('main', { ...updates, updatedAt: Date.now() });
   },
 };

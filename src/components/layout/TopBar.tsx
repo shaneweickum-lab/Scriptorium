@@ -1,13 +1,12 @@
 import { useState, useRef } from 'react';
-import { Save, Upload, Download, Settings } from 'lucide-react';
-import { useWritingStore } from '../../store/writingStore';
+import { ArrowLeft, Save, Upload, Download, Settings } from 'lucide-react';
+import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useProject } from '../../hooks/useProject';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 export function TopBar() {
-  const projectMeta = useWritingStore((s) => s.projectMeta);
-  const updateProjectMeta = useWritingStore((s) => s.updateProjectMeta);
+  const { activeBook, updateBook, closeBook } = useLibraryStore();
   const activeView = useUIStore((s) => s.activeView);
   const setShowExportModal = useUIStore((s) => s.setShowExportModal);
   const { saveProject, loadProject } = useProject();
@@ -19,14 +18,14 @@ export function TopBar() {
   const viewLabels = { world: 'World Bible', writing: 'Writing', assembly: 'Assembly' };
 
   const handleTitleClick = () => {
-    setTitleValue(projectMeta?.title || '');
+    setTitleValue(activeBook?.title || '');
     setEditingTitle(true);
   };
 
   const handleTitleBlur = () => {
     setEditingTitle(false);
-    if (titleValue.trim()) {
-      updateProjectMeta({ title: titleValue.trim() });
+    if (titleValue.trim() && activeBook) {
+      updateBook(activeBook.id, { title: titleValue.trim() });
     }
   };
 
@@ -37,7 +36,19 @@ export function TopBar() {
   };
 
   return (
-    <header className="h-12 bg-slate-900/80 backdrop-blur border-b border-slate-700/50 flex items-center px-4 gap-4 shrink-0">
+    <header className="h-12 bg-slate-900/80 backdrop-blur border-b border-slate-700/50 flex items-center px-3 gap-2 shrink-0">
+      {/* Back to library */}
+      <button
+        onClick={closeBook}
+        title="Back to Library"
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-all shrink-0"
+      >
+        <ArrowLeft size={14} />
+        <span className="hidden sm:inline">Library</span>
+      </button>
+
+      <span className="text-slate-700 text-sm">/</span>
+
       {/* Project title */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {editingTitle ? (
@@ -55,14 +66,21 @@ export function TopBar() {
         ) : (
           <button
             onClick={handleTitleClick}
-            className="text-sm font-medium text-slate-300 hover:text-white truncate max-w-[200px]"
-            title="Click to rename project"
+            className="text-sm font-medium text-slate-300 hover:text-white truncate max-w-[180px]"
+            title="Click to rename"
           >
-            {projectMeta?.title || 'My Novel'}
+            {activeBook?.title || 'Untitled'}
           </button>
         )}
-        <span className="text-slate-600 text-sm">·</span>
-        <span className="text-sm text-slate-500">{viewLabels[activeView]}</span>
+        {/* Color dot */}
+        {activeBook && (
+          <div
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ backgroundColor: activeBook.coverColor }}
+          />
+        )}
+        <span className="text-slate-600 text-sm hidden sm:inline">·</span>
+        <span className="text-sm text-slate-500 hidden sm:inline">{viewLabels[activeView]}</span>
       </div>
 
       {/* Actions */}
@@ -70,34 +88,34 @@ export function TopBar() {
         <button
           onClick={saveProject}
           title="Save project to file"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
         >
           <Save size={14} />
-          <span className="hidden sm:inline">Save</span>
+          <span className="hidden md:inline">Save</span>
         </button>
         <button
           onClick={() => fileInputRef.current?.click()}
           title="Load project from file"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
         >
           <Upload size={14} />
-          <span className="hidden sm:inline">Load</span>
+          <span className="hidden md:inline">Load</span>
         </button>
         <button
           onClick={() => setShowExportModal(true)}
           title="Export manuscript"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
         >
           <Download size={14} />
-          <span className="hidden sm:inline">Export</span>
+          <span className="hidden md:inline">Export</span>
         </button>
         {canInstall && (
           <button
             onClick={install}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition-all"
           >
             <Settings size={14} />
-            Install App
+            <span className="hidden md:inline">Install</span>
           </button>
         )}
       </div>

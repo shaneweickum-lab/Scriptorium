@@ -10,6 +10,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Plus, Minus } from 'lucide-react';
 import { useAssemblyStore } from '../../store/assemblyStore';
 import { useWritingStore } from '../../store/writingStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import type { AssemblyItem } from '../../types';
 import { buildTree, flattenTree } from '../../utils/sortableTree';
 
@@ -53,11 +54,12 @@ export function ManuscriptBuilder() {
   const addBreakItem = useAssemblyStore((s) => s.addBreakItem);
   const removeItem = useAssemblyStore((s) => s.removeItem);
   const nodes = useWritingStore((s) => s.nodes);
-  const projectMeta = useWritingStore((s) => s.projectMeta);
+  const activeBook = useLibraryStore((s) => s.activeBook);
+  const bookId = activeBook?.id ?? '';
 
   const [showNodePicker, setShowNodePicker] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const labels = projectMeta?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
+  const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
 
   const items = [...(assembly?.items || [])].sort((a, b) => a.order - b.order);
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
@@ -71,7 +73,7 @@ export function ManuscriptBuilder() {
     const reordered = [...items];
     const [moved] = reordered.splice(oldIdx, 1);
     reordered.splice(newIdx, 0, moved);
-    setItems(reordered.map((item, i) => ({ ...item, order: i })));
+    setItems(bookId, reordered.map((item, i) => ({ ...item, order: i })));
   };
 
   const tree = buildTree(nodes);
@@ -83,7 +85,7 @@ export function ManuscriptBuilder() {
         <h3 className="text-sm font-semibold text-slate-300">Manuscript Order</h3>
         <div className="flex items-center gap-2">
           <button
-            onClick={addBreakItem}
+            onClick={() => addBreakItem(bookId)}
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 px-2 py-1.5 rounded-lg hover:bg-slate-700 transition-colors"
             title="Add section break"
           >
@@ -109,7 +111,7 @@ export function ManuscriptBuilder() {
               <button
                 key={item.id}
                 disabled={alreadyAdded}
-                onClick={() => { addNodeItem(item.id); setShowNodePicker(false); }}
+                onClick={() => { addNodeItem(bookId, item.id); setShowNodePicker(false); }}
                 className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
                   alreadyAdded
                     ? 'text-slate-600 cursor-not-allowed'
@@ -140,7 +142,7 @@ export function ManuscriptBuilder() {
                   key={item.id}
                   item={item}
                   nodeTitle={item.nodeId ? (nodeMap.get(item.nodeId)?.title || 'Unknown') : ''}
-                  onRemove={removeItem}
+                  onRemove={(id) => removeItem(bookId, id)}
                 />
               ))}
             </SortableContext>

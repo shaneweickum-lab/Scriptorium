@@ -9,8 +9,8 @@ interface WorldState {
   activeSectionId: string | null;
   activeEntryId: string | null;
 
-  loadFromDB: () => Promise<void>;
-  addSection: (name: string, icon?: string) => Promise<void>;
+  loadFromDB: (bookId: string) => Promise<void>;
+  addSection: (bookId: string, name: string, icon?: string) => Promise<void>;
   updateSection: (id: string, updates: Partial<WorldSection>) => Promise<void>;
   deleteSection: (id: string) => Promise<void>;
   reorderSections: (ids: string[]) => Promise<void>;
@@ -18,7 +18,7 @@ interface WorldState {
   setActiveSection: (id: string | null) => void;
   setActiveEntry: (id: string | null) => void;
 
-  addEntry: (sectionId: string) => Promise<WorldEntry>;
+  addEntry: (bookId: string, sectionId: string) => Promise<WorldEntry>;
   updateEntry: (id: string, updates: Partial<WorldEntry>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
 
@@ -33,21 +33,22 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   activeSectionId: null,
   activeEntryId: null,
 
-  loadFromDB: async () => {
-    await worldRepository.seedDefaultSections();
+  loadFromDB: async (bookId) => {
+    await worldRepository.seedDefaultSections(bookId);
     const [sections, entries] = await Promise.all([
-      worldRepository.getAllSections(),
-      worldRepository.getAllEntries(),
+      worldRepository.getAllSections(bookId),
+      worldRepository.getAllEntries(bookId),
     ]);
     set({
       sections,
       entries,
       activeSectionId: sections[0]?.id ?? null,
+      activeEntryId: null,
     });
   },
 
-  addSection: async (name, icon) => {
-    const section = await worldRepository.addSection(name, icon);
+  addSection: async (bookId, name, icon) => {
+    const section = await worldRepository.addSection(bookId, name, icon);
     set((state) => ({ sections: [...state.sections, section] }));
   },
 
@@ -63,7 +64,8 @@ export const useWorldStore = create<WorldState>((set, get) => ({
     set((state) => {
       const sections = state.sections.filter((s) => s.id !== id);
       const entries = state.entries.filter((e) => e.sectionId !== id);
-      const activeSectionId = state.activeSectionId === id ? (sections[0]?.id ?? null) : state.activeSectionId;
+      const activeSectionId =
+        state.activeSectionId === id ? (sections[0]?.id ?? null) : state.activeSectionId;
       return { sections, entries, activeSectionId, activeEntryId: null };
     });
   },
@@ -72,17 +74,15 @@ export const useWorldStore = create<WorldState>((set, get) => ({
     await worldRepository.reorderSections(ids);
     set((state) => {
       const map = new Map(state.sections.map((s) => [s.id, s]));
-      return {
-        sections: ids.map((id, i) => ({ ...map.get(id)!, order: i })),
-      };
+      return { sections: ids.map((id, i) => ({ ...map.get(id)!, order: i })) };
     });
   },
 
   setActiveSection: (id) => set({ activeSectionId: id, activeEntryId: null }),
   setActiveEntry: (id) => set({ activeEntryId: id }),
 
-  addEntry: async (sectionId) => {
-    const entry = await worldRepository.addEntry(sectionId);
+  addEntry: async (bookId, sectionId) => {
+    const entry = await worldRepository.addEntry(bookId, sectionId);
     set((state) => ({ entries: [...state.entries, entry], activeEntryId: entry.id }));
     return entry;
   },
@@ -90,7 +90,9 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   updateEntry: async (id, updates) => {
     await worldRepository.updateEntry(id, updates);
     set((state) => ({
-      entries: state.entries.map((e) => (e.id === id ? { ...e, ...updates, updatedAt: Date.now() } : e)),
+      entries: state.entries.map((e) =>
+        e.id === id ? { ...e, ...updates, updatedAt: Date.now() } : e
+      ),
     }));
   },
 
@@ -105,16 +107,13 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   addCustomField: async (entryId) => {
     const entry = get().entries.find((e) => e.id === entryId);
     if (!entry) return;
-    const field: CustomField = {
-      id: generateId(),
-      label: 'New Field',
-      value: '',
-      fieldType: 'text',
-    };
+    const field: CustomField = { id: generateId(), label: 'New Field', value: '', fieldType: 'text' };
     const customFields = [...entry.customFields, field];
     await worldRepository.updateEntry(entryId, { customFields });
     set((state) => ({
-      entries: state.entries.map((e) => (e.id === entryId ? { ...e, customFields, updatedAt: Date.now() } : e)),
+      entries: state.entries.map((e) =>
+        e.id === entryId ? { ...e, customFields, updatedAt: Date.now() } : e
+      ),
     }));
   },
 
@@ -124,7 +123,9 @@ export const useWorldStore = create<WorldState>((set, get) => ({
     const customFields = entry.customFields.map((f) => (f.id === fieldId ? { ...f, ...updates } : f));
     await worldRepository.updateEntry(entryId, { customFields });
     set((state) => ({
-      entries: state.entries.map((e) => (e.id === entryId ? { ...e, customFields, updatedAt: Date.now() } : e)),
+      entries: state.entries.map((e) =>
+        e.id === entryId ? { ...e, customFields, updatedAt: Date.now() } : e
+      ),
     }));
   },
 
@@ -134,7 +135,9 @@ export const useWorldStore = create<WorldState>((set, get) => ({
     const customFields = entry.customFields.filter((f) => f.id !== fieldId);
     await worldRepository.updateEntry(entryId, { customFields });
     set((state) => ({
-      entries: state.entries.map((e) => (e.id === entryId ? { ...e, customFields, updatedAt: Date.now() } : e)),
+      entries: state.entries.map((e) =>
+        e.id === entryId ? { ...e, customFields, updatedAt: Date.now() } : e
+      ),
     }));
   },
 }));

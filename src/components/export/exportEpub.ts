@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { Assembly, WritingNode, ProjectMeta } from '../../types';
+import type { Assembly, WritingNode, Book } from '../../types';
 import { tiptapJsonToHtml } from '../../utils/tiptapToHtml';
 
 function slugify(str: string): string {
@@ -38,7 +38,7 @@ interface Chapter { id: string; title: string; bodyHtml: string }
 export async function exportEpub(
   assembly: Assembly,
   nodeMap: Map<string, WritingNode>,
-  projectMeta: ProjectMeta | null
+  projectMeta: Book | null
 ): Promise<void> {
   const title = projectMeta?.title || 'Untitled';
   const author = projectMeta?.author || 'Unknown Author';

@@ -8,6 +8,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Settings2 } from 'lucide-react';
 import { useWritingStore } from '../../store/writingStore';
 import { useUIStore } from '../../store/uiStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { TreeNode } from './TreeNode';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Modal } from '../common/Modal';
@@ -18,19 +19,20 @@ import type { WritingNode, NodeType } from '../../types';
 
 export function OutlineTree() {
   const nodes = useWritingStore((s) => s.nodes);
-  const projectMeta = useWritingStore((s) => s.projectMeta);
   const addNode = useWritingStore((s) => s.addNode);
   const deleteNode = useWritingStore((s) => s.deleteNode);
   const reorderSiblings = useWritingStore((s) => s.reorderSiblings);
   const updateNode = useWritingStore((s) => s.updateNode);
   const setShowHierarchyConfig = useUIStore((s) => s.setShowHierarchyConfig);
+  const activeBook = useLibraryStore((s) => s.activeBook);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<WritingNode | null>(null);
   const [renameTarget, setRenameTarget] = useState<WritingNode | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
-  const labels = projectMeta?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
+  const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
+  const bookId = activeBook?.id ?? '';
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
@@ -41,7 +43,7 @@ export function OutlineTree() {
   };
 
   const handleAddChild = (parentId: string, type: NodeType) => {
-    addNode(parentId, type);
+    addNode(bookId, parentId, type);
     setExpanded((prev) => new Set([...prev, parentId]));
   };
 
@@ -92,7 +94,7 @@ export function OutlineTree() {
             <Settings2 size={14} />
           </button>
           <button
-            onClick={() => addNode(null, 'part')}
+            onClick={() => addNode(bookId, null, 'part')}
             title={`Add ${labels.part}`}
             className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
           >
@@ -106,7 +108,7 @@ export function OutlineTree() {
           <div className="flex flex-col items-center justify-center h-32 gap-2 text-slate-600 text-xs">
             <p>No content yet</p>
             <button
-              onClick={() => addNode(null, 'part')}
+              onClick={() => addNode(bookId, null, 'part')}
               className="text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               + Add {labels.part}

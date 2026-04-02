@@ -1,47 +1,78 @@
 import { useState } from 'react';
 import { Modal } from '../common/Modal';
-import { Input } from '../common/Input';
+import { Input, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
-import { useWritingStore } from '../../store/writingStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
+import { BOOK_COLORS } from '../../types';
 import type { HierarchyLabels } from '../../types';
 
 interface Props { onClose: () => void }
 
 export function ProjectSettings({ onClose }: Props) {
-  const projectMeta = useWritingStore((s) => s.projectMeta);
-  const updateProjectMeta = useWritingStore((s) => s.updateProjectMeta);
-  const updateHierarchyLabels = useWritingStore((s) => s.updateHierarchyLabels);
+  const { activeBook, updateBook, updateHierarchyLabels } = useLibraryStore();
   const addToast = useUIStore((s) => s.addToast);
 
-  const [title, setTitle] = useState(projectMeta?.title || '');
-  const [author, setAuthor] = useState(projectMeta?.author || '');
+  const [title, setTitle] = useState(activeBook?.title || '');
+  const [author, setAuthor] = useState(activeBook?.author || '');
+  const [synopsis, setSynopsis] = useState(activeBook?.synopsis || '');
+  const [color, setColor] = useState(activeBook?.coverColor || BOOK_COLORS[0]);
   const [labels, setLabels] = useState<HierarchyLabels>(
-    projectMeta?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' }
+    activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' }
   );
 
   const handleSave = async () => {
-    await updateProjectMeta({ title: title.trim() || 'My Novel', author: author.trim() });
+    if (!activeBook) return;
+    await updateBook(activeBook.id, {
+      title: title.trim() || 'Untitled',
+      author: author.trim(),
+      synopsis: synopsis.trim(),
+      coverColor: color,
+    });
     await updateHierarchyLabels(labels);
     addToast('Settings saved');
     onClose();
   };
 
   return (
-    <Modal title="Project Settings" onClose={onClose} size="md">
+    <Modal title="Book Settings" onClose={onClose} size="md">
       <div className="flex flex-col gap-4">
         <Input
-          label="Project Title"
+          label="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="My Novel"
         />
         <Input
-          label="Author Name"
+          label="Author"
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
           placeholder="Your Name"
         />
+        <Textarea
+          label="Synopsis"
+          value={synopsis}
+          onChange={(e) => setSynopsis(e.target.value)}
+          placeholder="A brief description..."
+          rows={3}
+        />
+        <div>
+          <p className="text-sm text-slate-400 mb-2">Accent Color</p>
+          <div className="flex gap-2 flex-wrap">
+            {BOOK_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                className="w-7 h-7 rounded-full transition-transform hover:scale-110"
+                style={{
+                  backgroundColor: c,
+                  outline: color === c ? '3px solid white' : 'none',
+                  outlineOffset: '2px',
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
         <div>
           <p className="text-sm text-slate-400 mb-2">Hierarchy Labels</p>

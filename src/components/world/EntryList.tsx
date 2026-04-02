@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, Search } from 'lucide-react';
 import { useWorldStore } from '../../store/worldStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { EmptyState } from '../common/EmptyState';
 import type { WorldEntry } from '../../types';
@@ -14,6 +15,7 @@ export function EntryList() {
   const setActiveEntry = useWorldStore((s) => s.setActiveEntry);
   const addEntry = useWorldStore((s) => s.addEntry);
   const deleteEntry = useWorldStore((s) => s.deleteEntry);
+  const bookId = useLibraryStore((s) => s.activeBook?.id ?? '');
 
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<WorldEntry | null>(null);
@@ -38,7 +40,7 @@ export function EntryList() {
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-slate-300">{activeSection?.name}</span>
           <button
-            onClick={() => addEntry(activeSectionId)}
+            onClick={() => addEntry(bookId, activeSectionId)}
             className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
           >
             <Plus size={14} />
@@ -62,7 +64,7 @@ export function EntryList() {
             icon={<Plus size={32} />}
             title="No entries yet"
             description={`Add your first ${activeSection?.name.toLowerCase()} entry`}
-            action={{ label: 'Add Entry', onClick: () => addEntry(activeSectionId) }}
+            action={{ label: 'Add Entry', onClick: () => addEntry(bookId, activeSectionId) }}
           />
         ) : (
           sectionEntries.map((entry) => {

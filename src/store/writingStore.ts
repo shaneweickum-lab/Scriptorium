@@ -1,39 +1,32 @@
 import { create } from 'zustand';
-import type { WritingNode, NodeType, ProjectMeta, HierarchyLabels } from '../types';
+import type { WritingNode, NodeType } from '../types';
 import { writingRepository } from '../db/writingRepository';
 import { tiptapJsonToText, countWords } from '../utils/tiptapToHtml';
 
 interface WritingState {
   nodes: WritingNode[];
   activeNodeId: string | null;
-  projectMeta: ProjectMeta | null;
 
-  loadFromDB: () => Promise<void>;
-  addNode: (parentId: string | null, type: NodeType, title?: string) => Promise<WritingNode>;
+  loadFromDB: (bookId: string) => Promise<void>;
+  addNode: (bookId: string, parentId: string | null, type: NodeType, title?: string) => Promise<WritingNode>;
   updateNode: (id: string, updates: Partial<WritingNode>) => Promise<void>;
   deleteNode: (id: string) => Promise<void>;
   moveNode: (id: string, newParentId: string | null, newOrder: number) => Promise<void>;
   reorderSiblings: (parentId: string | null, orderedIds: string[]) => Promise<void>;
   setActiveNode: (id: string | null) => void;
-  updateProjectMeta: (updates: Partial<ProjectMeta>) => Promise<void>;
-  updateHierarchyLabels: (labels: HierarchyLabels) => Promise<void>;
 }
 
 export const useWritingStore = create<WritingState>((set, get) => ({
   nodes: [],
   activeNodeId: null,
-  projectMeta: null,
 
-  loadFromDB: async () => {
-    const [nodes, projectMeta] = await Promise.all([
-      writingRepository.getAllNodes(),
-      writingRepository.getProjectMeta(),
-    ]);
-    set({ nodes, projectMeta });
+  loadFromDB: async (bookId) => {
+    const nodes = await writingRepository.getNodesByBook(bookId);
+    set({ nodes, activeNodeId: null });
   },
 
-  addNode: async (parentId, type, title) => {
-    const node = await writingRepository.addNode(parentId, type, title);
+  addNode: async (bookId, parentId, type, title) => {
+    const node = await writingRepository.addNode(bookId, parentId, type, title);
     set((state) => ({ nodes: [...state.nodes, node], activeNodeId: node.id }));
     return node;
   },
@@ -54,8 +47,7 @@ export const useWritingStore = create<WritingState>((set, get) => ({
 
   deleteNode: async (id) => {
     const { nodes } = get();
-    const toDelete = new Set<string>();
-    toDelete.add(id);
+    const toDelete = new Set<string>([id]);
     function collectDescendants(parentId: string) {
       for (const n of nodes) {
         if (n.parentId === parentId) {
@@ -81,8 +73,8 @@ export const useWritingStore = create<WritingState>((set, get) => ({
     }));
   },
 
-  reorderSiblings: async (parentId, orderedIds) => {
-    await writingRepository.reorderSiblings(parentId, orderedIds);
+  reorderSiblings: async (_parentId, orderedIds) => {
+    await writingRepository.reorderSiblings(orderedIds);
     const orderMap = new Map(orderedIds.map((id, i) => [id, i]));
     set((state) => ({
       nodes: state.nodes.map((n) =>
@@ -92,18 +84,4 @@ export const useWritingStore = create<WritingState>((set, get) => ({
   },
 
   setActiveNode: (id) => set({ activeNodeId: id }),
-
-  updateProjectMeta: async (updates) => {
-    await writingRepository.updateProjectMeta(updates);
-    set((state) => ({
-      projectMeta: state.projectMeta ? { ...state.projectMeta, ...updates } : null,
-    }));
-  },
-
-  updateHierarchyLabels: async (labels) => {
-    await writingRepository.updateProjectMeta({ hierarchyLabels: labels });
-    set((state) => ({
-      projectMeta: state.projectMeta ? { ...state.projectMeta, hierarchyLabels: labels } : null,
-    }));
-  },
 }));

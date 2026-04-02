@@ -2,15 +2,16 @@ export type AssemblyItemType = 'node' | 'break' | 'frontmatter';
 
 export interface AssemblyItem {
   id: string;
-  nodeId: string | null; // null for breaks/frontmatter
+  nodeId: string | null;
   type: AssemblyItemType;
   customTitle?: string;
-  content?: string; // For frontmatter/break custom text
+  content?: string;
   order: number;
 }
 
 export interface Assembly {
-  id: string;
+  id: string; // = bookId
+  bookId: string;
   name: string;
   items: AssemblyItem[];
   createdAt: number;

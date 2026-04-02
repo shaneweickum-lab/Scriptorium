@@ -3,37 +3,43 @@ import { useUIStore } from '../store/uiStore';
 import { useWorldStore } from '../store/worldStore';
 import { useWritingStore } from '../store/writingStore';
 import { useAssemblyStore } from '../store/assemblyStore';
+import { useLibraryStore } from '../store/libraryStore';
+import { libraryRepository } from '../db/libraryRepository';
 
 export function useProject() {
   const addToast = useUIStore((s) => s.addToast);
   const loadWorld = useWorldStore((s) => s.loadFromDB);
   const loadWriting = useWritingStore((s) => s.loadFromDB);
   const loadAssembly = useAssemblyStore((s) => s.loadFromDB);
+  const activeBook = useLibraryStore((s) => s.activeBook);
 
   const saveProject = async () => {
+    if (!activeBook) {
+      addToast('No active book to save', 'error');
+      return;
+    }
     try {
-      const [worldSections, worldEntries, writingNodes, assemblies, projectMeta] = await Promise.all([
-        db.worldSections.toArray(),
-        db.worldEntries.toArray(),
-        db.writingNodes.toArray(),
-        db.assemblies.toArray(),
-        db.projectMeta.toArray(),
+      const bookId = activeBook.id;
+      const [worldSections, worldEntries, writingNodes, assemblies] = await Promise.all([
+        db.worldSections.where('bookId').equals(bookId).toArray(),
+        db.worldEntries.where('bookId').equals(bookId).toArray(),
+        db.writingNodes.where('bookId').equals(bookId).toArray(),
+        db.assemblies.where('bookId').equals(bookId).toArray(),
       ]);
 
-      const data = { worldSections, worldEntries, writingNodes, assemblies, projectMeta, version: 1 };
+      const data = { book: activeBook, worldSections, worldEntries, writingNodes, assemblies, version: 2 };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const title = projectMeta[0]?.title || 'scriptorium';
-      a.download = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-backup.json`;
+      a.download = `${activeBook.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-backup.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      addToast('Project saved successfully');
+      addToast('Book saved successfully');
     } catch {
-      addToast('Failed to save project', 'error');
+      addToast('Failed to save book', 'error');
     }
   };
 
@@ -47,21 +53,42 @@ export function useProject() {
         return;
       }
 
-      // Clear and reload all tables
-      await db.worldSections.clear();
-      await db.worldEntries.clear();
-      await db.writingNodes.clear();
-      await db.assemblies.clear();
-      await db.projectMeta.clear();
+      if (data.version >= 2 && data.book) {
+        // Multi-book format: import as a new/replace book
+        const bookId = data.book.id;
+        await db.worldSections.where('bookId').equals(bookId).delete();
+        await db.worldEntries.where('bookId').equals(bookId).delete();
+        await db.writingNodes.where('bookId').equals(bookId).delete();
+        await db.assemblies.where('bookId').equals(bookId).delete();
+        await libraryRepository.addBook(data.book);
 
-      if (data.worldSections?.length) await db.worldSections.bulkAdd(data.worldSections);
-      if (data.worldEntries?.length) await db.worldEntries.bulkAdd(data.worldEntries);
-      if (data.writingNodes?.length) await db.writingNodes.bulkAdd(data.writingNodes);
-      if (data.assemblies?.length) await db.assemblies.bulkAdd(data.assemblies);
-      if (data.projectMeta?.length) await db.projectMeta.bulkAdd(data.projectMeta);
+        if (data.worldSections?.length) await db.worldSections.bulkPut(data.worldSections);
+        if (data.worldEntries?.length) await db.worldEntries.bulkPut(data.worldEntries);
+        if (data.writingNodes?.length) await db.writingNodes.bulkPut(data.writingNodes);
+        if (data.assemblies?.length) await db.assemblies.bulkPut(data.assemblies);
 
-      await Promise.all([loadWorld(), loadWriting(), loadAssembly()]);
-      addToast('Project loaded successfully');
+        await Promise.all([loadWorld(bookId), loadWriting(bookId), loadAssembly(bookId)]);
+      } else if (activeBook) {
+        // Legacy v1 format: load into current active book
+        const bookId = activeBook.id;
+        await db.worldSections.where('bookId').equals(bookId).delete();
+        await db.worldEntries.where('bookId').equals(bookId).delete();
+        await db.writingNodes.where('bookId').equals(bookId).delete();
+        await db.assemblies.where('bookId').equals(bookId).delete();
+
+        const stamp = <T extends object>(arr: T[]) => arr.map((r) => ({ ...r, bookId }));
+        if (data.worldSections?.length) await db.worldSections.bulkPut(stamp(data.worldSections));
+        if (data.worldEntries?.length) await db.worldEntries.bulkPut(stamp(data.worldEntries));
+        if (data.writingNodes?.length) await db.writingNodes.bulkPut(stamp(data.writingNodes));
+        if (data.assemblies?.length) await db.assemblies.bulkPut(stamp(data.assemblies));
+
+        await Promise.all([loadWorld(bookId), loadWriting(bookId), loadAssembly(bookId)]);
+      } else {
+        addToast('Open a book first to import a legacy file', 'error');
+        return;
+      }
+
+      addToast('Book loaded successfully');
     } catch {
       addToast('Failed to load project file', 'error');
     }

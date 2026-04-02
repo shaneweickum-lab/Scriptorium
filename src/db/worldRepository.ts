@@ -1,28 +1,36 @@
 import { db } from './database';
 import type { WorldSection, WorldEntry } from '../types';
-import { DEFAULT_SECTIONS } from '../types';
+import { DEFAULT_SECTION_TEMPLATES } from '../types';
 import { generateId } from '../utils/id';
 
 export const worldRepository = {
-  async seedDefaultSections(): Promise<void> {
-    const count = await db.worldSections.count();
+  async seedDefaultSections(bookId: string): Promise<void> {
+    const count = await db.worldSections.where('bookId').equals(bookId).count();
     if (count === 0) {
       const now = Date.now();
       await db.worldSections.bulkAdd(
-        DEFAULT_SECTIONS.map((s) => ({ ...s, createdAt: now }))
+        DEFAULT_SECTION_TEMPLATES.map((s) => ({
+          ...s,
+          id: generateId(),
+          bookId,
+          createdAt: now,
+        }))
       );
     }
   },
 
-  async getAllSections(): Promise<WorldSection[]> {
-    return db.worldSections.orderBy('order').toArray();
+  async getAllSections(bookId: string): Promise<WorldSection[]> {
+    return db.worldSections
+      .where('bookId').equals(bookId)
+      .sortBy('order');
   },
 
-  async addSection(name: string, icon: string = 'BookOpen'): Promise<WorldSection> {
-    const sections = await db.worldSections.orderBy('order').toArray();
+  async addSection(bookId: string, name: string, icon: string = 'BookOpen'): Promise<WorldSection> {
+    const sections = await db.worldSections.where('bookId').equals(bookId).toArray();
     const maxOrder = sections.length > 0 ? Math.max(...sections.map((s) => s.order)) : -1;
     const section: WorldSection = {
       id: generateId(),
+      bookId,
       name,
       icon,
       order: maxOrder + 1,
@@ -51,17 +59,14 @@ export const worldRepository = {
     });
   },
 
-  async getAllEntries(): Promise<WorldEntry[]> {
-    return db.worldEntries.toArray();
+  async getAllEntries(bookId: string): Promise<WorldEntry[]> {
+    return db.worldEntries.where('bookId').equals(bookId).toArray();
   },
 
-  async getEntriesBySection(sectionId: string): Promise<WorldEntry[]> {
-    return db.worldEntries.where('sectionId').equals(sectionId).toArray();
-  },
-
-  async addEntry(sectionId: string): Promise<WorldEntry> {
+  async addEntry(bookId: string, sectionId: string): Promise<WorldEntry> {
     const entry: WorldEntry = {
       id: generateId(),
+      bookId,
       sectionId,
       title: 'New Entry',
       content: '',

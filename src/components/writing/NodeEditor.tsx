@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useWritingStore } from '../../store/writingStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { EmptyState } from '../common/EmptyState';
 import { PenLine } from 'lucide-react';
@@ -9,10 +10,10 @@ export function NodeEditor() {
   const nodes = useWritingStore((s) => s.nodes);
   const activeNodeId = useWritingStore((s) => s.activeNodeId);
   const updateNode = useWritingStore((s) => s.updateNode);
-  const projectMeta = useWritingStore((s) => s.projectMeta);
+  const activeBook = useLibraryStore((s) => s.activeBook);
 
   const node = nodes.find((n) => n.id === activeNodeId);
-  const labels = projectMeta?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
+  const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
 
   const saveContent = useCallback(
     async (content: string) => {
@@ -37,7 +38,6 @@ export function NodeEditor() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Node header */}
       <div className="px-6 pt-4 pb-2 border-b border-slate-700/30">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs text-slate-500 uppercase tracking-wider">{typeLabel}</span>
@@ -55,8 +55,6 @@ export function NodeEditor() {
           placeholder="Synopsis (optional)..."
         />
       </div>
-
-      {/* Editor */}
       <div className="flex-1 overflow-hidden">
         <RichTextEditor
           key={node.id}

@@ -4,43 +4,43 @@ import { assemblyRepository } from '../db/assemblyRepository';
 
 interface AssemblyState {
   assembly: Assembly | null;
-  loadFromDB: () => Promise<void>;
-  setItems: (items: AssemblyItem[]) => Promise<void>;
-  addNodeItem: (nodeId: string) => Promise<void>;
-  addBreakItem: () => Promise<void>;
-  removeItem: (itemId: string) => Promise<void>;
-  updateAssemblyName: (name: string) => Promise<void>;
+  loadFromDB: (bookId: string) => Promise<void>;
+  setItems: (bookId: string, items: AssemblyItem[]) => Promise<void>;
+  addNodeItem: (bookId: string, nodeId: string) => Promise<void>;
+  addBreakItem: (bookId: string) => Promise<void>;
+  removeItem: (bookId: string, itemId: string) => Promise<void>;
+  updateAssemblyName: (bookId: string, name: string) => Promise<void>;
 }
 
 export const useAssemblyStore = create<AssemblyState>((set) => ({
   assembly: null,
 
-  loadFromDB: async () => {
-    const assembly = await assemblyRepository.getAssembly();
+  loadFromDB: async (bookId) => {
+    const assembly = await assemblyRepository.getAssembly(bookId);
     set({ assembly });
   },
 
-  setItems: async (items) => {
-    await assemblyRepository.setItems(items);
+  setItems: async (bookId, items) => {
+    await assemblyRepository.setItems(bookId, items);
     set((state) => ({
       assembly: state.assembly ? { ...state.assembly, items, updatedAt: Date.now() } : null,
     }));
   },
 
-  addNodeItem: async (nodeId) => {
-    await assemblyRepository.addNodeItem(nodeId);
-    const assembly = await assemblyRepository.getAssembly();
+  addNodeItem: async (bookId, nodeId) => {
+    await assemblyRepository.addNodeItem(bookId, nodeId);
+    const assembly = await assemblyRepository.getAssembly(bookId);
     set({ assembly });
   },
 
-  addBreakItem: async () => {
-    await assemblyRepository.addBreakItem();
-    const assembly = await assemblyRepository.getAssembly();
+  addBreakItem: async (bookId) => {
+    await assemblyRepository.addBreakItem(bookId);
+    const assembly = await assemblyRepository.getAssembly(bookId);
     set({ assembly });
   },
 
-  removeItem: async (itemId) => {
-    await assemblyRepository.removeItem(itemId);
+  removeItem: async (bookId, itemId) => {
+    await assemblyRepository.removeItem(bookId, itemId);
     set((state) => ({
       assembly: state.assembly
         ? { ...state.assembly, items: state.assembly.items.filter((i) => i.id !== itemId) }
@@ -48,8 +48,8 @@ export const useAssemblyStore = create<AssemblyState>((set) => ({
     }));
   },
 
-  updateAssemblyName: async (name) => {
-    await assemblyRepository.updateAssembly({ name });
+  updateAssemblyName: async (bookId, name) => {
+    await assemblyRepository.updateAssembly(bookId, { name });
     set((state) => ({
       assembly: state.assembly ? { ...state.assembly, name } : null,
     }));

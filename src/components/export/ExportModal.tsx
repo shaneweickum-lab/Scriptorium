@@ -5,6 +5,7 @@ import { Button } from '../common/Button';
 import { useAssemblyStore } from '../../store/assemblyStore';
 import { useWritingStore } from '../../store/writingStore';
 import { useUIStore } from '../../store/uiStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { exportHtml } from './exportHtml';
 import { exportEpub } from './exportEpub';
 import { exportDocx } from './exportDocx';
@@ -22,7 +23,7 @@ interface Props { onClose: () => void }
 export function ExportModal({ onClose }: Props) {
   const assembly = useAssemblyStore((s) => s.assembly);
   const nodes = useWritingStore((s) => s.nodes);
-  const projectMeta = useWritingStore((s) => s.projectMeta);
+  const activeBook = useLibraryStore((s) => s.activeBook);
   const addToast = useUIStore((s) => s.addToast);
   const [selected, setSelected] = useState<Format>('html');
   const [exporting, setExporting] = useState(false);
@@ -37,11 +38,11 @@ export function ExportModal({ onClose }: Props) {
     setExporting(true);
     try {
       if (selected === 'html') {
-        exportHtml(assembly, nodeMap, projectMeta);
+        exportHtml(assembly, nodeMap, activeBook);
       } else if (selected === 'epub') {
-        await exportEpub(assembly, nodeMap, projectMeta);
+        await exportEpub(assembly, nodeMap, activeBook);
       } else if (selected === 'docx') {
-        await exportDocx(assembly, nodeMap, projectMeta);
+        await exportDocx(assembly, nodeMap, activeBook);
       }
       addToast(`Exported as ${selected.toUpperCase()}`);
       onClose();
@@ -79,7 +80,7 @@ export function ExportModal({ onClose }: Props) {
 
       {assembly && (
         <p className="text-xs text-slate-500 mb-4">
-          {assembly.items.length} item(s) in assembly · {projectMeta?.title || 'Untitled'}
+          {assembly.items.length} item(s) in assembly · {activeBook?.title || 'Untitled'}
         </p>
       )}
 
