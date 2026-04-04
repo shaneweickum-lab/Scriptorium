@@ -268,9 +268,9 @@ export function Library() {
     await Promise.all([loadWorld(id), loadWriting(id), loadAssembly(id)]);
   };
 
-  const handleCreateBook = async (title: string, author: string, synopsis: string, color: string) => {
+  const handleCreateBook = async (title: string, author: string, synopsis: string, color: string, worldBibleId?: string) => {
     const book = await createBook(title, author, synopsis);
-    await updateBook(book.id, { coverColor: color });
+    await updateBook(book.id, { coverColor: color, ...(worldBibleId ? { worldBibleId } : {}) });
     await handleOpenBook(book.id);
   };
 
@@ -408,11 +408,11 @@ export function Library() {
       {/* ── Modals ─────────────────────────────────── */}
       {showNewBookModal && (
         <NewBookModal onClose={() => setShowNewBookModal(false)}
-          onSave={handleCreateBook} initialColor={nextBookColor} />
+          onSave={handleCreateBook} initialColor={nextBookColor} worldBibles={worldBibles} />
       )}
       {editBookTarget && (
         <EditBookModal book={editBookTarget} onClose={() => setEditBookTarget(null)}
-          onSave={(updates) => updateBook(editBookTarget.id, updates)} />
+          onSave={(updates) => updateBook(editBookTarget.id, updates)} worldBibles={worldBibles} />
       )}
       {showNewWorldModal && (
         <NewWorldModal onClose={() => setShowNewWorldModal(false)}

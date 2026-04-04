@@ -1,21 +1,24 @@
 import { useState } from 'react';
+import { Globe2 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Input, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
 import { BOOK_COLORS } from '../../types';
-import type { Book } from '../../types';
+import type { Book, WorldBible } from '../../types';
 
 interface Props {
   book: Book;
   onClose: () => void;
   onSave: (updates: Partial<Book>) => void;
+  worldBibles: WorldBible[];
 }
 
-export function EditBookModal({ book, onClose, onSave }: Props) {
+export function EditBookModal({ book, onClose, onSave, worldBibles }: Props) {
   const [title, setTitle] = useState(book.title);
   const [author, setAuthor] = useState(book.author);
   const [synopsis, setSynopsis] = useState(book.synopsis);
   const [color, setColor] = useState(book.coverColor);
+  const [worldBibleId, setWorldBibleId] = useState(book.worldBibleId ?? '');
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -24,6 +27,7 @@ export function EditBookModal({ book, onClose, onSave }: Props) {
       author: author.trim(),
       synopsis: synopsis.trim(),
       coverColor: color,
+      worldBibleId: worldBibleId || undefined,
     });
     onClose();
   };
@@ -67,6 +71,30 @@ export function EditBookModal({ book, onClose, onSave }: Props) {
               />
             ))}
           </div>
+        </div>
+
+        <div>
+          <p className="text-sm text-slate-400 mb-2 flex items-center gap-1.5">
+            <Globe2 size={13} className="text-violet-400" />
+            Link World Bible (optional)
+          </p>
+          {worldBibles.length === 0 ? (
+            <p className="text-xs text-slate-600">No world bibles created yet.</p>
+          ) : (
+            <>
+              <select
+                value={worldBibleId}
+                onChange={(e) => setWorldBibleId(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="">— None —</option>
+                {worldBibles.map((wb) => (
+                  <option key={wb.id} value={wb.id}>{wb.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-600 mt-1">Linked world entries appear in the @ reference panel while writing.</p>
+            </>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-2">

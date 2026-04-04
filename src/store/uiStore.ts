@@ -14,6 +14,7 @@ interface UIState {
   showHierarchyConfig: boolean;
   showProjectSettings: boolean;
   showMobileSidebar: boolean;
+  showWorldRef: boolean;
   toasts: Toast[];
 
   setActiveView: (view: ActiveView) => void;
@@ -21,6 +22,7 @@ interface UIState {
   setShowHierarchyConfig: (show: boolean) => void;
   setShowProjectSettings: (show: boolean) => void;
   setShowMobileSidebar: (show: boolean) => void;
+  setShowWorldRef: (show: boolean) => void;
   addToast: (message: string, type?: Toast['type']) => void;
   removeToast: (id: string) => void;
 }
@@ -31,6 +33,7 @@ export const useUIStore = create<UIState>((set) => ({
   showHierarchyConfig: false,
   showProjectSettings: false,
   showMobileSidebar: false,
+  showWorldRef: false,
   toasts: [],
 
   setActiveView: (view) => set({ activeView: view }),
@@ -38,6 +41,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowHierarchyConfig: (show) => set({ showHierarchyConfig: show }),
   setShowProjectSettings: (show) => set({ showProjectSettings: show }),
   setShowMobileSidebar: (show) => set({ showMobileSidebar: show }),
+  setShowWorldRef: (show) => set({ showWorldRef: show }),
 
   addToast: (message, type = 'success') => {
     const id = crypto.randomUUID();

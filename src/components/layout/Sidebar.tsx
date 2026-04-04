@@ -1,9 +1,8 @@
-import { BookOpen, PenLine, BookMarked, Download, Settings } from 'lucide-react';
+import { PenLine, BookMarked, Download, Settings } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import type { ActiveView } from '../../store/uiStore';
 
-const navItems: { view: ActiveView; icon: typeof BookOpen; label: string }[] = [
-  { view: 'world', icon: BookOpen, label: 'World Bible' },
+const navItems: { view: ActiveView; icon: typeof PenLine; label: string }[] = [
   { view: 'writing', icon: PenLine, label: 'Writing' },
   { view: 'assembly', icon: BookMarked, label: 'Assembly' },
 ];
