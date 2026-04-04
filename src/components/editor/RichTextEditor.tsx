@@ -60,21 +60,12 @@ export function RichTextEditor({
     onExit?: () => void;
   }>({});
 
-  // Extract DOMRect bottom+left from clientRect for fixed popup positioning
-  const getPopupPosition = (clientRect: (() => DOMRect | null) | undefined | null) => {
-    if (!clientRect) return { top: 0, left: 0 };
-    const rect = clientRect();
-    if (!rect) return { top: 0, left: 0 };
-    return { top: rect.bottom + 4, left: rect.left };
-  };
-
   // Set up the suggestion render callbacks (read from the ref inside the extension)
   suggestionHandlersRef.current.onStart = (props: SuggestionProps<WorldEntry>) => {
     setMentionState({
       active: true,
       items: props.items,
       selectedIndex: 0,
-      position: getPopupPosition(props.clientRect),
       command: props.command as MentionSuggestionState['command'],
     });
   };
@@ -84,7 +75,6 @@ export function RichTextEditor({
       ...prev,
       items: props.items,
       selectedIndex: 0,
-      position: getPopupPosition(props.clientRect),
       command: props.command as MentionSuggestionState['command'],
     }));
   };

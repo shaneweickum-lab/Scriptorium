@@ -8,7 +8,6 @@ export interface MentionSuggestionState {
   active: boolean;
   items: WorldEntry[];
   selectedIndex: number;
-  position: { top: number; left: number };
   command: ((props: { id: string; label: string }) => void) | null;
 }
 
@@ -16,7 +15,6 @@ export const INITIAL_MENTION_STATE: MentionSuggestionState = {
   active: false,
   items: [],
   selectedIndex: 0,
-  position: { top: 0, left: 0 },
   command: null,
 };
 
@@ -33,7 +31,7 @@ export interface MentionPopupHandle {
 function EntryDetail({ entry, section }: { entry: WorldEntry; section: WorldSection | undefined }) {
   const notes = tiptapJsonToText(entry.content);
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-4 gap-3">
+    <div className="flex flex-col overflow-y-auto p-4 gap-3">
       {/* Title + section */}
       <div>
         <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">
@@ -121,64 +119,52 @@ export const MentionPopup = forwardRef<MentionPopupHandle, Props>(
       ? sections.find((s) => s.id === selectedEntry.sectionId)
       : undefined;
 
-    // Keep popup inside viewport horizontally
-    const popupWidth = 580;
-    const leftPos = Math.min(
-      state.position.left,
-      Math.max(0, (typeof window !== 'undefined' ? window.innerWidth : 1200) - popupWidth - 12)
-    );
-
     return createPortal(
       <div
-        style={{ top: state.position.top, left: leftPos, width: popupWidth }}
-        className="fixed z-50 bg-slate-800 border border-slate-600/80 rounded-xl shadow-2xl overflow-hidden flex"
+        style={{ right: 0, top: 0, bottom: 0, width: 320 }}
+        className="fixed z-50 flex flex-col bg-[#0a1a30] border-l border-violet-900/40 shadow-2xl shadow-black/60 overflow-hidden"
       >
-        {/* Left: entry list */}
-        <div className="w-52 shrink-0 border-r border-slate-700/60 flex flex-col">
-          <div className="px-3 py-2 border-b border-slate-700/60">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-              World Bible
-            </span>
-          </div>
-          <div className="overflow-y-auto max-h-80 py-1">
-            {state.items.map((entry, i) => {
-              const section = sections.find((s) => s.id === entry.sectionId);
-              return (
-                <button
-                  key={entry.id}
-                  className={`w-full flex flex-col px-3 py-2 text-left transition-colors ${
-                    i === localIndex
-                      ? 'bg-indigo-600/30 text-slate-100'
-                      : 'text-slate-300 hover:bg-slate-700/50'
-                  }`}
-                  onMouseEnter={() => setLocalIndex(i)}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    if (state.command) onSelectEntry(entry, state.command);
-                  }}
-                >
-                  <span className="text-sm font-medium truncate">@{entry.title}</span>
-                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                    {section && (
-                      <span className="text-[10px] text-slate-500 bg-slate-700/60 px-1.5 py-0.5 rounded">
-                        {section.name}
-                      </span>
-                    )}
-                    {entry.tags.slice(0, 2).map((tag) => (
-                      <span key={tag} className="text-[10px] text-indigo-400/70">#{tag}</span>
-                    ))}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="px-3 py-1.5 border-t border-slate-700/40">
-            <p className="text-[10px] text-slate-600">↑↓ navigate · Enter to insert</p>
-          </div>
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-violet-900/30 shrink-0">
+          <span className="arcanum-header">World Lookup</span>
         </div>
 
-        {/* Right: full entry detail */}
-        <div className="flex-1 max-h-80 overflow-hidden">
+        {/* Entry list */}
+        <div className="overflow-y-auto border-b border-violet-900/30" style={{ maxHeight: '55%' }}>
+          {state.items.map((entry, i) => {
+            const section = sections.find((s) => s.id === entry.sectionId);
+            return (
+              <button
+                key={entry.id}
+                className={`w-full flex flex-col px-4 py-2.5 text-left transition-colors ${
+                  i === localIndex
+                    ? 'bg-violet-900/30 text-slate-100'
+                    : 'text-slate-300 hover:bg-violet-900/15'
+                }`}
+                onMouseEnter={() => setLocalIndex(i)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  if (state.command) onSelectEntry(entry, state.command);
+                }}
+              >
+                <span className="text-sm font-medium truncate">@{entry.title}</span>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  {section && (
+                    <span className="text-[10px] text-violet-400/60 bg-violet-900/20 px-1.5 py-0.5 rounded">
+                      {section.name}
+                    </span>
+                  )}
+                  {entry.tags.slice(0, 2).map((tag) => (
+                    <span key={tag} className="text-[10px] text-slate-500">#{tag}</span>
+                  ))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Entry detail */}
+        <div className="flex-1 overflow-hidden">
           {selectedEntry ? (
             <EntryDetail entry={selectedEntry} section={selectedSection} />
           ) : (
@@ -186,6 +172,11 @@ export const MentionPopup = forwardRef<MentionPopupHandle, Props>(
               Select an entry
             </div>
           )}
+        </div>
+
+        {/* Footer hint */}
+        <div className="px-4 py-2 border-t border-violet-900/30 shrink-0">
+          <p className="text-[10px] text-slate-600">↑↓ navigate · Enter to insert</p>
         </div>
       </div>,
       document.body

@@ -91,3 +91,27 @@ body,
   border-color: rgba(99, 102, 241, 0.6);
   color: #c7d2fe;
 }
+
+/* Arcane decorative glow for active world sections */
+.arcane-active {
+  box-shadow: inset 3px 0 0 #7c3aed, inset 0 0 20px rgba(124, 58, 237, 0.08);
+}
+
+/* Runic section header text style */
+.arcane-section-header {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(196, 181, 253, 0.7);
+}
+
+/* Arcanum Editor header */
+.arcanum-header {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(167, 139, 250, 0.8);
+  text-shadow: 0 0 20px rgba(167, 139, 250, 0.4);
+}
