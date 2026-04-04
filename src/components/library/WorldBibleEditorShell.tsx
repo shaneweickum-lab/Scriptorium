@@ -2,7 +2,6 @@ import { ArrowLeft, Globe2, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { useWorldBibleStore } from '../../store/worldBibleStore';
 import { SectionList } from '../world/SectionList';
-import { EntryList } from '../world/EntryList';
 import { EntryEditor } from '../world/EntryEditor';
 import { ToastContainer } from '../common/Toast';
 import { Modal } from '../common/Modal';
@@ -54,11 +53,15 @@ export function WorldBibleEditorShell() {
   if (!activeWorldBible) return null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-900 text-slate-200">
-      {/* Sidebar */}
-      <div className="w-44 shrink-0 border-r border-slate-700/50 bg-slate-900/50 flex flex-col">
-        {/* Header */}
-        <div className="p-3 border-b border-slate-700/50">
+    <div className="flex h-screen overflow-hidden bg-[#060d18] text-slate-200">
+      {/* Sidebar — 280px, sections + entries tree */}
+      <div
+        className="shrink-0 flex flex-col bg-[#0a1628]/80 border-r border-purple-900/30"
+        style={{ width: 280 }}
+      >
+        {/* Sidebar header */}
+        <div className="p-3 pb-2 border-b border-purple-900/20">
+          {/* Back button */}
           <button
             onClick={closeWorldBible}
             className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-200 transition-colors mb-3"
@@ -66,10 +69,15 @@ export function WorldBibleEditorShell() {
             <ArrowLeft size={13} />
             Library
           </button>
+
+          {/* World name row */}
           <div className="flex items-center gap-2">
             <div
               className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-              style={{ backgroundColor: activeWorldBible.coverColor + '30', color: activeWorldBible.coverColor }}
+              style={{
+                backgroundColor: activeWorldBible.coverColor + '30',
+                color: activeWorldBible.coverColor,
+              }}
             >
               <Globe2 size={13} />
             </div>
@@ -88,16 +96,15 @@ export function WorldBibleEditorShell() {
             </button>
           </div>
         </div>
-        <SectionList />
+
+        {/* Section + entries tree fills remaining space */}
+        <div className="flex-1 overflow-hidden">
+          <SectionList />
+        </div>
       </div>
 
-      {/* Entry list */}
-      <div className="w-60 shrink-0 border-r border-slate-700/50 bg-slate-900/30">
-        <EntryList />
-      </div>
-
-      {/* Entry editor */}
-      <div className="flex-1 bg-slate-900/20">
+      {/* Entry editor takes the rest */}
+      <div className="flex-1 bg-[#060d18] overflow-hidden">
         <EntryEditor />
       </div>
 

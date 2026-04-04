@@ -9,6 +9,7 @@ import { useAutoSave } from '../../hooks/useAutoSave';
 
 export function EntryEditor() {
   const entries = useWorldStore((s) => s.entries);
+  const sections = useWorldStore((s) => s.sections);
   const activeEntryId = useWorldStore((s) => s.activeEntryId);
   const updateEntry = useWorldStore((s) => s.updateEntry);
   const addCustomField = useWorldStore((s) => s.addCustomField);
@@ -16,6 +17,7 @@ export function EntryEditor() {
   const deleteCustomField = useWorldStore((s) => s.deleteCustomField);
 
   const entry = entries.find((e) => e.id === activeEntryId);
+  const section = entry ? sections.find((s) => s.id === entry.sectionId) : undefined;
   const [tagInput, setTagInput] = useState('');
 
   const saveContent = useCallback(
@@ -47,22 +49,43 @@ export function EntryEditor() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Entry header */}
-      <div className="p-4 border-b border-slate-700/50 space-y-3">
+      {/* ARCANUM EDITOR header */}
+      <div className="px-5 pt-4 pb-3 border-b border-purple-900/20">
+        {/* Header label */}
+        <div className="arcanum-header mb-1.5">Arcanum Editor</div>
+
+        {/* Breadcrumb */}
+        {section && (
+          <p className="text-[11px] text-slate-500 mb-3 tracking-wide">
+            <span className="text-purple-400/60 uppercase text-[10px] font-semibold tracking-[0.1em]">
+              {section.name}
+            </span>
+            <span className="mx-1.5 text-slate-600">–</span>
+            <span className="text-slate-400">{entry.title || 'Untitled'}</span>
+          </p>
+        )}
+
+        {/* Title input */}
         <input
           value={entry.title}
           onChange={(e) => updateEntry(entry.id, { title: e.target.value })}
-          className="w-full bg-transparent text-xl font-semibold text-slate-100 placeholder-slate-600 focus:outline-none border-b border-transparent focus:border-indigo-500 pb-1 transition-colors"
+          className="w-full bg-transparent text-xl font-semibold text-white placeholder-slate-600 focus:outline-none border-b border-transparent focus:border-violet-500/60 pb-1 transition-colors"
           placeholder="Entry title..."
         />
 
         {/* Tags */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Tag size={12} className="text-slate-500" />
+        <div className="flex flex-wrap items-center gap-1.5 mt-3">
+          <Tag size={12} className="text-violet-500/50" />
           {entry.tags.map((tag) => (
-            <span key={tag} className="flex items-center gap-1 text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+            <span
+              key={tag}
+              className="flex items-center gap-1 text-xs bg-violet-900/30 text-violet-300/80 border border-violet-800/30 px-2 py-0.5 rounded-full"
+            >
               {tag}
-              <button onClick={() => updateEntry(entry.id, { tags: entry.tags.filter((t) => t !== tag) })} className="text-slate-500 hover:text-slate-300">
+              <button
+                onClick={() => updateEntry(entry.id, { tags: entry.tags.filter((t) => t !== tag) })}
+                className="text-violet-500/60 hover:text-violet-300"
+              >
                 <X size={10} />
               </button>
             </span>
@@ -70,7 +93,9 @@ export function EntryEditor() {
           <input
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); handleAddTag(); } }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); handleAddTag(); }
+            }}
             onBlur={handleAddTag}
             placeholder="Add tag..."
             className="text-xs bg-transparent text-slate-400 placeholder-slate-600 focus:outline-none w-20"
@@ -90,7 +115,7 @@ export function EntryEditor() {
         </div>
 
         {/* Custom fields panel */}
-        <div className="w-64 shrink-0 border-l border-slate-700/50 overflow-y-auto p-3">
+        <div className="w-64 shrink-0 border-l border-purple-900/20 overflow-y-auto p-3">
           <CustomFieldEditor
             fields={entry.customFields}
             onAdd={() => addCustomField(entry.id)}

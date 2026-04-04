@@ -1,28 +1,24 @@
 import { useState } from 'react';
-import { Globe2 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Input, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
 import { BOOK_COLORS } from '../../types';
-import type { WorldBible } from '../../types';
 
 interface Props {
   onClose: () => void;
-  onSave: (title: string, author: string, synopsis: string, color: string, worldBibleId?: string) => void;
+  onSave: (title: string, author: string, synopsis: string, color: string) => void;
   initialColor: string;
-  worldBibles: WorldBible[];
 }
 
-export function NewBookModal({ onClose, onSave, initialColor, worldBibles }: Props) {
+export function NewBookModal({ onClose, onSave, initialColor }: Props) {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [synopsis, setSynopsis] = useState('');
   const [color, setColor] = useState(initialColor);
-  const [worldBibleId, setWorldBibleId] = useState<string>('');
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    onSave(title.trim(), author.trim(), synopsis.trim(), color, worldBibleId || undefined);
+    onSave(title.trim(), author.trim(), synopsis.trim(), color);
     onClose();
   };
 
@@ -70,29 +66,6 @@ export function NewBookModal({ onClose, onSave, initialColor, worldBibles }: Pro
             ))}
           </div>
         </div>
-
-        {/* World Bible link */}
-        {worldBibles.length > 0 && (
-          <div>
-            <p className="text-sm text-slate-400 mb-2 flex items-center gap-1.5">
-              <Globe2 size={13} className="text-violet-400" />
-              Link to World Bible (optional)
-            </p>
-            <select
-              value={worldBibleId}
-              onChange={(e) => setWorldBibleId(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="">— None —</option>
-              {worldBibles.map((wb) => (
-                <option key={wb.id} value={wb.id}>{wb.name}</option>
-              ))}
-            </select>
-            <p className="text-xs text-slate-600 mt-1">
-              Linked world entries will be searchable via @ in the writing editor.
-            </p>
-          </div>
-        )}
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>

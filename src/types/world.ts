@@ -27,8 +27,13 @@ export interface WorldSection {
 }
 
 export const DEFAULT_SECTION_TEMPLATES = [
-  { name: 'Characters', icon: 'Users', order: 0 },
-  { name: 'Events', icon: 'Calendar', order: 1 },
-  { name: 'Ecology', icon: 'Leaf', order: 2 },
-  { name: 'Cosmology', icon: 'Sparkles', order: 3 },
+  { name: 'History and Timeline', icon: 'Clock', order: 0 },
+  { name: 'Geography', icon: 'Map', order: 1 },
+  { name: 'Magic System or Technology', icon: 'Zap', order: 2 },
+  { name: 'Cultures', icon: 'Users', order: 3 },
+  { name: 'Characters', icon: 'User', order: 4 },
+  { name: 'Creatures and Flora', icon: 'Leaf', order: 5 },
+  { name: 'Lore Corrections', icon: 'AlertCircle', order: 6 },
+  { name: 'Open Questions', icon: 'HelpCircle', order: 7 },
+  { name: 'Established Facts', icon: 'CheckCircle2', order: 8 },
 ];
