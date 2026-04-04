@@ -41,7 +41,8 @@ function Divider() {
 export function EditorToolbar({ editor }: Props) {
   const sz = 15;
   return (
-    <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-slate-700/50 bg-slate-800/50">
+    <div className="overflow-x-auto overflow-y-hidden border-b border-slate-700/50 bg-slate-800/50">
+      <div className="flex items-center gap-0.5 px-3 py-2 min-w-max">
       {/* Undo/Redo */}
       <ToolBtn onClick={() => editor.chain().focus().undo().run()} title="Undo" disabled={!editor.can().undo()}>
         <Undo size={sz} />
@@ -109,6 +110,7 @@ export function EditorToolbar({ editor }: Props) {
       <ToolBtn onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={editor.isActive({ textAlign: 'justify' })} title="Justify">
         <AlignJustify size={sz} />
       </ToolBtn>
+      </div>
     </div>
   );
 }

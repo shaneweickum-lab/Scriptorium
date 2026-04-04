@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Download } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download, Menu } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useProject } from '../../hooks/useProject';
@@ -8,6 +8,8 @@ export function TopBar() {
   const { activeBook, updateBook, closeBook } = useLibraryStore();
   const activeView = useUIStore((s) => s.activeView);
   const setShowExportModal = useUIStore((s) => s.setShowExportModal);
+  const showMobileSidebar = useUIStore((s) => s.showMobileSidebar);
+  const setShowMobileSidebar = useUIStore((s) => s.setShowMobileSidebar);
   const { saveProject, loadProject } = useProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -35,6 +37,15 @@ export function TopBar() {
 
   return (
     <header className="h-12 bg-slate-900/80 backdrop-blur border-b border-slate-700/50 flex items-center px-3 gap-2 shrink-0">
+      {/* Mobile outline toggle */}
+      <button
+        onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+        title="Toggle outline"
+        className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-all shrink-0"
+      >
+        <Menu size={16} />
+      </button>
+
       {/* Back to library */}
       <button
         onClick={closeBook}

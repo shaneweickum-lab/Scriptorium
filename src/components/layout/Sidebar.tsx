@@ -15,43 +15,49 @@ export function Sidebar() {
   const setShowProjectSettings = useUIStore((s) => s.setShowProjectSettings);
 
   return (
-    <aside className="flex flex-col w-14 bg-slate-900 border-r border-slate-700/50 shrink-0">
-      <div className="flex items-center justify-center h-14 border-b border-slate-700/50">
+    <aside className="
+      fixed bottom-0 left-0 right-0 z-40 h-16 flex flex-row items-center
+      bg-slate-900 border-t border-slate-700/50
+      md:static md:h-full md:w-14 md:flex-col md:border-t-0 md:border-r
+    ">
+      {/* Logo icon — hide on mobile bottom bar, show on desktop */}
+      <div className="hidden md:flex items-center justify-center h-14 border-b border-slate-700/50 w-full shrink-0">
         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-sm font-serif">S</span>
+          <span className="text-white font-bold text-sm font-serif">W</span>
         </div>
       </div>
 
-      <nav className="flex flex-col items-center gap-1 p-2 flex-1">
+      {/* Nav items — row on mobile, column on desktop */}
+      <nav className="flex flex-row flex-1 items-center justify-around px-2 md:flex-col md:justify-start md:gap-1 md:p-2 md:flex-1">
         {navItems.map(({ view, icon: Icon, label }) => (
           <button
             key={view}
             onClick={() => setActiveView(view)}
             title={label}
-            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-              activeView === view
+            className={`flex flex-col items-center justify-center gap-0.5
+              w-14 h-12 md:w-10 md:h-10 rounded-xl md:rounded-lg transition-all
+              text-[10px] md:text-base
+              ${activeView === view
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
-            }`}
+              }`}
           >
             <Icon size={18} />
+            <span className="md:hidden">{label.split(' ')[0]}</span>
           </button>
         ))}
       </nav>
 
-      <div className="flex flex-col items-center gap-1 p-2 border-t border-slate-700/50">
-        <button
-          onClick={() => setShowExportModal(true)}
-          title="Export"
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all"
-        >
+      {/* Export + Settings — row on mobile (right side), column on desktop (bottom) */}
+      <div className="flex flex-row gap-1 pr-2 md:flex-col md:p-2 md:pr-0 md:border-t md:border-slate-700/50">
+        <button onClick={() => setShowExportModal(true)} title="Export"
+          className="w-12 h-12 md:w-10 md:h-10 rounded-xl md:rounded-lg flex items-center justify-center
+            text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all">
           <Download size={18} />
         </button>
-        <button
-          onClick={() => setShowProjectSettings(true)}
-          title="Project Settings"
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all"
-        >
+        <button onClick={() => setShowProjectSettings(true)} title="Settings"
+          className="w-12 h-12 md:w-10 md:h-10 rounded-xl md:rounded-lg flex items-center justify-center
+            text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all">
           <Settings size={18} />
         </button>
       </div>

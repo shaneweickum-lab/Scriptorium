@@ -20,11 +20,16 @@ export function Modal({ title, onClose, children, size = 'md' }: ModalProps) {
   const widths = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full ${widths[size]} bg-slate-800 rounded-xl shadow-2xl border border-slate-700`}>
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+      <div className={`
+        relative w-full md:${widths[size]}
+        bg-slate-800 border border-slate-700 shadow-2xl
+        rounded-t-2xl md:rounded-xl
+        max-h-[90vh] overflow-y-auto
+      `}>
+        <div className="flex items-center justify-between p-4 border-b border-slate-700 sticky top-0 bg-slate-800 z-10">
+          <h2 className="text-base font-semibold text-slate-100">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
@@ -33,6 +38,8 @@ export function Modal({ title, onClose, children, size = 'md' }: ModalProps) {
           </button>
         </div>
         <div className="p-4">{children}</div>
+        {/* Safe area spacer for iOS */}
+        <div className="h-safe-area-inset-bottom md:hidden" />
       </div>
     </div>
   );

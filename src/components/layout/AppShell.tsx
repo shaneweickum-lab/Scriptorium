@@ -18,7 +18,7 @@ export function AppShell() {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-900 text-slate-200">
       <Sidebar />
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 pb-16 md:pb-0">
         <TopBar />
         <main className="flex-1 overflow-hidden">
           {activeView === 'world' && <WorldBible />}

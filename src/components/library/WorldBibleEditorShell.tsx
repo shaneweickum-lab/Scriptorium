@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe2, Pencil } from 'lucide-react';
+import { ArrowLeft, Globe2, Pencil, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useWorldBibleStore } from '../../store/worldBibleStore';
 import { SectionList } from '../world/SectionList';
@@ -49,16 +49,31 @@ function EditWorldModal({ onClose }: { onClose: () => void }) {
 export function WorldBibleEditorShell() {
   const { activeWorldBible, closeWorldBible } = useWorldBibleStore();
   const [showEdit, setShowEdit] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   if (!activeWorldBible) return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#060d18] text-slate-200">
-      {/* Sidebar — 280px, sections + entries tree */}
-      <div
-        className="shrink-0 flex flex-col bg-[#0a1628]/80 border-r border-purple-900/30"
-        style={{ width: 280 }}
-      >
+      {/* Mobile overlay backdrop */}
+      {showSidebar && (
+        <div className="fixed inset-0 z-20 bg-black/50 md:hidden" onClick={() => setShowSidebar(false)} />
+      )}
+
+      {/* Sidebar: drawer on mobile, static on desktop */}
+      <div className={`
+        absolute inset-y-0 left-0 z-30 flex flex-col
+        bg-[#0a1628] border-r border-purple-900/30
+        transform transition-transform duration-200
+        ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
+        md:relative md:translate-x-0 md:transform-none md:transition-none md:shrink-0
+        w-72 md:w-[280px]
+      `}>
+        {/* Close button for mobile */}
+        <button className="md:hidden absolute top-2 right-2 p-1 text-slate-500 hover:text-slate-300 z-10" onClick={() => setShowSidebar(false)}>
+          <X size={16} />
+        </button>
+
         {/* Sidebar header */}
         <div className="p-3 pb-2 border-b border-purple-900/20">
           {/* Back button */}
@@ -103,8 +118,19 @@ export function WorldBibleEditorShell() {
         </div>
       </div>
 
-      {/* Entry editor takes the rest */}
-      <div className="flex-1 bg-[#060d18] overflow-hidden">
+      {/* Mobile header bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-10 h-12 bg-[#0a1628] border-b border-purple-900/30 flex items-center px-3 gap-2">
+        <button onClick={() => setShowSidebar(true)} className="p-2 text-slate-400 hover:text-slate-200">
+          <Menu size={18} />
+        </button>
+        <span className="text-sm font-medium text-slate-200 truncate">{activeWorldBible.name}</span>
+        <button onClick={closeWorldBible} className="ml-auto flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300">
+          <ArrowLeft size={13} /> Library
+        </button>
+      </div>
+
+      {/* Entry editor: full width, with top padding on mobile for the header bar */}
+      <div className="flex-1 bg-[#060d18] overflow-hidden pt-12 md:pt-0">
         <EntryEditor />
       </div>
 
