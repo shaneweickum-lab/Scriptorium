@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Download, Menu } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download, Menu, BookOpen } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useProject } from '../../hooks/useProject';
@@ -10,6 +10,8 @@ export function TopBar() {
   const setShowExportModal = useUIStore((s) => s.setShowExportModal);
   const showMobileSidebar = useUIStore((s) => s.showMobileSidebar);
   const setShowMobileSidebar = useUIStore((s) => s.setShowMobileSidebar);
+  const showWorldRef = useUIStore((s) => s.showWorldRef);
+  const setShowWorldRef = useUIStore((s) => s.setShowWorldRef);
   const { saveProject, loadProject } = useProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -117,6 +119,18 @@ export function TopBar() {
         >
           <Download size={14} />
           <span className="hidden md:inline">Export</span>
+        </button>
+        <button
+          onClick={() => setShowWorldRef(!showWorldRef)}
+          title="World Reference"
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all
+            ${showWorldRef
+              ? 'bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
+        >
+          <BookOpen size={14} />
+          <span className="hidden md:inline">World</span>
         </button>
       </div>
 
