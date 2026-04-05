@@ -1,6 +1,9 @@
 import { ArrowLeft, Globe2, Pencil, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWorldBibleStore } from '../../store/worldBibleStore';
+import { useWorldStore } from '../../store/worldStore';
+import { useAchievementStore } from '../../store/achievementStore';
+import { useUIStore } from '../../store/uiStore';
 import { SectionList } from '../world/SectionList';
 import { EntryEditor } from '../world/EntryEditor';
 import { ToastContainer } from '../common/Toast';
@@ -8,6 +11,8 @@ import { Modal } from '../common/Modal';
 import { Input, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
 import { WORLD_COLORS } from '../../types';
+import { tiptapJsonToText, countWords } from '../../utils/tiptapToHtml';
+import { DEFAULT_SECTION_TEMPLATES } from '../../types';
 
 function EditWorldModal({ onClose }: { onClose: () => void }) {
   const { activeWorldBible, updateWorldBible } = useWorldBibleStore();
@@ -48,8 +53,34 @@ function EditWorldModal({ onClose }: { onClose: () => void }) {
 
 export function WorldBibleEditorShell() {
   const { activeWorldBible, closeWorldBible } = useWorldBibleStore();
+  const entries = useWorldStore((s) => s.entries);
+  const sections = useWorldStore((s) => s.sections);
+  const { checkWorldEntries, checkXPMilestone } = useAchievementStore();
+  const addAchievementToast = useUIStore((s) => s.addAchievementToast);
   const [showEdit, setShowEdit] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+
+  // Check world bible achievements whenever entries change
+  useEffect(() => {
+    if (!activeWorldBible || entries.length === 0) return;
+
+    const totalWords = entries.reduce((sum, e) => {
+      return sum + countWords(tiptapJsonToText(e.content));
+    }, 0);
+
+    // Find which default section names have at least one entry
+    const defaultNames = DEFAULT_SECTION_TEMPLATES.map((t) => t.name);
+    const defaultSectionIds = sections
+      .filter((s) => defaultNames.includes(s.name))
+      .map((s) => s.id);
+    const coveredSectionIds = defaultSectionIds.filter((sId) =>
+      entries.some((e) => e.sectionId === sId)
+    );
+
+    const onUnlock = (name: string, xp: number, emoji: string) => addAchievementToast(name, xp, emoji);
+    checkWorldEntries(activeWorldBible.id, entries.length, totalWords, coveredSectionIds, onUnlock);
+    checkXPMilestone(onUnlock);
+  }, [entries.length, activeWorldBible?.id]);
 
   if (!activeWorldBible) return null;
 

@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Download, Menu, BookOpen } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
+import { useAchievementStore } from '../../store/achievementStore';
 import { useProject } from '../../hooks/useProject';
+import { getLevel, getLevelProgress } from '../../types/achievements';
 
 export function TopBar() {
   const { activeBook, updateBook, closeBook } = useLibraryStore();
@@ -12,10 +14,15 @@ export function TopBar() {
   const setShowMobileSidebar = useUIStore((s) => s.setShowMobileSidebar);
   const showWorldRef = useUIStore((s) => s.showWorldRef);
   const setShowWorldRef = useUIStore((s) => s.setShowWorldRef);
+  const setShowAchievementsModal = useUIStore((s) => s.setShowAchievementsModal);
   const { saveProject, loadProject } = useProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
+
+  const { totalXP, unlocks } = useAchievementStore();
+  const level = getLevel(totalXP);
+  const { pct } = getLevelProgress(totalXP);
 
   const viewLabels = { world: 'World Bible', writing: 'Writing', assembly: 'Assembly' };
 
@@ -59,7 +66,23 @@ export function TopBar() {
         <span className="hidden sm:inline font-medium">Wizards Playground</span>
       </button>
 
-      <span className="text-slate-700 text-sm">/</span>
+      {/* XP bar (desktop) */}
+      <div className="hidden md:flex items-center gap-2 px-2 py-1 shrink-0">
+        <Star size={11} className="text-amber-400 shrink-0" />
+        <span className="text-[10px] font-bold text-amber-300/80 shrink-0">Lv.{level}</span>
+        <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{
+              width: `${pct}%`,
+              background: 'linear-gradient(to right, #7c3aed, #a78bfa)',
+            }}
+          />
+        </div>
+        <span className="text-[10px] text-slate-600 shrink-0">{totalXP} XP</span>
+      </div>
+
+      <span className="text-slate-700 text-sm">|</span>
 
       {/* Project title */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -96,6 +119,18 @@ export function TopBar() {
 
       {/* Actions */}
       <div className="flex items-center gap-1">
+        {/* Achievements counter */}
+        <button
+          onClick={() => setShowAchievementsModal(true)}
+          title="Achievements"
+          className="relative flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-slate-400 hover:text-amber-300 hover:bg-slate-800 transition-all"
+        >
+          <Trophy size={14} />
+          {unlocks.length > 0 && (
+            <span className="text-[10px] font-bold text-amber-400">{unlocks.length}</span>
+          )}
+        </button>
+
         <button
           onClick={saveProject}
           title="Save project to file"

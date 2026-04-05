@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAchievementStore } from '../../store/achievementStore';
 import { FileText, BookOpen, FileCode, Loader, BookMarked, Info } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
@@ -58,6 +59,8 @@ export function ExportModal({ onClose }: Props) {
   const nodes = useWritingStore((s) => s.nodes);
   const activeBook = useLibraryStore((s) => s.activeBook);
   const addToast = useUIStore((s) => s.addToast);
+  const addAchievementToast = useUIStore((s) => s.addAchievementToast);
+  const checkExport = useAchievementStore((s) => s.checkExport);
   const [selected, setSelected] = useState<Format>('html');
   const [exporting, setExporting] = useState(false);
 
@@ -108,6 +111,7 @@ export function ExportModal({ onClose }: Props) {
         });
       }
       addToast(`Exported as ${selected.toUpperCase()}`);
+      await checkExport((name, xp, emoji) => addAchievementToast(name, xp, emoji));
       onClose();
     } catch (e) {
       addToast(`Export failed: ${e instanceof Error ? e.message : 'Unknown error'}`, 'error');

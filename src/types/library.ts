@@ -19,6 +19,7 @@ export interface Book {
   coverColor: string;
   hierarchyLabels: HierarchyLabels;
   worldBibleId?: string; // optional link to a shared WorldBible for series
+  wordGoal?: number;     // personal word count target
   createdAt: number;
   updatedAt: number;
 }

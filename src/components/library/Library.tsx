@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import { Plus, Download, Globe2, BookOpen, Pencil, Trash2, MoreVertical, X, Share } from 'lucide-react';
+import { Plus, Download, Globe2, BookOpen, Pencil, Trash2, MoreVertical, X, Share, Trophy, Star } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
 import { useWritingStore } from '../../store/writingStore';
 import { useAssemblyStore } from '../../store/assemblyStore';
 import { useWorldBibleStore } from '../../store/worldBibleStore';
+import { useAchievementStore } from '../../store/achievementStore';
+import { useUIStore } from '../../store/uiStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { NewBookModal } from './NewBookModal';
 import { EditBookModal } from './EditBookModal';
 import { NewWorldModal } from './NewWorldModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { AchievementsModal } from '../achievements/AchievementsModal';
+import { ToastContainer } from '../common/Toast';
 import { BOOK_COLORS, WORLD_COLORS } from '../../types';
 import type { Book, WorldBible } from '../../types';
+import { getLevel, getLevelProgress } from '../../types/achievements';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -310,6 +315,13 @@ export function Library() {
   const { worldBibles, createWorldBible, updateWorldBible, deleteWorldBible, openWorldBible } = useWorldBibleStore();
   const loadWorldBibleData = useWorldStore((s) => s.loadFromDB);
   const { canInstall, install, installMethod } = usePWAInstall();
+  const { checkGlobal, unlocks, totalXP } = useAchievementStore();
+  const addAchievementToast = useUIStore((s) => s.addAchievementToast);
+  const showAchievementsModal = useUIStore((s) => s.showAchievementsModal);
+  const setShowAchievementsModal = useUIStore((s) => s.setShowAchievementsModal);
+
+  const level = getLevel(totalXP);
+  const { pct } = getLevelProgress(totalXP);
 
   const [view, setView] = useState<'books' | 'worlds'>('books');
   const [showNewBookModal, setShowNewBookModal] = useState(false);
@@ -317,6 +329,8 @@ export function Library() {
   const [showNewWorldModal, setShowNewWorldModal] = useState(false);
   const [editWorldTarget, setEditWorldTarget] = useState<WorldBible | null>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
+
+  const onUnlock = (name: string, xp: number, emoji: string) => addAchievementToast(name, xp, emoji);
 
   const handleOpenBook = async (id: string) => {
     await openBook(id);
@@ -326,6 +340,7 @@ export function Library() {
   const handleCreateBook = async (title: string, author: string, synopsis: string, color: string, worldBibleId?: string) => {
     const book = await createBook(title, author, synopsis);
     await updateBook(book.id, { coverColor: color, ...(worldBibleId ? { worldBibleId } : {}) });
+    await checkGlobal(books.length + 1, worldBibles.length, onUnlock);
     await handleOpenBook(book.id);
   };
 
@@ -336,6 +351,7 @@ export function Library() {
 
   const handleCreateWorld = async (name: string, description: string, color: string) => {
     const wb = await createWorldBible(name, description, color);
+    await checkGlobal(books.length, worldBibles.length + 1, onUnlock);
     await handleOpenWorldBible(wb.id);
   };
 
@@ -360,7 +376,33 @@ export function Library() {
           </div>
         </div>
 
+        {/* XP bar (center-ish, hidden on small) */}
+        <div className="hidden sm:flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2">
+            <Star size={12} className="text-amber-400" />
+            <span className="text-xs font-bold text-amber-300">Level {level}</span>
+            <span className="text-[10px] text-slate-600">·</span>
+            <span className="text-[10px] text-slate-500">{totalXP} XP</span>
+          </div>
+          <div className="w-36 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, background: 'linear-gradient(to right, #7c3aed, #a78bfa)' }} />
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
+          {/* Achievements */}
+          <button
+            onClick={() => setShowAchievementsModal(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold
+              bg-white/5 hover:bg-white/10 border border-white/10 hover:border-violet-500/30
+              text-slate-400 hover:text-violet-300 transition-all"
+          >
+            <Trophy size={13} />
+            <span className="hidden md:inline">{unlocks.length} Achievements</span>
+            <span className="md:hidden">{unlocks.length}</span>
+          </button>
+
           {/* Toggle view */}
           <button
             onClick={() => setView(view === 'books' ? 'worlds' : 'books')}
@@ -500,6 +542,8 @@ export function Library() {
       {showInstallModal && (installMethod === 'safari-mac' || installMethod === 'safari-ios') && (
         <SafariInstallModal method={installMethod} onClose={() => setShowInstallModal(false)} />
       )}
+      {showAchievementsModal && <AchievementsModal onClose={() => setShowAchievementsModal(false)} />}
+      <ToastContainer />
     </div>
   );
 }

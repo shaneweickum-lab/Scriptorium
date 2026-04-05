@@ -5,7 +5,9 @@ export type ActiveView = 'world' | 'writing' | 'assembly';
 interface Toast {
   id: string;
   message: string;
-  type: 'success' | 'error' | 'info';
+  type: 'success' | 'error' | 'info' | 'achievement';
+  achievementEmoji?: string;
+  achievementXP?: number;
 }
 
 interface UIState {
@@ -13,6 +15,7 @@ interface UIState {
   showExportModal: boolean;
   showHierarchyConfig: boolean;
   showProjectSettings: boolean;
+  showAchievementsModal: boolean;
   showMobileSidebar: boolean;
   showWorldRef: boolean;
   toasts: Toast[];
@@ -21,9 +24,11 @@ interface UIState {
   setShowExportModal: (show: boolean) => void;
   setShowHierarchyConfig: (show: boolean) => void;
   setShowProjectSettings: (show: boolean) => void;
+  setShowAchievementsModal: (show: boolean) => void;
   setShowMobileSidebar: (show: boolean) => void;
   setShowWorldRef: (show: boolean) => void;
   addToast: (message: string, type?: Toast['type']) => void;
+  addAchievementToast: (name: string, xp: number, emoji: string) => void;
   removeToast: (id: string) => void;
 }
 
@@ -32,6 +37,7 @@ export const useUIStore = create<UIState>((set) => ({
   showExportModal: false,
   showHierarchyConfig: false,
   showProjectSettings: false,
+  showAchievementsModal: false,
   showMobileSidebar: false,
   showWorldRef: false,
   toasts: [],
@@ -40,6 +46,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowExportModal: (show) => set({ showExportModal: show }),
   setShowHierarchyConfig: (show) => set({ showHierarchyConfig: show }),
   setShowProjectSettings: (show) => set({ showProjectSettings: show }),
+  setShowAchievementsModal: (show) => set({ showAchievementsModal: show }),
   setShowMobileSidebar: (show) => set({ showMobileSidebar: show }),
   setShowWorldRef: (show) => set({ showWorldRef: show }),
 
@@ -49,6 +56,17 @@ export const useUIStore = create<UIState>((set) => ({
     setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
     }, 3000);
+  },
+
+  addAchievementToast: (name, xp, emoji) => {
+    const id = crypto.randomUUID();
+    const message = xp > 0 ? `${name}  +${xp} XP` : name;
+    set((state) => ({
+      toasts: [...state.toasts, { id, message, type: 'achievement', achievementEmoji: emoji, achievementXP: xp }],
+    }));
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
+    }, 5000);
   },
 
   removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),

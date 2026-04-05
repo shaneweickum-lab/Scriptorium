@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useWritingStore } from '../../store/writingStore';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
+import { useAchievementStore } from '../../store/achievementStore';
+import { useUIStore } from '../../store/uiStore';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { WorldReferencePanel } from './WorldReferencePanel';
 import { EmptyState } from '../common/EmptyState';
@@ -18,6 +20,18 @@ export function NodeEditor() {
   const linkedSections = useWorldStore((s) => s.linkedSections);
   const linkedEntries = useWorldStore((s) => s.linkedEntries);
 
+  const {
+    checkBookWordCount,
+    checkBookChapters,
+    checkSessionWords,
+    checkTimeOfDay,
+    checkXPMilestone,
+  } = useAchievementStore();
+  const addAchievementToast = useUIStore((s) => s.addAchievementToast);
+
+  // Track session word count delta
+  const sessionBaseWords = useRef<number | null>(null);
+
   // Merge book's own world entries with linked world bible entries for @mention
   const allSections = linkedSections.length > 0 ? [...sections, ...linkedSections] : sections;
   const allEntries = linkedEntries.length > 0 ? [...entries, ...linkedEntries] : entries;
@@ -26,7 +40,6 @@ export function NodeEditor() {
   const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
 
   const [referencedEntryId, setReferencedEntryId] = useState<string | null>(null);
-
   const referencedEntry = referencedEntryId ? entries.find((e) => e.id === referencedEntryId) ?? null : null;
   const referencedSection = referencedEntry ? sections.find((s) => s.id === referencedEntry.sectionId) : undefined;
 
@@ -38,6 +51,31 @@ export function NodeEditor() {
   );
 
   const { save: debouncedSave } = useAutoSave(saveContent, 500);
+
+  // Check achievements whenever nodes change
+  useEffect(() => {
+    if (!activeBook || nodes.length === 0) return;
+
+    const totalWords = nodes.reduce((sum, n) => sum + (n.wordCountCache ?? 0), 0);
+    const chapterCount = nodes.filter((n) => n.type === 'chapter').length;
+
+    // Initialize session baseline on first load
+    if (sessionBaseWords.current === null) {
+      sessionBaseWords.current = totalWords;
+    }
+
+    const sessionWords = Math.max(0, totalWords - sessionBaseWords.current);
+
+    const onUnlock = (name: string, xp: number, emoji: string) => {
+      addAchievementToast(name, xp, emoji);
+    };
+
+    checkBookWordCount(activeBook.id, totalWords, activeBook.wordGoal, onUnlock);
+    checkBookChapters(activeBook.id, chapterCount, onUnlock);
+    checkSessionWords(sessionWords, onUnlock);
+    checkTimeOfDay(onUnlock);
+    checkXPMilestone(onUnlock);
+  }, [nodes, activeBook?.id]);
 
   if (!node) {
     return (

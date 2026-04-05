@@ -7,6 +7,7 @@ import { useWorldStore } from './store/worldStore';
 import { useWritingStore } from './store/writingStore';
 import { useAssemblyStore } from './store/assemblyStore';
 import { useWorldBibleStore } from './store/worldBibleStore';
+import { useAchievementStore } from './store/achievementStore';
 
 function App() {
   const { isLoaded, activeBook, loadLibrary } = useLibraryStore();
@@ -16,11 +17,13 @@ function App() {
   const loadWriting = useWritingStore((s) => s.loadFromDB);
   const loadAssembly = useAssemblyStore((s) => s.loadFromDB);
   const { activeWorldBible, loadWorldBibles } = useWorldBibleStore();
+  const loadAchievements = useAchievementStore((s) => s.loadAchievements);
 
   // Bootstrap: load library + world bibles list on mount
   useEffect(() => {
     loadLibrary();
     loadWorldBibles();
+    loadAchievements();
   }, []);
 
   // When a book becomes active, load all its data + any linked world bible

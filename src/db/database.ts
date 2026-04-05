@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
 import type { WorldSection, WorldEntry, WritingNode, Assembly, Book, WorldBible } from '../types';
+import type { AchievementUnlock } from '../types/achievements';
 import { generateId } from '../utils/id';
 import { DEFAULT_HIERARCHY_LABELS } from '../types';
 import { BOOK_COLORS } from '../types';
@@ -12,6 +13,7 @@ export class ScriptoriumDB extends Dexie {
   worldEntries!: Table<WorldEntry, string>;
   writingNodes!: Table<WritingNode, string>;
   assemblies!: Table<Assembly, string>;
+  achievementUnlocks!: Table<AchievementUnlock, string>;
 
   constructor() {
     super('ScriptoriumDB');
@@ -66,6 +68,11 @@ export class ScriptoriumDB extends Dexie {
     // v3 schema - add worldBibles table (no migration needed, fresh table)
     this.version(3).stores({
       worldBibles: 'id',
+    });
+
+    // v4 schema - add achievement unlock tracking
+    this.version(4).stores({
+      achievementUnlocks: 'id, achievementId, scopeId, [achievementId+scopeId]',
     });
   }
 }
