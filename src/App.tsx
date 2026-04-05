@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AppShell } from './components/layout/AppShell';
 import { Library } from './components/library/Library';
 import { WorldBibleEditorShell } from './components/library/WorldBibleEditorShell';
+import { LandingPage } from './components/landing/LandingPage';
 import { TimerController } from './components/timer/TimerController';
 import { BreakOverlay } from './components/timer/BreakOverlay';
 import { useLibraryStore } from './store/libraryStore';
@@ -11,7 +12,10 @@ import { useAssemblyStore } from './store/assemblyStore';
 import { useWorldBibleStore } from './store/worldBibleStore';
 import { useAchievementStore } from './store/achievementStore';
 
+const LS_LANDING = 'wp_seen_landing';
+
 function App() {
+  const [showLanding, setShowLanding] = useState(() => !localStorage.getItem(LS_LANDING));
   const { isLoaded, activeBook, loadLibrary } = useLibraryStore();
   const loadWorld = useWorldStore((s) => s.loadFromDB);
   const loadLinked = useWorldStore((s) => s.loadLinked);
@@ -62,6 +66,15 @@ function App() {
           className="w-16 h-16 animate-pulse drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]"
         />
       </div>
+    );
+  }
+
+  if (showLanding) {
+    return (
+      <LandingPage onEnter={() => {
+        localStorage.setItem(LS_LANDING, '1');
+        setShowLanding(false);
+      }} />
     );
   }
 

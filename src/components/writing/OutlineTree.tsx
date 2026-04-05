@@ -5,7 +5,7 @@ import {
 } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Plus, Settings2 } from 'lucide-react';
+import { Plus, Settings2, Search } from 'lucide-react';
 import { useWritingStore } from '../../store/writingStore';
 import { useUIStore } from '../../store/uiStore';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -17,7 +17,8 @@ import { Button } from '../common/Button';
 import { buildTree } from '../../utils/sortableTree';
 import type { WritingNode, NodeType } from '../../types';
 
-export function OutlineTree() {
+interface OutlineTreeProps { onGlobalSearch?: () => void; }
+export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
   const nodes = useWritingStore((s) => s.nodes);
   const addNode = useWritingStore((s) => s.addNode);
   const deleteNode = useWritingStore((s) => s.deleteNode);
@@ -90,6 +91,15 @@ export function OutlineTree() {
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50">
         <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Outline</span>
         <div className="flex items-center gap-1">
+          {onGlobalSearch && (
+            <button
+              onClick={onGlobalSearch}
+              title="Search all sections"
+              className="p-1 rounded text-slate-600 hover:text-slate-400 hover:bg-slate-800 transition-colors"
+            >
+              <Search size={13} />
+            </button>
+          )}
           <button
             onClick={() => setShowHierarchyConfig(true)}
             title="Configure hierarchy labels"

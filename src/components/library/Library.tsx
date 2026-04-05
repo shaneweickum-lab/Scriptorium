@@ -18,6 +18,7 @@ import { ToastContainer } from '../common/Toast';
 import { BOOK_COLORS, WORLD_COLORS } from '../../types';
 import type { Book, WorldBible } from '../../types';
 import { getLevel, getLevelProgress } from '../../types/achievements';
+import { useStreak } from '../../store/streakStore';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -323,6 +324,7 @@ export function Library() {
 
   const level = getLevel(totalXP);
   const { pct } = getLevelProgress(totalXP);
+  const { current: streakDays } = useStreak();
 
   const [view, setView] = useState<'books' | 'worlds'>('books');
   const [showNewBookModal, setShowNewBookModal] = useState(false);
@@ -377,17 +379,30 @@ export function Library() {
           </div>
         </div>
 
-        {/* XP bar (center-ish, hidden on small) */}
-        <div className="hidden sm:flex flex-col items-center gap-1">
-          <div className="flex items-center gap-2">
-            <Star size={12} className="text-amber-400" />
-            <span className="text-xs font-bold text-amber-300">Level {level}</span>
-            <span className="text-[10px] text-slate-600">·</span>
-            <span className="text-[10px] text-slate-500">{totalXP} XP</span>
-          </div>
-          <div className="w-36 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${pct}%`, background: 'linear-gradient(to right, #7c3aed, #a78bfa)' }} />
+        {/* XP bar + streak */}
+        <div className="hidden sm:flex items-center gap-4">
+          {/* Streak */}
+          {streakDays > 0 && (
+            <div className="flex items-center gap-1.5" title={`${streakDays}-day writing streak`}>
+              <span className="text-base">🔥</span>
+              <div>
+                <div className="text-xs font-bold text-orange-300 leading-none">{streakDays}</div>
+                <div className="text-[9px] text-slate-600 leading-none">day streak</div>
+              </div>
+            </div>
+          )}
+          {/* XP */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-2">
+              <Star size={12} className="text-amber-400" />
+              <span className="text-xs font-bold text-amber-300">Level {level}</span>
+              <span className="text-[10px] text-slate-600">·</span>
+              <span className="text-[10px] text-slate-500">{totalXP} XP</span>
+            </div>
+            <div className="w-28 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${pct}%`, background: 'linear-gradient(to right, #7c3aed, #a78bfa)' }} />
+            </div>
           </div>
         </div>
 
@@ -418,6 +433,15 @@ export function Library() {
               ? <><Globe2 size={14} /> My Worlds</>
               : <><BookOpen size={14} /> My Books</>
             }
+          </button>
+
+          <button
+            onClick={() => { localStorage.removeItem('wp_seen_landing'); window.location.reload(); }}
+            title="About Wizards Playground"
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs
+              bg-white/5 hover:bg-white/10 border border-white/10 text-slate-500 hover:text-slate-300 transition-all"
+          >
+            About
           </button>
 
           {canInstall && (

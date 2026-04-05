@@ -4,13 +4,15 @@ import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
 import { useAchievementStore } from '../../store/achievementStore';
 import { useUIStore } from '../../store/uiStore';
+import { streakStore } from '../../store/streakStore';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { WorldReferencePanel } from './WorldReferencePanel';
 import { EmptyState } from '../common/EmptyState';
-import { PenLine } from 'lucide-react';
+import { PenLine, Maximize2 } from 'lucide-react';
 import { useAutoSave } from '../../hooks/useAutoSave';
 
-export function NodeEditor() {
+interface NodeEditorProps { distractFree?: boolean; }
+export function NodeEditor({ distractFree = false }: NodeEditorProps) {
   const nodes = useWritingStore((s) => s.nodes);
   const activeNodeId = useWritingStore((s) => s.activeNodeId);
   const updateNode = useWritingStore((s) => s.updateNode);
@@ -28,6 +30,7 @@ export function NodeEditor() {
     checkXPMilestone,
   } = useAchievementStore();
   const addAchievementToast = useUIStore((s) => s.addAchievementToast);
+  const setShowDistractFree = useUIStore((s) => s.setShowDistractFree);
 
   // Track session word count delta
   const sessionBaseWords = useRef<number | null>(null);
@@ -76,6 +79,9 @@ export function NodeEditor() {
     checkSessionWords(sessionWords, onUnlock);
     checkTimeOfDay(onUnlock);
     checkXPMilestone(onUnlock);
+
+    // Record writing streak
+    if (totalWords > 0) streakStore.recordToday();
   }, [nodes, activeBook?.id]);
 
   if (!node) {
@@ -93,8 +99,17 @@ export function NodeEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="px-6 pt-4 pb-2 border-b border-slate-700/30">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-xs text-slate-500 uppercase tracking-wider">{typeLabel}</span>
+          {!distractFree && (
+            <button
+              onClick={() => setShowDistractFree(true)}
+              title="Distraction-free mode (Esc to exit)"
+              className="p-1 rounded text-slate-700 hover:text-slate-400 hover:bg-slate-800 transition-colors"
+            >
+              <Maximize2 size={13} />
+            </button>
+          )}
         </div>
         <input
           value={node.title}

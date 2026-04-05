@@ -8,12 +8,14 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import Mention from '@tiptap/extension-mention';
+import Image from '@tiptap/extension-image';
 import type { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
 import { EditorToolbar } from './EditorToolbar';
 import { MentionPopup, INITIAL_MENTION_STATE } from './MentionPopup';
 import type { MentionSuggestionState, MentionPopupHandle } from './MentionPopup';
 import { FindReplacePanel } from './FindReplacePanel';
 import { SearchAndReplace } from './SearchAndReplace';
+import { useEditorSettings, getEditorFont } from '../../store/editorSettingsStore';
 import type { WorldEntry, WorldSection } from '../../types';
 
 interface Props {
@@ -42,6 +44,8 @@ export function RichTextEditor({
 }: Props) {
   const isInitialMount = useRef(true);
   const lastContent = useRef(content);
+  const [editorSettings] = useEditorSettings();
+  const editorFont = getEditorFont(editorSettings.fontValue);
 
   // Keep refs to world data so the mention extension (created once) always sees the latest
   const worldEntriesRef = useRef<WorldEntry[]>(worldEntries ?? []);
@@ -115,6 +119,7 @@ export function RichTextEditor({
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Highlight,
       SearchAndReplace,
+      Image.configure({ allowBase64: true, inline: false }),
       Mention.configure({
         HTMLAttributes: { class: 'world-mention' },
         suggestion: {
@@ -197,11 +202,19 @@ export function RichTextEditor({
           findActive={showFindReplace}
         />
       )}
-      <div className="relative flex-1 overflow-y-auto" onClick={handleEditorClick}>
+      <div className="relative flex-1 overflow-y-auto" onClick={handleEditorClick}
+        style={{
+          fontFamily: editorFont.stack,
+          fontSize: editorSettings.fontSize,
+          lineHeight: editorSettings.lineHeight,
+        }}
+      >
         {showFindReplace && (
           <FindReplacePanel editor={editor} onClose={() => setShowFindReplace(false)} />
         )}
-        <EditorContent editor={editor} className="h-full" />
+        <div style={{ maxWidth: `${editorSettings.maxWidthCh}ch`, margin: '0 auto' }}>
+          <EditorContent editor={editor} className="h-full" />
+        </div>
       </div>
       <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex items-center gap-4">
         <span>{editor.storage.characterCount.words().toLocaleString()} words</span>

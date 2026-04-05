@@ -18,6 +18,8 @@ interface UIState {
   showAchievementsModal: boolean;
   showMobileSidebar: boolean;
   showWorldRef: boolean;
+  showDistractFree: boolean;
+  showGlobalSearch: boolean;
   toasts: Toast[];
 
   setActiveView: (view: ActiveView) => void;
@@ -27,6 +29,8 @@ interface UIState {
   setShowAchievementsModal: (show: boolean) => void;
   setShowMobileSidebar: (show: boolean) => void;
   setShowWorldRef: (show: boolean) => void;
+  setShowDistractFree: (show: boolean) => void;
+  setShowGlobalSearch: (show: boolean) => void;
   addToast: (message: string, type?: Toast['type']) => void;
   addAchievementToast: (name: string, xp: number, emoji: string) => void;
   removeToast: (id: string) => void;
@@ -40,6 +44,8 @@ export const useUIStore = create<UIState>((set) => ({
   showAchievementsModal: false,
   showMobileSidebar: false,
   showWorldRef: false,
+  showDistractFree: false,
+  showGlobalSearch: false,
   toasts: [],
 
   setActiveView: (view) => set({ activeView: view }),
@@ -49,6 +55,8 @@ export const useUIStore = create<UIState>((set) => ({
   setShowAchievementsModal: (show) => set({ showAchievementsModal: show }),
   setShowMobileSidebar: (show) => set({ showMobileSidebar: show }),
   setShowWorldRef: (show) => set({ showWorldRef: show }),
+  setShowDistractFree: (show) => set({ showDistractFree: show }),
+  setShowGlobalSearch: (show) => set({ showGlobalSearch: show }),
 
   addToast: (message, type = 'success') => {
     const id = crypto.randomUUID();

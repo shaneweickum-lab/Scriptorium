@@ -1,11 +1,13 @@
+import { useRef, useState } from 'react';
 import { Editor } from '@tiptap/react';
 import {
   Bold, Italic, Underline, Strikethrough,
   Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Minus,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Highlighter, Undo, Redo, Search,
+  Highlighter, Undo, Redo, Search, ImagePlus, Settings2,
 } from 'lucide-react';
+import { EditorSettingsPanel } from './EditorSettingsPanel';
 
 interface Props {
   editor: Editor;
@@ -44,6 +46,21 @@ function Divider() {
 
 export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
   const sz = 15;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = reader.result as string;
+      editor.chain().focus().setImage({ src }).run();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="overflow-x-auto overflow-y-hidden border-b border-slate-700/50 bg-slate-800/50">
       <div className="flex items-center gap-0.5 px-3 py-2 min-w-max">
@@ -114,6 +131,13 @@ export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
       <ToolBtn onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={editor.isActive({ textAlign: 'justify' })} title="Justify">
         <AlignJustify size={sz} />
       </ToolBtn>
+      <Divider />
+
+      {/* Image */}
+      <ToolBtn onClick={() => fileInputRef.current?.click()} title="Insert Image">
+        <ImagePlus size={sz} />
+      </ToolBtn>
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
 
       {onFindToggle && (
         <>
@@ -123,6 +147,16 @@ export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
           </ToolBtn>
         </>
       )}
+
+      {/* Editor Appearance */}
+      <Divider />
+      <div className="relative">
+        <ToolBtn onClick={() => setShowSettings((v) => !v)} active={showSettings} title="Editor Appearance">
+          <Settings2 size={sz} />
+        </ToolBtn>
+        <EditorSettingsPanel open={showSettings} onClose={() => setShowSettings(false)} />
+      </div>
+
       </div>
     </div>
   );
