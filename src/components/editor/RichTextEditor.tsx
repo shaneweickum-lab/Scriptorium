@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -12,8 +12,9 @@ import type { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion
 import { EditorToolbar } from './EditorToolbar';
 import { MentionPopup, INITIAL_MENTION_STATE } from './MentionPopup';
 import type { MentionSuggestionState, MentionPopupHandle } from './MentionPopup';
+import { FindReplacePanel } from './FindReplacePanel';
+import { SearchAndReplace } from './SearchAndReplace';
 import type { WorldEntry, WorldSection } from '../../types';
-import { useState } from 'react';
 
 interface Props {
   content: string;
@@ -47,6 +48,9 @@ export function RichTextEditor({
 
   const onMentionClickRef = useRef(onMentionClick);
   onMentionClickRef.current = onMentionClick;
+
+  // Find & replace state
+  const [showFindReplace, setShowFindReplace] = useState(false);
 
   // Mention popup state
   const [mentionState, setMentionState] = useState<MentionSuggestionState>(INITIAL_MENTION_STATE);
@@ -107,6 +111,7 @@ export function RichTextEditor({
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Highlight,
+      SearchAndReplace,
       Mention.configure({
         HTMLAttributes: { class: 'world-mention' },
         suggestion: {
@@ -173,9 +178,26 @@ export function RichTextEditor({
   if (!editor) return null;
 
   return (
-    <div className="flex flex-col h-full">
-      {showToolbar && <EditorToolbar editor={editor} />}
-      <div className="flex-1 overflow-y-auto" onClick={handleEditorClick}>
+    <div
+      className="flex flex-col h-full"
+      onKeyDown={(e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+          e.preventDefault();
+          setShowFindReplace(true);
+        }
+      }}
+    >
+      {showToolbar && (
+        <EditorToolbar
+          editor={editor}
+          onFindToggle={() => setShowFindReplace((v) => !v)}
+          findActive={showFindReplace}
+        />
+      )}
+      <div className="relative flex-1 overflow-y-auto" onClick={handleEditorClick}>
+        {showFindReplace && (
+          <FindReplacePanel editor={editor} onClose={() => setShowFindReplace(false)} />
+        )}
         <EditorContent editor={editor} className="h-full" />
       </div>
       <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex gap-4">

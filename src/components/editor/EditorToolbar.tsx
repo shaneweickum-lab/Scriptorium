@@ -4,10 +4,14 @@ import {
   Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Minus,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Highlighter, Undo, Redo,
+  Highlighter, Undo, Redo, Search,
 } from 'lucide-react';
 
-interface Props { editor: Editor }
+interface Props {
+  editor: Editor;
+  onFindToggle?: () => void;
+  findActive?: boolean;
+}
 
 function ToolBtn({
   onClick, active, title, children, disabled,
@@ -38,7 +42,7 @@ function Divider() {
   return <div className="w-px h-5 bg-slate-700 mx-1" />;
 }
 
-export function EditorToolbar({ editor }: Props) {
+export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
   const sz = 15;
   return (
     <div className="overflow-x-auto overflow-y-hidden border-b border-slate-700/50 bg-slate-800/50">
@@ -110,6 +114,15 @@ export function EditorToolbar({ editor }: Props) {
       <ToolBtn onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={editor.isActive({ textAlign: 'justify' })} title="Justify">
         <AlignJustify size={sz} />
       </ToolBtn>
+
+      {onFindToggle && (
+        <>
+          <Divider />
+          <ToolBtn onClick={onFindToggle} active={findActive} title="Find & Replace (Ctrl+F)">
+            <Search size={sz} />
+          </ToolBtn>
+        </>
+      )}
       </div>
     </div>
   );
