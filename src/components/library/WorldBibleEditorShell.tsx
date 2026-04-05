@@ -1,4 +1,5 @@
 import { ArrowLeft, Globe2, Pencil, Menu, X } from 'lucide-react';
+import { FocusTimer } from '../timer/FocusTimer';
 import { useState, useEffect } from 'react';
 import { useWorldBibleStore } from '../../store/worldBibleStore';
 import { useWorldStore } from '../../store/worldStore';
@@ -107,14 +108,17 @@ export function WorldBibleEditorShell() {
 
         {/* Sidebar header */}
         <div className="p-3 pb-2 border-b border-purple-900/20">
-          {/* Back button */}
-          <button
-            onClick={closeWorldBible}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-200 transition-colors mb-3"
-          >
-            <ArrowLeft size={13} />
-            Library
-          </button>
+          {/* Back + timer row */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={closeWorldBible}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-200 transition-colors"
+            >
+              <ArrowLeft size={13} />
+              Library
+            </button>
+            <FocusTimer compact />
+          </div>
 
           {/* World name row */}
           <div className="flex items-center gap-2">
@@ -154,8 +158,9 @@ export function WorldBibleEditorShell() {
         <button onClick={() => setShowSidebar(true)} className="p-2 text-slate-400 hover:text-slate-200">
           <Menu size={18} />
         </button>
-        <span className="text-sm font-medium text-slate-200 truncate">{activeWorldBible.name}</span>
-        <button onClick={closeWorldBible} className="ml-auto flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300">
+        <span className="text-sm font-medium text-slate-200 truncate flex-1">{activeWorldBible.name}</span>
+        <FocusTimer compact />
+        <button onClick={closeWorldBible} className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300">
           <ArrowLeft size={13} /> Library
         </button>
       </div>

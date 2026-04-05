@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { AppShell } from './components/layout/AppShell';
 import { Library } from './components/library/Library';
 import { WorldBibleEditorShell } from './components/library/WorldBibleEditorShell';
+import { TimerController } from './components/timer/TimerController';
+import { BreakOverlay } from './components/timer/BreakOverlay';
 import { useLibraryStore } from './store/libraryStore';
 import { useWorldStore } from './store/worldStore';
 import { useWritingStore } from './store/writingStore';
@@ -63,9 +65,13 @@ function App() {
     );
   }
 
-  if (activeWorldBible) return <WorldBibleEditorShell />;
-  if (!activeBook) return <Library />;
-  return <AppShell />;
+  return (
+    <>
+      <TimerController />
+      <BreakOverlay />
+      {activeWorldBible ? <WorldBibleEditorShell /> : !activeBook ? <Library /> : <AppShell />}
+    </>
+  );
 }
 
 export default App;

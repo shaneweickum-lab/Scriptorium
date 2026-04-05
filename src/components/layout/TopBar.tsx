@@ -5,6 +5,7 @@ import { useUIStore } from '../../store/uiStore';
 import { useAchievementStore } from '../../store/achievementStore';
 import { useProject } from '../../hooks/useProject';
 import { getLevel, getLevelProgress } from '../../types/achievements';
+import { FocusTimer } from '../timer/FocusTimer';
 
 export function TopBar() {
   const { activeBook, updateBook, closeBook } = useLibraryStore();
@@ -119,6 +120,11 @@ export function TopBar() {
 
       {/* Actions */}
       <div className="flex items-center gap-1">
+        {/* Focus Timer */}
+        <FocusTimer />
+
+        <div className="w-px h-4 bg-slate-700/50 mx-0.5" />
+
         {/* Achievements counter */}
         <button
           onClick={() => setShowAchievementsModal(true)}

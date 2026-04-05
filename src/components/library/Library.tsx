@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Download, Globe2, BookOpen, Pencil, Trash2, MoreVertical, X, Share, Trophy, Star } from 'lucide-react';
+import { FocusTimer } from '../timer/FocusTimer';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
 import { useWritingStore } from '../../store/writingStore';
@@ -391,6 +392,9 @@ export function Library() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Focus Timer */}
+          <FocusTimer />
+
           {/* Achievements */}
           <button
             onClick={() => setShowAchievementsModal(true)}
