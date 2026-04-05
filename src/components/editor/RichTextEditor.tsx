@@ -25,6 +25,8 @@ interface Props {
   worldEntries?: WorldEntry[];
   worldSections?: WorldSection[];
   onMentionClick?: (entryId: string) => void;
+  /** Total accumulated word count across all sections in the book */
+  totalBookWords?: number;
 }
 
 export function RichTextEditor({
@@ -36,6 +38,7 @@ export function RichTextEditor({
   worldEntries,
   worldSections,
   onMentionClick,
+  totalBookWords,
 }: Props) {
   const isInitialMount = useRef(true);
   const lastContent = useRef(content);
@@ -200,9 +203,18 @@ export function RichTextEditor({
         )}
         <EditorContent editor={editor} className="h-full" />
       </div>
-      <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex gap-4">
-        <span>{editor.storage.characterCount.words()} words</span>
-        <span>{editor.storage.characterCount.characters()} characters</span>
+      <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex items-center gap-4">
+        <span>{editor.storage.characterCount.words().toLocaleString()} words</span>
+        <span>{editor.storage.characterCount.characters().toLocaleString()} characters</span>
+        {totalBookWords !== undefined && (
+          <>
+            <span className="text-slate-700">·</span>
+            <span className="text-slate-500">
+              Book total:{' '}
+              <span className="text-slate-400 font-medium">{totalBookWords.toLocaleString()}</span> words
+            </span>
+          </>
+        )}
       </div>
 
       <MentionPopup

@@ -36,6 +36,7 @@ export function NodeEditor() {
   const allSections = linkedSections.length > 0 ? [...sections, ...linkedSections] : sections;
   const allEntries = linkedEntries.length > 0 ? [...entries, ...linkedEntries] : entries;
 
+  const totalBookWords = nodes.reduce((sum, n) => sum + (n.wordCountCache ?? 0), 0);
   const node = nodes.find((n) => n.id === activeNodeId);
   const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
 
@@ -120,6 +121,7 @@ export function NodeEditor() {
             worldEntries={allEntries}
             worldSections={allSections}
             onMentionClick={setReferencedEntryId}
+            totalBookWords={totalBookWords}
           />
         </div>
 

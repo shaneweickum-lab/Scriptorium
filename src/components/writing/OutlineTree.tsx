@@ -81,6 +81,10 @@ export function OutlineTree() {
   }
   traverse(tree);
 
+  const totalWords = nodes.reduce((sum, n) => sum + (n.wordCountCache ?? 0), 0);
+  const wordGoal = activeBook?.wordGoal;
+  const goalPct = wordGoal ? Math.min(100, Math.round((totalWords / wordGoal) * 100)) : null;
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50">
@@ -137,6 +141,37 @@ export function OutlineTree() {
           </DndContext>
         )}
       </div>
+
+      {/* Total word count footer */}
+      {nodes.length > 0 && (
+        <div className="px-3 py-2 border-t border-slate-700/30 shrink-0">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-slate-600 uppercase tracking-wider">Total Words</span>
+            <span className="text-xs font-semibold text-slate-400">{totalWords.toLocaleString()}</span>
+          </div>
+          {wordGoal ? (
+            <>
+              <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${goalPct}%`,
+                    background: goalPct === 100
+                      ? 'linear-gradient(to right, #10b981, #34d399)'
+                      : 'linear-gradient(to right, #6366f1, #818cf8)',
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-[9px] text-slate-700">{goalPct}% of goal</span>
+                <span className="text-[9px] text-slate-700">{wordGoal.toLocaleString()} target</span>
+              </div>
+            </>
+          ) : (
+            <div className="w-full h-px bg-slate-800" />
+          )}
+        </div>
+      )}
 
       {deleteTarget && (
         <ConfirmDialog
