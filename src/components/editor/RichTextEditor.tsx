@@ -212,7 +212,7 @@ export function RichTextEditor({
         {showFindReplace && (
           <FindReplacePanel editor={editor} onClose={() => setShowFindReplace(false)} />
         )}
-        <div style={{ maxWidth: `${editorSettings.maxWidthCh}ch`, margin: '0 auto' }}>
+        <div style={{ maxWidth: editorSettings.maxWidthCh < 100 ? `${editorSettings.maxWidthCh}ch` : undefined }}>
           <EditorContent editor={editor} className="h-full" />
         </div>
       </div>

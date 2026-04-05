@@ -27,7 +27,7 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   fontValue: 'georgia',
   fontSize: 17,
   lineHeight: 1.9,
-  maxWidthCh: 70,
+  maxWidthCh: 100,
 };
 
 function load(): EditorSettings {

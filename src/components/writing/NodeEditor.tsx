@@ -105,7 +105,7 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
             <button
               onClick={() => setShowDistractFree(true)}
               title="Distraction-free mode (Esc to exit)"
-              className="p-1 rounded text-slate-700 hover:text-slate-400 hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
             >
               <Maximize2 size={13} />
             </button>

@@ -105,7 +105,7 @@ export function FocusTimer({ compact = false }: Props) {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-52
+        <div className="absolute right-0 top-full mt-1 z-[100] w-52
           bg-[#0d1526] border border-slate-700/60 rounded-xl shadow-2xl py-2 overflow-hidden"
           style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 20px rgba(124,58,237,0.08)' }}
         >

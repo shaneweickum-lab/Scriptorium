@@ -77,11 +77,11 @@ export function EditorSettingsPanel({ open, onClose }: Props) {
       <Slider label="Line height" value={settings.lineHeight} min={1.4} max={2.4} step={0.1}
         format={(v) => v.toFixed(1)} onChange={(v) => setSettings({ lineHeight: v })} />
 
-      <Slider label="Max width" value={settings.maxWidthCh} min={45} max={100} step={5}
-        format={(v) => `${v}ch`} onChange={(v) => setSettings({ maxWidthCh: v })} />
+      <Slider label="Max width" value={settings.maxWidthCh} min={45} max={120} step={5}
+        format={(v) => v >= 100 ? 'Full' : `${v}ch`} onChange={(v) => setSettings({ maxWidthCh: v })} />
 
       {/* Reset */}
-      <button onClick={() => setSettings({ fontValue: 'georgia', fontSize: 17, lineHeight: 1.9, maxWidthCh: 70 })}
+      <button onClick={() => setSettings({ fontValue: 'georgia', fontSize: 17, lineHeight: 1.9, maxWidthCh: 100 })}
         className="text-[10px] text-slate-600 hover:text-slate-400 text-center transition-colors pt-1 border-t border-slate-700/40">
         Reset to defaults
       </button>
