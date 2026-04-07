@@ -129,6 +129,7 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
         <div className="flex-1 overflow-hidden">
           <RichTextEditor
             key={node.id}
+            nodeId={node.id}
             content={node.content}
             onChange={debouncedSave}
             placeholder={`Write your ${typeLabel.toLowerCase()} here...`}

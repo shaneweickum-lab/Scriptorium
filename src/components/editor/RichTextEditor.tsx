@@ -15,8 +15,16 @@ import { MentionPopup, INITIAL_MENTION_STATE } from './MentionPopup';
 import type { MentionSuggestionState, MentionPopupHandle } from './MentionPopup';
 import { FindReplacePanel } from './FindReplacePanel';
 import { SearchAndReplace } from './SearchAndReplace';
+import { CommentsPanel } from './CommentsPanel';
+import { CommentMark } from '../../extensions/CommentMark';
 import { useEditorSettings, getEditorFont } from '../../store/editorSettingsStore';
 import type { WorldEntry, WorldSection } from '../../types';
+
+interface CommentDraft {
+  from: number;
+  to: number;
+  quote: string;
+}
 
 interface Props {
   content: string;
@@ -29,6 +37,8 @@ interface Props {
   onMentionClick?: (entryId: string) => void;
   /** Total accumulated word count across all sections in the book */
   totalBookWords?: number;
+  /** Node id used to scope inline comments. Comments are hidden when omitted. */
+  nodeId?: string;
 }
 
 export function RichTextEditor({
@@ -41,6 +51,7 @@ export function RichTextEditor({
   worldSections,
   onMentionClick,
   totalBookWords,
+  nodeId,
 }: Props) {
   const isInitialMount = useRef(true);
   const lastContent = useRef(content);
@@ -59,11 +70,15 @@ export function RichTextEditor({
   // Find & replace state
   const [showFindReplace, setShowFindReplace] = useState(false);
 
+  // Comment state
+  const [showComments, setShowComments] = useState(false);
+  const [commentDraft, setCommentDraft] = useState<CommentDraft | null>(null);
+  const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null);
+
   // Mention popup state
   const [mentionState, setMentionState] = useState<MentionSuggestionState>(INITIAL_MENTION_STATE);
   const mentionPopupRef = useRef<MentionPopupHandle>(null);
 
-  // These callbacks are set during render and read by the suggestion render() callbacks
   const suggestionHandlersRef = useRef<{
     onStart?: (props: SuggestionProps<WorldEntry>) => void;
     onUpdate?: (props: SuggestionProps<WorldEntry>) => void;
@@ -71,7 +86,6 @@ export function RichTextEditor({
     onExit?: () => void;
   }>({});
 
-  // Set up the suggestion render callbacks (read from the ref inside the extension)
   suggestionHandlersRef.current.onStart = (props: SuggestionProps<WorldEntry>) => {
     setMentionState({
       active: true,
@@ -103,7 +117,6 @@ export function RichTextEditor({
     (entry: WorldEntry, command: (props: { id: string; label: string }) => void) => {
       command({ id: entry.id, label: entry.title });
       setMentionState(INITIAL_MENTION_STATE);
-      // Open the reference panel for this entry
       onMentionClickRef.current?.(entry.id);
     },
     []
@@ -120,15 +133,14 @@ export function RichTextEditor({
       Highlight,
       SearchAndReplace,
       Image.configure({ allowBase64: true, inline: false }),
+      CommentMark,
       Mention.configure({
         HTMLAttributes: { class: 'world-mention' },
         suggestion: {
           char: '@',
           items: ({ query }: { query: string }) => {
             const entries = worldEntriesRef.current;
-            if (!query && entries.length > 0) {
-              return entries.slice(0, 8);
-            }
+            if (!query && entries.length > 0) return entries.slice(0, 8);
             return entries
               .filter(
                 (e) =>
@@ -170,18 +182,40 @@ export function RichTextEditor({
     }
   }, [content, editor]);
 
-  // Handle clicks on rendered mention nodes in the editor
+  // Handle clicks on the editor — mentions and comment marks
   const handleEditorClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const target = e.target as HTMLElement;
+
+      // Mention chip click → open reference panel
       const mentionEl = target.closest('[data-type="mention"]') as HTMLElement | null;
       if (mentionEl) {
         const entryId = mentionEl.getAttribute('data-id');
         if (entryId) onMentionClickRef.current?.(entryId);
       }
+
+      // Comment mark click → focus the comment in the panel
+      const commentEl = target.closest('[data-comment-id]') as HTMLElement | null;
+      if (commentEl && nodeId) {
+        const commentId = commentEl.getAttribute('data-comment-id');
+        if (commentId) {
+          setShowComments(true);
+          setFocusedCommentId(commentId);
+        }
+      }
     },
-    []
+    [nodeId]
   );
+
+  // Start adding a comment: capture selection then open panel
+  const handleAddComment = useCallback(() => {
+    if (!editor || !nodeId) return;
+    const { from, to, empty } = editor.state.selection;
+    if (empty) return;
+    const quote = editor.state.doc.textBetween(from, to, ' ').slice(0, 150);
+    setCommentDraft({ from, to, quote });
+    setShowComments(true);
+  }, [editor, nodeId]);
 
   if (!editor) return null;
 
@@ -193,6 +227,11 @@ export function RichTextEditor({
           e.preventDefault();
           setShowFindReplace(true);
         }
+        // Ctrl+Alt+M → add comment
+        if ((e.ctrlKey || e.metaKey) && e.altKey && e.key === 'm') {
+          e.preventDefault();
+          handleAddComment();
+        }
       }}
     >
       {showToolbar && (
@@ -200,23 +239,43 @@ export function RichTextEditor({
           editor={editor}
           onFindToggle={() => setShowFindReplace((v) => !v)}
           findActive={showFindReplace}
+          onAddComment={nodeId ? handleAddComment : undefined}
+          onToggleComments={nodeId ? () => setShowComments((v) => !v) : undefined}
+          commentsOpen={showComments}
         />
       )}
-      <div className="relative flex-1 overflow-y-auto" onClick={handleEditorClick}
-        style={{
-          fontFamily: editorFont.stack,
-          fontSize: editorSettings.fontSize,
-          lineHeight: editorSettings.lineHeight,
-        }}
-      >
-        {showFindReplace && (
-          <FindReplacePanel editor={editor} onClose={() => setShowFindReplace(false)} />
-        )}
-        <div style={{ maxWidth: editorSettings.maxWidthCh < 100 ? `${editorSettings.maxWidthCh}ch` : undefined }}>
-          <EditorContent editor={editor} className="h-full" />
+
+      {/* Editor + Comments panel side by side */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="relative flex-1 overflow-y-auto" onClick={handleEditorClick}
+          style={{
+            fontFamily: editorFont.stack,
+            fontSize: editorSettings.fontSize,
+            lineHeight: editorSettings.lineHeight,
+          }}
+        >
+          {showFindReplace && (
+            <FindReplacePanel editor={editor} onClose={() => setShowFindReplace(false)} />
+          )}
+          <div style={{ maxWidth: editorSettings.maxWidthCh < 100 ? `${editorSettings.maxWidthCh}ch` : undefined }}>
+            <EditorContent editor={editor} className="h-full" />
+          </div>
         </div>
+
+        {showComments && nodeId && (
+          <CommentsPanel
+            editor={editor}
+            nodeId={nodeId}
+            focusedId={focusedCommentId}
+            onFocusChange={setFocusedCommentId}
+            draft={commentDraft}
+            onDraftCancel={() => setCommentDraft(null)}
+            onClose={() => { setShowComments(false); setCommentDraft(null); }}
+          />
+        )}
       </div>
-      <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex items-center gap-4">
+
+      <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex items-center gap-4 shrink-0">
         <span>{editor.storage.characterCount.words().toLocaleString()} words</span>
         <span>{editor.storage.characterCount.characters().toLocaleString()} characters</span>
         {totalBookWords !== undefined && (

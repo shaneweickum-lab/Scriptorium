@@ -6,6 +6,7 @@ import {
   List, ListOrdered, Quote, Minus,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Highlighter, Undo, Redo, Search, ImagePlus, Settings2,
+  MessageSquarePlus, MessageSquare,
 } from 'lucide-react';
 import { EditorSettingsPanel } from './EditorSettingsPanel';
 
@@ -13,6 +14,9 @@ interface Props {
   editor: Editor;
   onFindToggle?: () => void;
   findActive?: boolean;
+  onAddComment?: () => void;
+  onToggleComments?: () => void;
+  commentsOpen?: boolean;
 }
 
 function ToolBtn({
@@ -44,7 +48,7 @@ function Divider() {
   return <div className="w-px h-5 bg-slate-700 mx-1" />;
 }
 
-export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
+export function EditorToolbar({ editor, onFindToggle, findActive, onAddComment, onToggleComments, commentsOpen }: Props) {
   const sz = 15;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -148,6 +152,24 @@ export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
             <ToolBtn onClick={onFindToggle} active={findActive} title="Find & Replace (Ctrl+F)">
               <Search size={sz} />
             </ToolBtn>
+          </>
+        )}
+
+        {onAddComment && (
+          <>
+            <Divider />
+            <ToolBtn
+              onClick={onAddComment}
+              disabled={editor.state.selection.empty}
+              title="Add Comment — select text first (Ctrl+Alt+M)"
+            >
+              <MessageSquarePlus size={sz} />
+            </ToolBtn>
+            {onToggleComments && (
+              <ToolBtn onClick={onToggleComments} active={commentsOpen} title="Toggle Comments panel">
+                <MessageSquare size={sz} />
+              </ToolBtn>
+            )}
           </>
         )}
         </div>
