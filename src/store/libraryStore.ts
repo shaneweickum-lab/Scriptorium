@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Book, HierarchyLabels } from '../types';
-import { BOOK_COLORS, DEFAULT_HIERARCHY_LABELS } from '../types';
+import { BOOK_COLORS, DEFAULT_HIERARCHY_LABELS, DEFAULT_ENABLED_LEVELS } from '../types';
 import { libraryRepository } from '../db/libraryRepository';
 import { worldRepository } from '../db/worldRepository';
 import { generateId } from '../utils/id';
@@ -47,6 +47,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       synopsis,
       coverColor: BOOK_COLORS[colorIdx],
       hierarchyLabels: { ...DEFAULT_HIERARCHY_LABELS },
+      enabledLevels: { ...DEFAULT_ENABLED_LEVELS },
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };

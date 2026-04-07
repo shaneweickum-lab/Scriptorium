@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { WritingNode, NodeType, HierarchyLabels } from '../../types';
+import type { WritingNode, NodeType, HierarchyLabels, EnabledLevels } from '../../types';
+import { getChildTypes, DEFAULT_ENABLED_LEVELS } from '../../types';
 import { useWritingStore } from '../../store/writingStore';
 
 const TYPE_ICONS: Record<NodeType, React.FC<{ size?: number; className?: string }>> = {
@@ -21,13 +22,14 @@ interface Props {
   isExpanded: boolean;
   onToggle: (id: string) => void;
   labels: HierarchyLabels;
+  enabledLevels?: EnabledLevels;
   onAddChild: (parentId: string, type: NodeType) => void;
   onDelete: (node: WritingNode) => void;
   onRename: (node: WritingNode) => void;
 }
 
 export function TreeNode({
-  node, depth, isExpanded, onToggle, labels,
+  node, depth, isExpanded, onToggle, labels, enabledLevels = DEFAULT_ENABLED_LEVELS,
   onAddChild, onDelete, onRename,
 }: Props) {
   const activeNodeId = useWritingStore((s) => s.activeNodeId);
@@ -47,13 +49,7 @@ export function TreeNode({
   const Icon = TYPE_ICONS[node.type] || FileText;
   const isActive = activeNodeId === node.id;
 
-  const childTypes: Record<NodeType, NodeType[]> = {
-    part: ['chapter', 'scene', 'note'],
-    chapter: ['scene', 'note'],
-    scene: [],
-    note: [],
-  };
-  const availableChildTypes = childTypes[node.type];
+  const availableChildTypes = getChildTypes(node.type, enabledLevels);
 
   return (
     <div ref={setNodeRef} style={style} className="select-none">

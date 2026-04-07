@@ -16,6 +16,7 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { buildTree } from '../../utils/sortableTree';
 import type { WritingNode, NodeType } from '../../types';
+import { DEFAULT_ENABLED_LEVELS, getTopLevelType, getChildTypes } from '../../types';
 
 interface OutlineTreeProps { onGlobalSearch?: () => void; }
 export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
@@ -33,6 +34,8 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
   const [renameValue, setRenameValue] = useState('');
 
   const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
+  const enabledLevels = activeBook?.enabledLevels ?? DEFAULT_ENABLED_LEVELS;
+  const topLevelType = getTopLevelType(enabledLevels);
   const bookId = activeBook?.id ?? '';
 
   const toggleExpand = (id: string) => {
@@ -108,8 +111,8 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
             <Settings2 size={14} />
           </button>
           <button
-            onClick={() => addNode(bookId, null, 'part')}
-            title={`Add ${labels.part}`}
+            onClick={() => addNode(bookId, null, topLevelType)}
+            title={`Add ${labels[topLevelType]}`}
             className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
           >
             <Plus size={14} />
@@ -122,10 +125,10 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
           <div className="flex flex-col items-center justify-center h-32 gap-2 text-slate-600 text-xs">
             <p>No content yet</p>
             <button
-              onClick={() => addNode(bookId, null, 'part')}
+              onClick={() => addNode(bookId, null, topLevelType)}
               className="text-indigo-400 hover:text-indigo-300 transition-colors"
             >
-              + Add {labels.part}
+              + Add {labels[topLevelType]}
             </button>
           </div>
         ) : (
@@ -142,6 +145,7 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
                   isExpanded={expanded.has(node.id)}
                   onToggle={toggleExpand}
                   labels={labels}
+                  enabledLevels={enabledLevels}
                   onAddChild={handleAddChild}
                   onDelete={(n) => setDeleteTarget(n)}
                   onRename={(n) => { setRenameTarget(n); setRenameValue(n.title); }}

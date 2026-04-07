@@ -6,13 +6,31 @@ import { Button } from '../common/Button';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useAchievementStore } from '../../store/achievementStore';
-import { BOOK_COLORS } from '../../types';
-import type { HierarchyLabels } from '../../types';
+import { BOOK_COLORS, DEFAULT_ENABLED_LEVELS } from '../../types';
+import type { HierarchyLabels, EnabledLevels } from '../../types';
 import { ACHIEVEMENTS, CATEGORY_COLORS } from '../../types/achievements';
 
 interface Props { onClose: () => void }
 
 type Tab = 'settings' | 'achievements';
+
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!checked)}
+      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+      } ${checked ? 'bg-indigo-600' : 'bg-slate-700'}`}
+    >
+      <span
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-[18px]' : 'translate-x-0.5'
+        }`}
+      />
+    </button>
+  );
+}
 
 export function ProjectSettings({ onClose }: Props) {
   const { activeBook, updateBook, updateHierarchyLabels } = useLibraryStore();
@@ -28,6 +46,9 @@ export function ProjectSettings({ onClose }: Props) {
   const [labels, setLabels] = useState<HierarchyLabels>(
     activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' }
   );
+  const [enabledLevels, setEnabledLevels] = useState<EnabledLevels>(
+    activeBook?.enabledLevels ?? { ...DEFAULT_ENABLED_LEVELS }
+  );
 
   const handleSave = async () => {
     if (!activeBook) return;
@@ -37,6 +58,7 @@ export function ProjectSettings({ onClose }: Props) {
       synopsis: synopsis.trim(),
       coverColor: color,
       wordGoal: wordGoal ? Number(wordGoal) : undefined,
+      enabledLevels,
     });
     await updateHierarchyLabels(labels);
     addToast('Settings saved');
@@ -92,14 +114,43 @@ export function ProjectSettings({ onClose }: Props) {
           </div>
 
           <div>
-            <p className="text-sm text-slate-400 mb-2">Hierarchy Labels</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(['part', 'chapter', 'scene', 'note'] as const).map((key) => (
-                <Input key={key} label={key.charAt(0).toUpperCase() + key.slice(1)}
-                  value={labels[key]} onChange={(e) => setLabels({ ...labels, [key]: e.target.value })}
-                  placeholder={key.charAt(0).toUpperCase() + key.slice(1)} />
-              ))}
+            <p className="text-sm text-slate-400 mb-1">Outline Structure</p>
+            <p className="text-[11px] text-slate-600 mb-3">
+              Toggle levels on/off and rename them. Disabled levels are skipped when adding new nodes.
+            </p>
+            {/* Part, Chapter, Scene — toggleable + renameable */}
+            <div className="flex flex-col gap-2 mb-3">
+              {(['part', 'chapter', 'scene'] as const).map((key, i) => {
+                // Prevent disabling the last enabled level
+                const enabledCount = Object.values(enabledLevels).filter(Boolean).length;
+                const disableToggle = enabledLevels[key] && enabledCount === 1;
+                return (
+                  <div key={key} className="flex items-center gap-3">
+                    <Toggle
+                      checked={enabledLevels[key]}
+                      onChange={(v) => setEnabledLevels({ ...enabledLevels, [key]: v })}
+                      disabled={disableToggle}
+                    />
+                    <div className={`flex-1 transition-opacity ${enabledLevels[key] ? '' : 'opacity-40'}`}>
+                      <Input
+                        label={`Level ${i + 1} label`}
+                        value={labels[key]}
+                        onChange={(e) => setLabels({ ...labels, [key]: e.target.value })}
+                        placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
+                        disabled={!enabledLevels[key]}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+            {/* Note label — always on */}
+            <Input
+              label="Note label"
+              value={labels.note}
+              onChange={(e) => setLabels({ ...labels, note: e.target.value })}
+              placeholder="Note"
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

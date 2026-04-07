@@ -1,4 +1,4 @@
-import type { HierarchyLabels } from './writing';
+import type { HierarchyLabels, EnabledLevels } from './writing';
 
 export const BOOK_COLORS = [
   '#6366f1', // indigo
@@ -18,8 +18,9 @@ export interface Book {
   synopsis: string;
   coverColor: string;
   hierarchyLabels: HierarchyLabels;
-  worldBibleId?: string; // optional link to a shared WorldBible for series
-  wordGoal?: number;     // personal word count target
+  enabledLevels?: EnabledLevels; // optional for backwards compat with older saves
+  worldBibleId?: string;
+  wordGoal?: number;
   createdAt: number;
   updatedAt: number;
 }
