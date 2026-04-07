@@ -48,6 +48,7 @@ export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
   const sz = 15;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const settingsAnchorRef = useRef<HTMLDivElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,12 +153,12 @@ export function EditorToolbar({ editor, onFindToggle, findActive }: Props) {
         </div>
       </div>
 
-      {/* Editor Appearance — outside the scrollable area so the dropdown isn't clipped */}
-      <div className="relative shrink-0 px-1.5 py-2 border-l border-slate-700/40">
+      {/* Editor Appearance — portal-rendered so it escapes any overflow:hidden ancestors */}
+      <div ref={settingsAnchorRef} className="shrink-0 px-1.5 py-2 border-l border-slate-700/40">
         <ToolBtn onClick={() => setShowSettings((v) => !v)} active={showSettings} title="Editor Appearance">
           <Settings2 size={sz} />
         </ToolBtn>
-        <EditorSettingsPanel open={showSettings} onClose={() => setShowSettings(false)} />
+        <EditorSettingsPanel open={showSettings} onClose={() => setShowSettings(false)} anchorRef={settingsAnchorRef} />
       </div>
     </div>
   );
