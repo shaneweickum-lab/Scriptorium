@@ -89,71 +89,88 @@ export function ProjectSettings({ onClose }: Props) {
 
       {tab === 'settings' && (
         <div className="flex flex-col gap-4">
-          <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My Novel" />
-          <Input label="Author" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Your Name" />
-          <Textarea label="Synopsis" value={synopsis} onChange={(e) => setSynopsis(e.target.value)}
-            placeholder="A brief description..." rows={3} />
-          <Input
-            label="Word Count Goal"
-            value={wordGoal}
-            onChange={(e) => setWordGoal(e.target.value.replace(/\D/g, ''))}
-            placeholder="e.g. 80000"
-            type="text"
-            inputMode="numeric"
-          />
+          {/* Row 1: Title + Author */}
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My Novel" />
+            <Input label="Author" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Your Name" />
+          </div>
 
-          <div>
-            <p className="text-sm text-slate-400 mb-2">Accent Color</p>
-            <div className="flex gap-2 flex-wrap">
-              {BOOK_COLORS.map((c) => (
-                <button key={c} onClick={() => setColor(c)}
-                  className="w-7 h-7 rounded-full transition-transform hover:scale-110"
-                  style={{ backgroundColor: c, outline: color === c ? '3px solid white' : 'none', outlineOffset: '2px' }} />
-              ))}
+          {/* Row 2: Synopsis */}
+          <Textarea label="Synopsis" value={synopsis} onChange={(e) => setSynopsis(e.target.value)}
+            placeholder="A brief description..." rows={2} />
+
+          {/* Row 3: Word goal + Accent color side by side */}
+          <div className="grid grid-cols-2 gap-3 items-start">
+            <Input
+              label="Word Count Goal"
+              value={wordGoal}
+              onChange={(e) => setWordGoal(e.target.value.replace(/\D/g, ''))}
+              placeholder="e.g. 80000"
+              type="text"
+              inputMode="numeric"
+            />
+            <div>
+              <p className="text-sm text-slate-400 mb-2">Accent Color</p>
+              <div className="flex gap-2 flex-wrap">
+                {BOOK_COLORS.map((c) => (
+                  <button key={c} onClick={() => setColor(c)}
+                    className="w-6 h-6 rounded-full transition-transform hover:scale-110"
+                    style={{ backgroundColor: c, outline: color === c ? '3px solid white' : 'none', outlineOffset: '2px' }} />
+                ))}
+              </div>
             </div>
           </div>
 
+          {/* Row 4: Outline Structure — compact toggle rows */}
           <div>
-            <p className="text-sm text-slate-400 mb-1">Outline Structure</p>
-            <p className="text-[11px] text-slate-600 mb-3">
-              Toggle levels on/off and rename them. Disabled levels are skipped when adding new nodes.
-            </p>
-            {/* Part, Chapter, Scene — toggleable + renameable */}
-            <div className="flex flex-col gap-2 mb-3">
-              {(['part', 'chapter', 'scene'] as const).map((key, i) => {
-                // Prevent disabling the last enabled level
+            <p className="text-sm text-slate-400 mb-2">Outline Structure</p>
+            <div className="flex flex-col gap-1.5">
+              {(['part', 'chapter', 'scene'] as const).map((key) => {
                 const enabledCount = Object.values(enabledLevels).filter(Boolean).length;
                 const disableToggle = enabledLevels[key] && enabledCount === 1;
                 return (
-                  <div key={key} className="flex items-center gap-3">
+                  <div key={key}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors ${
+                      enabledLevels[key]
+                        ? 'bg-slate-800/60 border-slate-700/40'
+                        : 'bg-slate-800/20 border-slate-700/20'
+                    }`}
+                  >
                     <Toggle
                       checked={enabledLevels[key]}
                       onChange={(v) => setEnabledLevels({ ...enabledLevels, [key]: v })}
                       disabled={disableToggle}
                     />
-                    <div className={`flex-1 transition-opacity ${enabledLevels[key] ? '' : 'opacity-40'}`}>
-                      <Input
-                        label={`Level ${i + 1} label`}
-                        value={labels[key]}
-                        onChange={(e) => setLabels({ ...labels, [key]: e.target.value })}
-                        placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
-                        disabled={!enabledLevels[key]}
-                      />
-                    </div>
+                    <input
+                      value={labels[key]}
+                      onChange={(e) => setLabels({ ...labels, [key]: e.target.value })}
+                      disabled={!enabledLevels[key]}
+                      placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
+                      className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider">
+                      {key}
+                    </span>
                   </div>
                 );
               })}
+              {/* Note — always on */}
+              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/40">
+                <div className="w-9 h-5 flex items-center justify-center">
+                  <span className="text-[10px] text-slate-600">—</span>
+                </div>
+                <input
+                  value={labels.note}
+                  onChange={(e) => setLabels({ ...labels, note: e.target.value })}
+                  placeholder="Note"
+                  className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                />
+                <span className="text-[10px] text-slate-600 uppercase tracking-wider">note</span>
+              </div>
             </div>
-            {/* Note label — always on */}
-            <Input
-              label="Note label"
-              value={labels.note}
-              onChange={(e) => setLabels({ ...labels, note: e.target.value })}
-              placeholder="Note"
-            />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-1">
             <Button variant="ghost" onClick={onClose}>Cancel</Button>
             <Button variant="primary" onClick={handleSave}>Save Settings</Button>
           </div>
