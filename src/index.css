@@ -23,10 +23,9 @@ body,
   outline: none;
   min-height: 100%;
   padding: 2rem;
-  font-family: Georgia, Cambria, serif;
-  font-size: 1.05rem;
-  line-height: 1.8;
   color: #e2e8f0;
+  /* font-family, font-size, line-height are inherited from the RichTextEditor
+     scroll container so the editor appearance settings take effect */
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
