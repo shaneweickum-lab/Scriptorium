@@ -136,7 +136,7 @@ export function LandingPage({ onEnter }: Props) {
 
         {/* Mini stats */}
         <div className="flex gap-8 mt-16 text-center">
-          {[['30', 'Achievements'], ['5', 'Export formats'], ['100%', 'Offline']].map(([val, label]) => (
+          {[['30', 'Achievements'], ['4', 'Export formats'], ['100%', 'Offline']].map(([val, label]) => (
             <div key={label}>
               <div className="text-2xl font-bold text-slate-200">{val}</div>
               <div className="text-xs text-slate-600 mt-0.5">{label}</div>
