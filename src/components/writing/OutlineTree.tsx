@@ -16,7 +16,7 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { buildTree } from '../../utils/sortableTree';
 import type { WritingNode, NodeType } from '../../types';
-import { DEFAULT_ENABLED_LEVELS, getTopLevelType, getChildTypes } from '../../types';
+import { DEFAULT_ENABLED_LEVELS, getTopLevelType } from '../../types';
 
 interface OutlineTreeProps { onGlobalSearch?: () => void; }
 export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {

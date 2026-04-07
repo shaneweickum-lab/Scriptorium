@@ -8,7 +8,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({ title, onClose, children, size = 'md' }: ModalProps) {
+export function Modal({ title, onClose, children }: ModalProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -16,8 +16,6 @@ export function Modal({ title, onClose, children, size = 'md' }: ModalProps) {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
-
-  const widths = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4">
