@@ -1,10 +1,11 @@
-import { ArrowLeft, Globe2, Pencil, Menu, X } from 'lucide-react';
+import { ArrowLeft, Globe2, Pencil, Menu, X, Download, Upload } from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useWorldBibleStore } from '../../store/worldBibleStore';
 import { useWorldStore } from '../../store/worldStore';
 import { useAchievementStore } from '../../store/achievementStore';
 import { useUIStore } from '../../store/uiStore';
+import { db } from '../../db/database';
 import { SectionList } from '../world/SectionList';
 import { EntryEditor } from '../world/EntryEditor';
 import { ToastContainer } from '../common/Toast';
@@ -56,10 +57,58 @@ export function WorldBibleEditorShell() {
   const { activeWorldBible, closeWorldBible } = useWorldBibleStore();
   const entries = useWorldStore((s) => s.entries);
   const sections = useWorldStore((s) => s.sections);
+  const loadWorld = useWorldStore((s) => s.loadFromDB);
   const { checkWorldEntries, checkXPMilestone } = useAchievementStore();
   const addAchievementToast = useUIStore((s) => s.addAchievementToast);
+  const addToast = useUIStore((s) => s.addToast);
   const [showEdit, setShowEdit] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const loadFileRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveWorldBible = async () => {
+    if (!activeWorldBible) return;
+    try {
+      const wbId = activeWorldBible.id;
+      const [wbSections, wbEntries] = await Promise.all([
+        db.worldSections.where('bookId').equals(wbId).toArray(),
+        db.worldEntries.where('bookId').equals(wbId).toArray(),
+      ]);
+      const data = { type: 'worldBible', worldBible: activeWorldBible, sections: wbSections, entries: wbEntries, version: 1 };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${activeWorldBible.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-world-bible.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addToast('World Bible saved');
+    } catch {
+      addToast('Failed to save World Bible', 'error');
+    }
+  };
+
+  const handleLoadWorldBible = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (data.type !== 'worldBible' || !data.worldBible) {
+        addToast('Invalid World Bible file', 'error');
+        return;
+      }
+      const wbId = data.worldBible.id;
+      await db.worldSections.where('bookId').equals(wbId).delete();
+      await db.worldEntries.where('bookId').equals(wbId).delete();
+      await db.worldBibles.put(data.worldBible);
+      if (data.sections?.length) await db.worldSections.bulkPut(data.sections);
+      if (data.entries?.length) await db.worldEntries.bulkPut(data.entries);
+      await loadWorld(wbId);
+      addToast('World Bible loaded');
+    } catch {
+      addToast('Failed to load World Bible', 'error');
+    }
+  };
 
   // Check world bible achievements whenever entries change
   useEffect(() => {
@@ -137,13 +186,39 @@ export function WorldBibleEditorShell() {
               </p>
               <p className="text-[10px] text-slate-500 mt-0.5">World Bible</p>
             </div>
-            <button
-              onClick={() => setShowEdit(true)}
-              className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-600 hover:text-slate-300 transition-colors"
-              title="Edit world"
-            >
-              <Pencil size={11} />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={handleSaveWorldBible}
+                className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-600 hover:text-slate-300 transition-colors"
+                title="Save World Bible to file"
+              >
+                <Download size={11} />
+              </button>
+              <button
+                onClick={() => loadFileRef.current?.click()}
+                className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-600 hover:text-slate-300 transition-colors"
+                title="Load World Bible from file"
+              >
+                <Upload size={11} />
+              </button>
+              <button
+                onClick={() => setShowEdit(true)}
+                className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-600 hover:text-slate-300 transition-colors"
+                title="Edit world"
+              >
+                <Pencil size={11} />
+              </button>
+            </div>
+            <input
+              ref={loadFileRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) { handleLoadWorldBible(file); e.target.value = ''; }
+              }}
+            />
           </div>
         </div>
 

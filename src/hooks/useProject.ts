@@ -5,6 +5,7 @@ import { useWritingStore } from '../store/writingStore';
 import { useAssemblyStore } from '../store/assemblyStore';
 import { useLibraryStore } from '../store/libraryStore';
 import { libraryRepository } from '../db/libraryRepository';
+import { worldBibleRepository } from '../db/worldBibleRepository';
 
 export function useProject() {
   const addToast = useUIStore((s) => s.addToast);
@@ -27,7 +28,20 @@ export function useProject() {
         db.assemblies.where('bookId').equals(bookId).toArray(),
       ]);
 
-      const data = { book: activeBook, worldSections, worldEntries, writingNodes, assemblies, version: 2 };
+      let linkedWorldBible = null;
+      if (activeBook.worldBibleId) {
+        const wbId = activeBook.worldBibleId;
+        const [worldBible, wbSections, wbEntries] = await Promise.all([
+          worldBibleRepository.getWorldBible(wbId),
+          db.worldSections.where('bookId').equals(wbId).toArray(),
+          db.worldEntries.where('bookId').equals(wbId).toArray(),
+        ]);
+        if (worldBible) {
+          linkedWorldBible = { worldBible, sections: wbSections, entries: wbEntries };
+        }
+      }
+
+      const data = { book: activeBook, worldSections, worldEntries, writingNodes, assemblies, linkedWorldBible, version: 3 };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -66,6 +80,17 @@ export function useProject() {
         if (data.worldEntries?.length) await db.worldEntries.bulkPut(data.worldEntries);
         if (data.writingNodes?.length) await db.writingNodes.bulkPut(data.writingNodes);
         if (data.assemblies?.length) await db.assemblies.bulkPut(data.assemblies);
+
+        // Restore linked world bible (version 3+)
+        if (data.linkedWorldBible) {
+          const { worldBible, sections: wbSections, entries: wbEntries } = data.linkedWorldBible;
+          const wbId = worldBible.id;
+          await db.worldSections.where('bookId').equals(wbId).delete();
+          await db.worldEntries.where('bookId').equals(wbId).delete();
+          await db.worldBibles.put(worldBible);
+          if (wbSections?.length) await db.worldSections.bulkPut(wbSections);
+          if (wbEntries?.length) await db.worldEntries.bulkPut(wbEntries);
+        }
 
         await Promise.all([loadWorld(bookId), loadWriting(bookId), loadAssembly(bookId)]);
       } else if (activeBook) {
