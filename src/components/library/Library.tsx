@@ -113,11 +113,11 @@ function BookCard({ book, onOpen, onEdit, onDelete }: {
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-0.5">
               <button onClick={() => onOpen(book.id)} title="Open"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-colors">
                 <BookOpen size={14} />
               </button>
               <button onClick={() => onEdit(book)} title="Edit"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-colors">
                 <Pencil size={14} />
               </button>
             </div>
@@ -179,11 +179,11 @@ function WorldCard({ world, onOpen, onEdit, onDelete }: {
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-0.5">
               <button onClick={() => onOpen(world.id)} title="Open"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-colors">
                 <Globe2 size={14} />
               </button>
               <button onClick={() => onEdit(world)} title="Edit"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-colors">
                 <Pencil size={14} />
               </button>
             </div>
@@ -223,15 +223,14 @@ function WorldCard({ world, onOpen, onEdit, onDelete }: {
 function CreateCard({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <div onClick={onClick}
-      className="border-2 border-dashed border-slate-300/60 hover:border-violet-400/70
+      className="border-2 border-dashed border-slate-200 hover:border-teal-400
         rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer
-        transition-all duration-200 hover:bg-violet-50/40 group min-h-[240px]
-        bg-white/40">
-      <div className="w-14 h-14 rounded-full bg-slate-100 group-hover:bg-violet-100
+        transition-all duration-200 hover:bg-teal-50/40 group min-h-[240px] bg-white">
+      <div className="w-14 h-14 rounded-full bg-slate-100 group-hover:bg-teal-100
         flex items-center justify-center transition-colors">
-        <Plus size={24} className="text-slate-400 group-hover:text-violet-600 transition-colors" />
+        <Plus size={24} className="text-slate-400 group-hover:text-teal-600 transition-colors" />
       </div>
-      <span className="text-sm font-semibold text-slate-400 group-hover:text-violet-600 transition-colors">
+      <span className="text-sm font-semibold text-slate-400 group-hover:text-teal-600 transition-colors">
         {label}
       </span>
     </div>
@@ -319,64 +318,62 @@ function LibrarySidebar({
   ];
 
   const content = (
-    <div className="flex flex-col h-full" style={{ background: '#0d0b17' }}>
+    <div className="flex flex-col h-full bg-white border-r border-slate-200">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/5">
+      <div className="px-5 py-5 border-b border-slate-100">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
             <img src="/logo.svg" alt="" className="w-5 h-5 opacity-90" onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }} />
-            <span className="text-white font-bold text-sm font-serif" style={{ display: 'none' }}>W</span>
           </div>
           <div>
-            <p className="text-[11px] font-bold text-white leading-none tracking-wide">Wizards Playground</p>
-            <p className="text-[9px] text-violet-400/60 mt-0.5 tracking-[0.18em] uppercase">World Builder's Toolkit</p>
+            <p className="text-[11px] font-bold text-slate-800 leading-none tracking-wide">Wizards Playground</p>
+            <p className="text-[9px] text-teal-600/70 mt-0.5 tracking-[0.18em] uppercase">World Builder's Toolkit</p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map(({ id, icon: Icon, label }) => (
           <button key={id} onClick={() => { setView(id); onMobileClose(); }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
               ${view === id
-                ? 'text-white border-l-2 border-violet-500 pl-[10px]'
-                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-              }`}
-            style={view === id ? { background: 'rgba(124,58,237,0.13)' } : {}}>
-            <Icon size={16} />
+                ? 'text-violet-700 bg-violet-50 border-l-2 border-violet-500 pl-[10px]'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}>
+            <Icon size={16} className={view === id ? 'text-violet-600' : 'text-slate-400'} />
             {label}
           </button>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="px-3 pb-4 space-y-1 border-t border-white/5 pt-3">
+      <div className="px-3 pb-4 space-y-0.5 border-t border-slate-100 pt-3">
         {/* XP */}
         <div className="px-3 py-2.5">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5">
-              <Star size={11} className="text-amber-400" />
-              <span className="text-[11px] font-bold text-amber-300">Level {level}</span>
+              <Star size={11} className="text-amber-500" />
+              <span className="text-[11px] font-bold text-amber-600">Level {level}</span>
               {streakDays > 0 && (
-                <span className="text-[11px] text-orange-400">· 🔥 {streakDays}</span>
+                <span className="text-[11px] text-orange-500">· 🔥 {streakDays}</span>
               )}
             </div>
-            <span className="text-[10px] text-slate-600">{totalXP} XP</span>
+            <span className="text-[10px] text-slate-400">{totalXP} XP</span>
           </div>
-          <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${xpPct}%`, background: 'linear-gradient(to right, #7c3aed, #a78bfa)' }} />
+              style={{ width: `${xpPct}%`, background: 'linear-gradient(to right, #7c3aed, #0d9488)' }} />
           </div>
         </div>
 
         <button onClick={onAchievements}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-            text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
-          <Trophy size={16} />
+            text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all">
+          <Trophy size={16} className="text-teal-500" />
           {unlockCount} Achievements
         </button>
 
@@ -384,7 +381,7 @@ function LibrarySidebar({
           <button onClick={onInstall}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold
               text-white transition-all"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
             <Download size={16} />
             Install App
           </button>
@@ -392,8 +389,8 @@ function LibrarySidebar({
 
         <button onClick={onAbout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-            text-slate-600 hover:text-slate-400 hover:bg-white/5 transition-all">
-          <Settings size={16} />
+            text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
+          <Settings size={16} className="text-slate-300" />
           About
         </button>
       </div>
@@ -410,8 +407,8 @@ function LibrarySidebar({
       {/* Mobile drawer */}
       {mobileOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={onMobileClose} />
-          <aside className="fixed inset-y-0 left-0 z-50 w-64 md:hidden flex flex-col">
+          <div className="fixed inset-0 z-40 bg-slate-900/40 md:hidden" onClick={onMobileClose} />
+          <aside className="fixed inset-y-0 left-0 z-50 w-64 md:hidden flex flex-col shadow-xl">
             {content}
           </aside>
         </>
@@ -491,7 +488,7 @@ export function Library() {
     : 'No world bibles yet — build your first universe above';
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: '#f0e9d9' }}>
+    <div className="h-screen flex overflow-hidden bg-slate-50">
       {/* Sidebar */}
       <LibrarySidebar
         view={view} setView={setView}
@@ -507,13 +504,13 @@ export function Library() {
       />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-white">
 
         {/* Top bar */}
-        <header className="shrink-0 px-6 pt-5 pb-4">
+        <header className="shrink-0 px-6 pt-5 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
-            <button className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white/60 transition-colors"
+            <button className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               onClick={() => setMobileSidebarOpen(true)}>
               <Menu size={20} />
             </button>
@@ -521,8 +518,8 @@ export function Library() {
             {/* Search bar with gradient border */}
             <div className="flex-1 max-w-xl">
               <div className="relative p-px rounded-full"
-                style={{ background: 'linear-gradient(to right, #7c3aed55, #22d3ee55)' }}>
-                <div className="relative flex items-center gap-2 bg-white rounded-full px-4 py-2.5 shadow-sm">
+                style={{ background: 'linear-gradient(to right, #7c3aed, #0d9488)', padding: '1.5px' }}>
+                <div className="relative flex items-center gap-2 bg-white rounded-full px-4 py-2.5">
                   <Search size={15} className="text-slate-400 shrink-0" />
                   <input
                     value={searchQuery}
@@ -549,19 +546,19 @@ export function Library() {
             <button
               onClick={() => isBooks ? setShowNewBookModal(true) : setShowNewWorldModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-white
-                shadow-lg shadow-violet-900/20 transition-all hover:shadow-violet-900/30 hover:opacity-90 shrink-0"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                shadow-lg shadow-teal-900/20 transition-all hover:opacity-90 shrink-0"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
               <Plus size={16} />
               <span className="hidden sm:inline">{newLabel}</span>
             </button>
           </div>
         </header>
 
-        {/* Section title + tabs */}
-        <div className="shrink-0 px-6 pb-4 flex items-center justify-between">
+        {/* Section title */}
+        <div className="shrink-0 px-6 py-4 flex items-center justify-between border-b border-slate-100">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">{sectionTitle}</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h1 className="text-lg font-bold text-slate-800">{sectionTitle}</h1>
+            <p className="text-xs text-slate-400 mt-0.5">
               {isBooks
                 ? `${filteredBooks.length} ${filteredBooks.length === 1 ? 'book' : 'books'} in your library`
                 : `${filteredWorlds.length} world ${filteredWorlds.length === 1 ? 'bible' : 'bibles'}`
@@ -571,7 +568,7 @@ export function Library() {
         </div>
 
         {/* Card grid */}
-        <main className="flex-1 overflow-y-auto px-6 pb-8">
+        <main className="flex-1 overflow-y-auto px-6 pb-8 pt-5 bg-slate-50">
           {isBooks ? (
             filteredBooks.length === 0 && !searchQuery ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
