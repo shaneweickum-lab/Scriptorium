@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Plus, Download, Globe2, BookOpen, Pencil, Trash2, MoreVertical, X, Share, Trophy, Star } from 'lucide-react';
+import {
+  Plus, Globe2, BookOpen, Pencil, Trash2, MoreHorizontal,
+  Search, Star, Trophy, Download, X, Share, Settings, Menu,
+} from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
@@ -20,157 +23,122 @@ import type { Book, WorldBible } from '../../types';
 import { getLevel, getLevelProgress } from '../../types/achievements';
 import { useStreak } from '../../store/streakStore';
 
-/* ── Helpers ─────────────────────────────────────────────── */
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
+/* ── Color helper ─────────────────────────────────────────── */
+function shiftColor(hex: string, amount: number): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.max(0, (n >> 16) + amount));
+  const g = Math.min(255, Math.max(0, ((n >> 8) & 0xff) + amount));
+  const b = Math.min(255, Math.max(0, (n & 0xff) + amount));
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
 }
 
-const BOOKS_PER_SHELF = 9;
-
-/* ── Mystical background ──────────────────────────────────── */
-function MysticalBackground() {
-  const stars = [
-    [8, 12], [22, 38], [68, 18], [84, 58], [14, 72], [58, 82],
-    [38, 8], [91, 28], [47, 55], [73, 42], [5, 48], [95, 75],
-    [31, 90], [77, 10], [52, 25], [19, 62],
-  ];
+/* ── Cover Art ────────────────────────────────────────────── */
+function BookCoverArt({ color, title }: { color: string; title: string }) {
+  const seed = title.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const dark = shiftColor(color, -45);
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#0d1f3c_0%,_#060d18_65%)]" />
-      <svg className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[680px] h-[680px] opacity-[0.15]"
-        viewBox="0 0 680 680">
-        <circle cx="340" cy="340" r="320" fill="none" stroke="#38bdf8" strokeWidth="1.2" />
-        <circle cx="340" cy="340" r="295" fill="none" stroke="#6366f1" strokeWidth="0.6" strokeDasharray="4 6" />
-        {Array.from({ length: 48 }).map((_, i) => {
-          const angle = (i * 7.5 * Math.PI) / 180;
-          const len = i % 4 === 0 ? 14 : 7;
-          const r1 = 308;
-          const x1 = 340 + r1 * Math.cos(angle); const y1 = 340 + r1 * Math.sin(angle);
-          const x2 = 340 + (r1 + len) * Math.cos(angle); const y2 = 340 + (r1 + len) * Math.sin(angle);
-          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-            stroke={i % 4 === 0 ? '#38bdf8' : '#6366f1'} strokeWidth={i % 4 === 0 ? 1.2 : 0.7} />;
+    <div className="relative w-full h-44 overflow-hidden" style={{
+      background: `linear-gradient(145deg, ${color} 0%, ${dark} 100%)`,
+    }}>
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 300 176" preserveAspectRatio="xMidYMid slice">
+        <circle cx={60 + (seed % 80)} cy={20 + (seed % 50)} r={100} fill="rgba(255,255,255,0.07)" />
+        <circle cx={220 + (seed % 50)} cy={130 + (seed % 40)} r={75} fill="rgba(255,255,255,0.05)" />
+        {Array.from({ length: 14 }).map((_, i) => {
+          const x = ((seed * (i * 37 + 17)) % 260) + 20;
+          const y = ((seed * (i * 23 + 11)) % 140) + 18;
+          const r = 1 + (i % 3) * 0.8;
+          return <circle key={i} cx={x} cy={y} r={r} fill="rgba(255,255,255,0.45)" />;
         })}
-        <line x1="340" y1="20" x2="340" y2="660" stroke="#38bdf8" strokeWidth="0.3" strokeDasharray="2 8" />
-        <line x1="20" y1="340" x2="660" y2="340" stroke="#38bdf8" strokeWidth="0.3" strokeDasharray="2 8" />
+        <line x1="0" y1="176" x2="300" y2="0" stroke="rgba(255,255,255,0.04)" strokeWidth="50" />
       </svg>
-      {stars.map(([x, y], i) => (
-        <div key={i} className="absolute rounded-full bg-cyan-300/50"
-          style={{ left: `${x}%`, top: `${y}%`, width: i % 3 === 0 ? 3 : 2, height: i % 3 === 0 ? 3 : 2,
-            boxShadow: '0 0 4px rgba(103,232,249,0.7)' }} />
-      ))}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span className="select-none text-7xl font-bold tracking-wider"
+          style={{ color: 'rgba(255,255,255,0.13)', fontFamily: 'Georgia, serif' }}>
+          {title.slice(0, 2).toUpperCase()}
+        </span>
+      </div>
     </div>
   );
 }
 
-/* ── Shelf plank ──────────────────────────────────────────── */
-function ShelfPlank() {
+function WorldCoverArt({ color, name }: { color: string; name: string }) {
+  const seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const dark = shiftColor(color, -45);
   return (
-    <div className="w-full" style={{
-      height: 14,
-      background: 'linear-gradient(to bottom, #3a1c08 0%, #281205 55%, #180b03 100%)',
-      borderTop: '1px solid rgba(200,110,40,0.22)',
-      boxShadow: '0 5px 16px rgba(0,0,0,0.75), 0 2px 4px rgba(0,0,0,0.5)',
-    }} />
-  );
-}
-
-/* ── Add-new slot ─────────────────────────────────────────── */
-function AddSlot({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <div onClick={onClick} title={label}
-      className="shrink-0 cursor-pointer flex flex-col items-center justify-center gap-2
-        border-2 border-dashed border-white/10 hover:border-white/25 rounded-r-sm
-        transition-all duration-200 group"
-      style={{ width: 72, height: 186 }}>
-      <Plus size={18} className="text-white/20 group-hover:text-white/45 transition-colors" />
-      <span className="text-[9px] text-white/15 group-hover:text-white/35 transition-colors
-        text-center leading-tight px-1">{label}</span>
+    <div className="relative w-full h-44 overflow-hidden" style={{
+      background: `linear-gradient(145deg, ${color} 0%, ${dark} 100%)`,
+    }}>
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 300 176" preserveAspectRatio="xMidYMid slice">
+        <circle cx={150} cy={88} r={82} fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="1.5" />
+        <circle cx={150} cy={88} r={55} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+        <ellipse cx={150} cy={88} rx={42} ry={82} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1" />
+        <line x1={68} y1={88} x2={232} y2={88} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+        <line x1={150} y1={6} x2={150} y2={170} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+        {Array.from({ length: 9 }).map((_, i) => {
+          const x = ((seed * (i * 41 + 13)) % 240) + 30;
+          const y = ((seed * (i * 29 + 7)) % 120) + 28;
+          return <circle key={i} cx={x} cy={y} r={1.5} fill="rgba(255,255,255,0.4)" />;
+        })}
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <Globe2 size={54} style={{ color: 'rgba(255,255,255,0.16)' }} />
+      </div>
     </div>
   );
 }
 
-/* ── Book spine ───────────────────────────────────────────── */
-function BookSpine({ book, onOpen, onEdit, onDelete }: {
-  book: Book;
-  onOpen: (id: string) => void;
-  onEdit: (b: Book) => void;
-  onDelete: (id: string) => void;
+/* ── Book Card ────────────────────────────────────────────── */
+function BookCard({ book, onOpen, onEdit, onDelete }: {
+  book: Book; onOpen: (id: string) => void;
+  onEdit: (b: Book) => void; onDelete: (id: string) => void;
 }) {
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const c = book.coverColor;
 
   return (
     <>
-      <div style={{ width: 72, height: 186 }} className="relative group shrink-0">
-        {/* Spine body */}
-        <div
-          className="absolute inset-0 rounded-r-sm cursor-pointer flex flex-col py-5 px-1.5"
-          style={{
-            backgroundColor: c,
-            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 35%, rgba(255,255,255,0.05) 100%)`,
-            boxShadow: `inset 1px 0 3px rgba(0,0,0,0.5), 3px 0 8px rgba(0,0,0,0.45)`,
-          }}
-          onClick={() => onOpen(book.id)}
-        >
-          {/* Title (vertical, bottom-to-top) */}
-          <span className="text-white font-semibold tracking-wide leading-tight flex-1"
-            style={{
-              fontSize: 11, writingMode: 'vertical-rl', textOrientation: 'mixed',
-              transform: 'rotate(180deg)', overflow: 'hidden', maxHeight: 130,
-              textShadow: '0 1px 3px rgba(0,0,0,0.6)',
-            }}>
-            {book.title}
-          </span>
-          {/* Author last name */}
-          {book.author && (
-            <span className="text-white/50 mt-auto"
-              style={{ fontSize: 9, writingMode: 'vertical-rl', transform: 'rotate(180deg)', overflow: 'hidden' }}>
-              {book.author.split(' ').pop()}
-            </span>
-          )}
-        </div>
+      <div
+        className="group bg-white rounded-2xl overflow-hidden cursor-pointer flex flex-col
+          shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_10px_36px_rgba(0,0,0,0.14)]
+          transition-all duration-300 hover:-translate-y-1.5 border border-slate-100/80"
+        onClick={() => onOpen(book.id)}
+      >
+        <BookCoverArt color={book.coverColor} title={book.title} />
 
-        {/* Left-edge highlight (spine binding) */}
-        <div className="absolute left-0 top-0 bottom-0 rounded-l-sm pointer-events-none"
-          style={{ width: 5, background: 'linear-gradient(to right, rgba(255,255,255,0.22), rgba(255,255,255,0.05))' }} />
+        <div className="p-4 flex flex-col flex-1">
+          <h3 className="font-bold text-slate-900 text-sm leading-snug mb-0.5 line-clamp-2">{book.title}</h3>
+          {book.author && <p className="text-[11px] text-slate-400 mb-2 truncate">{book.author}</p>}
 
-        {/* Hover glow */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-sm pointer-events-none"
-          style={{ boxShadow: `0 0 22px ${c}70, inset 0 0 8px rgba(255,255,255,0.06)` }} />
-
-        {/* Lift on hover */}
-        <div className="absolute inset-0 group-hover:-translate-y-1.5 transition-transform duration-200 pointer-events-none" />
-
-        {/* Kebab menu */}
-        <div className="absolute top-1.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-          onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => setMenu(!menu)}
-            className="p-0.5 rounded text-white/50 hover:text-white hover:bg-black/40 transition-colors">
-            <MoreVertical size={10} />
-          </button>
-          {menu && (
-            <>
-              <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
-              <div className="absolute left-1/2 -translate-x-1/2 top-5 z-40
-                bg-slate-800 border border-slate-700 rounded-lg shadow-2xl py-1 w-28">
-                <button onClick={() => { onOpen(book.id); setMenu(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-300 hover:bg-slate-700">
-                  <BookOpen size={11} /> Open
-                </button>
-                <button onClick={() => { onEdit(book); setMenu(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-300 hover:bg-slate-700">
-                  <Pencil size={11} /> Edit
-                </button>
-                <button onClick={() => { setConfirm(true); setMenu(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-red-900/20">
-                  <Trash2 size={11} /> Delete
-                </button>
-              </div>
-            </>
-          )}
+          <div className="mt-auto flex items-center justify-between pt-3 border-t border-slate-100"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-0.5">
+              <button onClick={() => onOpen(book.id)} title="Open"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                <BookOpen size={14} />
+              </button>
+              <button onClick={() => onEdit(book)} title="Edit"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                <Pencil size={14} />
+              </button>
+            </div>
+            <div className="relative">
+              <button onClick={() => setMenu(!menu)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                <MoreHorizontal size={14} />
+              </button>
+              {menu && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
+                  <div className="absolute right-0 bottom-9 z-40 bg-white border border-slate-200 rounded-xl shadow-xl py-1 w-32">
+                    <button onClick={() => { setConfirm(true); setMenu(false); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-500 hover:bg-red-50">
+                      <Trash2 size={11} /> Delete
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -178,83 +146,65 @@ function BookSpine({ book, onOpen, onEdit, onDelete }: {
         <ConfirmDialog title="Delete Book"
           message={`Delete "${book.title}" and all its content? This cannot be undone.`}
           confirmLabel="Delete" danger
-          onConfirm={() => onDelete(book.id)}
+          onConfirm={() => { onDelete(book.id); setConfirm(false); }}
           onClose={() => setConfirm(false)} />
       )}
     </>
   );
 }
 
-/* ── World Bible spine ────────────────────────────────────── */
-function WorldSpine({ world, onOpen, onEdit, onDelete }: {
-  world: WorldBible;
-  onOpen: (id: string) => void;
-  onEdit: (w: WorldBible) => void;
-  onDelete: (id: string) => void;
+/* ── World Card ───────────────────────────────────────────── */
+function WorldCard({ world, onOpen, onEdit, onDelete }: {
+  world: WorldBible; onOpen: (id: string) => void;
+  onEdit: (w: WorldBible) => void; onDelete: (id: string) => void;
 }) {
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const c = world.coverColor;
 
   return (
     <>
-      <div style={{ width: 72, height: 186 }} className="relative group shrink-0">
-        {/* Spine body */}
-        <div
-          className="absolute inset-0 rounded-r-sm cursor-pointer flex flex-col items-center py-5 px-1.5"
-          style={{
-            backgroundColor: c,
-            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 40%, rgba(255,255,255,0.04) 100%)`,
-            boxShadow: `inset 1px 0 3px rgba(0,0,0,0.5), 3px 0 8px rgba(0,0,0,0.45)`,
-          }}
-          onClick={() => onOpen(world.id)}
-        >
-          <Globe2 size={14} className="text-white/50 mb-3 shrink-0" />
-          <span className="text-white font-semibold tracking-wide leading-tight flex-1"
-            style={{
-              fontSize: 11, writingMode: 'vertical-rl', textOrientation: 'mixed',
-              transform: 'rotate(180deg)', overflow: 'hidden', maxHeight: 110,
-              textShadow: '0 1px 3px rgba(0,0,0,0.6)',
-            }}>
-            {world.name}
-          </span>
-        </div>
+      <div
+        className="group bg-white rounded-2xl overflow-hidden cursor-pointer flex flex-col
+          shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_10px_36px_rgba(0,0,0,0.14)]
+          transition-all duration-300 hover:-translate-y-1.5 border border-slate-100/80"
+        onClick={() => onOpen(world.id)}
+      >
+        <WorldCoverArt color={world.coverColor} name={world.name} />
 
-        {/* Left-edge highlight */}
-        <div className="absolute left-0 top-0 bottom-0 rounded-l-sm pointer-events-none"
-          style={{ width: 5, background: 'linear-gradient(to right, rgba(255,255,255,0.22), rgba(255,255,255,0.05))' }} />
+        <div className="p-4 flex flex-col flex-1">
+          <h3 className="font-bold text-slate-900 text-sm leading-snug mb-0.5 line-clamp-2">{world.name}</h3>
+          {world.description && <p className="text-[11px] text-slate-400 mb-2 line-clamp-2">{world.description}</p>}
 
-        {/* Hover glow */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-sm pointer-events-none"
-          style={{ boxShadow: `0 0 22px ${c}70, inset 0 0 8px rgba(255,255,255,0.06)` }} />
-
-        {/* Kebab menu */}
-        <div className="absolute top-1.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-          onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => setMenu(!menu)}
-            className="p-0.5 rounded text-white/50 hover:text-white hover:bg-black/40 transition-colors">
-            <MoreVertical size={10} />
-          </button>
-          {menu && (
-            <>
-              <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
-              <div className="absolute left-1/2 -translate-x-1/2 top-5 z-40
-                bg-slate-800 border border-slate-700 rounded-lg shadow-2xl py-1 w-28">
-                <button onClick={() => { onOpen(world.id); setMenu(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-300 hover:bg-slate-700">
-                  <Globe2 size={11} /> Open
-                </button>
-                <button onClick={() => { onEdit(world); setMenu(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-300 hover:bg-slate-700">
-                  <Pencil size={11} /> Edit
-                </button>
-                <button onClick={() => { setConfirm(true); setMenu(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-red-900/20">
-                  <Trash2 size={11} /> Delete
-                </button>
-              </div>
-            </>
-          )}
+          <div className="mt-auto flex items-center justify-between pt-3 border-t border-slate-100"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-0.5">
+              <button onClick={() => onOpen(world.id)} title="Open"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                <Globe2 size={14} />
+              </button>
+              <button onClick={() => onEdit(world)} title="Edit"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors">
+                <Pencil size={14} />
+              </button>
+            </div>
+            <div className="relative">
+              <button onClick={() => setMenu(!menu)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                <MoreHorizontal size={14} />
+              </button>
+              {menu && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
+                  <div className="absolute right-0 bottom-9 z-40 bg-white border border-slate-200 rounded-xl shadow-xl py-1 w-32">
+                    <button onClick={() => { setConfirm(true); setMenu(false); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-500 hover:bg-red-50">
+                      <Trash2 size={11} /> Delete
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -262,49 +212,211 @@ function WorldSpine({ world, onOpen, onEdit, onDelete }: {
         <ConfirmDialog title="Delete World"
           message={`Delete "${world.name}" and all its entries? This cannot be undone.`}
           confirmLabel="Delete" danger
-          onConfirm={() => onDelete(world.id)}
+          onConfirm={() => { onDelete(world.id); setConfirm(false); }}
           onClose={() => setConfirm(false)} />
       )}
     </>
   );
 }
 
-/* ── Safari install modal ─────────────────────────────────── */
+/* ── Create New Card ──────────────────────────────────────── */
+function CreateCard({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <div onClick={onClick}
+      className="border-2 border-dashed border-slate-300/60 hover:border-violet-400/70
+        rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer
+        transition-all duration-200 hover:bg-violet-50/40 group min-h-[240px]
+        bg-white/40">
+      <div className="w-14 h-14 rounded-full bg-slate-100 group-hover:bg-violet-100
+        flex items-center justify-center transition-colors">
+        <Plus size={24} className="text-slate-400 group-hover:text-violet-600 transition-colors" />
+      </div>
+      <span className="text-sm font-semibold text-slate-400 group-hover:text-violet-600 transition-colors">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+/* ── Safari Install Modal ─────────────────────────────────── */
 function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safari-ios'; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl rounded-b-2xl shadow-2xl w-full max-w-sm p-6">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-slate-100">Install Wizards Playground</h2>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800">
+          <h2 className="text-base font-bold text-slate-900">Install Wizards Playground</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
             <X size={16} />
           </button>
         </div>
         {method === 'safari-ios' ? (
-          <ol className="space-y-3 text-sm text-slate-300">
-            <li className="flex items-start gap-3"><span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
-              <span>Tap <Share size={13} className="inline mx-1 text-blue-400" /><strong>Share</strong> in Safari</span></li>
-            <li className="flex items-start gap-3"><span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">2</span>
-              <span>Tap <strong>"Add to Home Screen"</strong></span></li>
-            <li className="flex items-start gap-3"><span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">3</span>
-              <span>Tap <strong>"Add"</strong></span></li>
+          <ol className="space-y-3 text-sm text-slate-600">
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
+              <span>Tap <Share size={13} className="inline mx-1 text-blue-500" /><strong>Share</strong> in Safari</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">2</span>
+              <span>Tap <strong>"Add to Home Screen"</strong></span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">3</span>
+              <span>Tap <strong>"Add"</strong></span>
+            </li>
           </ol>
         ) : (
-          <ol className="space-y-3 text-sm text-slate-300">
-            <li className="flex items-start gap-3"><span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
-              <span>Click <Share size={13} className="inline mx-1 text-blue-400" /><strong>Share</strong> in Safari</span></li>
-            <li className="flex items-start gap-3"><span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">2</span>
-              <span>Click <strong>"Add to Dock"</strong></span></li>
-            <li className="flex items-start gap-3"><span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">3</span>
-              <span>Click <strong>"Add"</strong></span></li>
+          <ol className="space-y-3 text-sm text-slate-600">
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
+              <span>Click <Share size={13} className="inline mx-1 text-blue-500" /><strong>Share</strong> in Safari</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">2</span>
+              <span>Click <strong>"Add to Dock"</strong></span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">3</span>
+              <span>Click <strong>"Add"</strong></span>
+            </li>
           </ol>
         )}
         <button onClick={onClose}
-          className="mt-5 w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-colors">
+          className="mt-5 w-full py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-colors">
           Got it
         </button>
       </div>
     </div>
+  );
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+type LibraryView = 'books' | 'worlds';
+
+interface SidebarProps {
+  view: LibraryView;
+  setView: (v: LibraryView) => void;
+  totalXP: number;
+  level: number;
+  xpPct: number;
+  streakDays: number;
+  unlockCount: number;
+  onAchievements: () => void;
+  canInstall: boolean;
+  onInstall: () => void;
+  onAbout: () => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+function LibrarySidebar({
+  view, setView, totalXP, level, xpPct, streakDays,
+  unlockCount, onAchievements, canInstall, onInstall, onAbout,
+  mobileOpen, onMobileClose,
+}: SidebarProps) {
+  const navItems: { id: LibraryView; icon: typeof BookOpen; label: string }[] = [
+    { id: 'books', icon: BookOpen, label: 'Books Library' },
+    { id: 'worlds', icon: Globe2, label: 'World Atlas' },
+  ];
+
+  const content = (
+    <div className="flex flex-col h-full" style={{ background: '#0d0b17' }}>
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+            <img src="/logo.svg" alt="" className="w-5 h-5 opacity-90" onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }} />
+            <span className="text-white font-bold text-sm font-serif" style={{ display: 'none' }}>W</span>
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-white leading-none tracking-wide">Wizards Playground</p>
+            <p className="text-[9px] text-violet-400/60 mt-0.5 tracking-[0.18em] uppercase">World Builder's Toolkit</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-1">
+        {navItems.map(({ id, icon: Icon, label }) => (
+          <button key={id} onClick={() => { setView(id); onMobileClose(); }}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+              ${view === id
+                ? 'text-white border-l-2 border-violet-500 pl-[10px]'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+            style={view === id ? { background: 'rgba(124,58,237,0.13)' } : {}}>
+            <Icon size={16} />
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-3 pb-4 space-y-1 border-t border-white/5 pt-3">
+        {/* XP */}
+        <div className="px-3 py-2.5">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <Star size={11} className="text-amber-400" />
+              <span className="text-[11px] font-bold text-amber-300">Level {level}</span>
+              {streakDays > 0 && (
+                <span className="text-[11px] text-orange-400">· 🔥 {streakDays}</span>
+              )}
+            </div>
+            <span className="text-[10px] text-slate-600">{totalXP} XP</span>
+          </div>
+          <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${xpPct}%`, background: 'linear-gradient(to right, #7c3aed, #a78bfa)' }} />
+          </div>
+        </div>
+
+        <button onClick={onAchievements}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+            text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
+          <Trophy size={16} />
+          {unlockCount} Achievements
+        </button>
+
+        {canInstall && (
+          <button onClick={onInstall}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold
+              text-white transition-all"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+            <Download size={16} />
+            Install App
+          </button>
+        )}
+
+        <button onClick={onAbout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+            text-slate-600 hover:text-slate-400 hover:bg-white/5 transition-all">
+          <Settings size={16} />
+          About
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex flex-col w-56 shrink-0 h-full">
+        {content}
+      </aside>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={onMobileClose} />
+          <aside className="fixed inset-y-0 left-0 z-50 w-64 md:hidden flex flex-col">
+            {content}
+          </aside>
+        </>
+      )}
+    </>
   );
 }
 
@@ -326,12 +438,14 @@ export function Library() {
   const { pct } = getLevelProgress(totalXP);
   const { current: streakDays } = useStreak();
 
-  const [view, setView] = useState<'books' | 'worlds'>('books');
+  const [view, setView] = useState<LibraryView>('books');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showNewBookModal, setShowNewBookModal] = useState(false);
   const [editBookTarget, setEditBookTarget] = useState<Book | null>(null);
   const [showNewWorldModal, setShowNewWorldModal] = useState(false);
   const [editWorldTarget, setEditWorldTarget] = useState<WorldBible | null>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const onUnlock = (name: string, xp: number, emoji: string) => addAchievementToast(name, xp, emoji);
 
@@ -361,192 +475,159 @@ export function Library() {
   const nextBookColor = BOOK_COLORS[books.length % BOOK_COLORS.length];
   const nextWorldColor = WORLD_COLORS[worldBibles.length % WORLD_COLORS.length];
 
-  const bookShelves = chunk(books, BOOKS_PER_SHELF);
-  const worldShelves = chunk(worldBibles, BOOKS_PER_SHELF);
+  const filteredBooks = books.filter((b) =>
+    !searchQuery || b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.author?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredWorlds = worldBibles.filter((w) =>
+    !searchQuery || w.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const isBooks = view === 'books';
+  const sectionTitle = isBooks ? 'Books Library' : 'World Atlas';
+  const newLabel = isBooks ? 'New Book' : 'New World';
+  const emptyHint = isBooks
+    ? 'Your library is empty — create your first book above'
+    : 'No world bibles yet — build your first universe above';
 
   return (
-    <div className="h-screen bg-[#060d18] flex flex-col overflow-hidden text-slate-200">
-      <MysticalBackground />
+    <div className="h-screen flex overflow-hidden" style={{ background: '#f0e9d9' }}>
+      {/* Sidebar */}
+      <LibrarySidebar
+        view={view} setView={setView}
+        totalXP={totalXP} level={level} xpPct={pct} streakDays={streakDays}
+        unlockCount={unlocks.length}
+        onAchievements={() => setShowAchievementsModal(true)}
+        canInstall={canInstall}
+        onInstall={installMethod === 'safari-mac' || installMethod === 'safari-ios'
+          ? () => setShowInstallModal(true) : install}
+        onAbout={() => { localStorage.removeItem('wp_seen_landing'); window.location.reload(); }}
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
+      />
 
-      {/* ── Header ─────────────────────────────────── */}
-      <header className="relative z-10 flex items-center justify-between px-4 md:px-10 py-4 shrink-0">
-        <div className="flex items-center gap-3">
-          <img src="/logo.svg" alt="Wizards Playground"
-            className="w-10 h-10 drop-shadow-[0_0_10px_rgba(99,102,241,0.9)]" />
-          <div>
-            <h1 className="text-lg font-bold leading-none tracking-wide text-white">Wizards Playground</h1>
-            <p className="text-[10px] text-cyan-400/70 mt-0.5 tracking-[0.22em] uppercase font-medium">World‑Builder's Toolkit</p>
-          </div>
-        </div>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
 
-        {/* XP bar + streak */}
-        <div className="hidden sm:flex items-center gap-4">
-          {/* Streak */}
-          {streakDays > 0 && (
-            <div className="flex items-center gap-1.5" title={`${streakDays}-day writing streak`}>
-              <span className="text-base">🔥</span>
-              <div>
-                <div className="text-xs font-bold text-orange-300 leading-none">{streakDays}</div>
-                <div className="text-[9px] text-slate-600 leading-none">day streak</div>
-              </div>
-            </div>
-          )}
-          {/* XP */}
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center gap-2">
-              <Star size={12} className="text-amber-400" />
-              <span className="text-xs font-bold text-amber-300">Level {level}</span>
-              <span className="text-[10px] text-slate-600">·</span>
-              <span className="text-[10px] text-slate-500">{totalXP} XP</span>
-            </div>
-            <div className="w-28 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${pct}%`, background: 'linear-gradient(to right, #7c3aed, #a78bfa)' }} />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Focus Timer */}
-          <FocusTimer />
-
-          {/* Achievements */}
-          <button
-            onClick={() => setShowAchievementsModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold
-              bg-white/5 hover:bg-white/10 border border-white/10 hover:border-violet-500/30
-              text-slate-400 hover:text-violet-300 transition-all"
-          >
-            <Trophy size={13} />
-            <span className="hidden md:inline">{unlocks.length} Achievements</span>
-            <span className="md:hidden">{unlocks.length}</span>
-          </button>
-
-          {/* Toggle view */}
-          <button
-            onClick={() => setView(view === 'books' ? 'worlds' : 'books')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold
-              bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
-              text-slate-300 hover:text-white transition-all"
-          >
-            {view === 'books'
-              ? <><Globe2 size={14} /> My Worlds</>
-              : <><BookOpen size={14} /> My Books</>
-            }
-          </button>
-
-          <button
-            onClick={() => { localStorage.removeItem('wp_seen_landing'); window.location.reload(); }}
-            title="About Wizards Playground"
-            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs
-              bg-white/5 hover:bg-white/10 border border-white/10 text-slate-500 hover:text-slate-300 transition-all"
-          >
-            About
-          </button>
-
-          {canInstall && (
-            <button
-              onClick={installMethod === 'safari-mac' || installMethod === 'safari-ios'
-                ? () => setShowInstallModal(true) : install}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold
-                bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-900/40"
-            >
-              <Download size={13} />
-              Install App
+        {/* Top bar */}
+        <header className="shrink-0 px-6 pt-5 pb-4">
+          <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <button className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white/60 transition-colors"
+              onClick={() => setMobileSidebarOpen(true)}>
+              <Menu size={20} />
             </button>
+
+            {/* Search bar with gradient border */}
+            <div className="flex-1 max-w-xl">
+              <div className="relative p-px rounded-full"
+                style={{ background: 'linear-gradient(to right, #7c3aed55, #22d3ee55)' }}>
+                <div className="relative flex items-center gap-2 bg-white rounded-full px-4 py-2.5 shadow-sm">
+                  <Search size={15} className="text-slate-400 shrink-0" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={isBooks ? 'Search your books...' : 'Search world bibles...'}
+                    className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')}
+                      className="text-slate-400 hover:text-slate-600 transition-colors">
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Focus timer */}
+            <div className="hidden sm:block">
+              <FocusTimer />
+            </div>
+
+            {/* New button */}
+            <button
+              onClick={() => isBooks ? setShowNewBookModal(true) : setShowNewWorldModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-white
+                shadow-lg shadow-violet-900/20 transition-all hover:shadow-violet-900/30 hover:opacity-90 shrink-0"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+              <Plus size={16} />
+              <span className="hidden sm:inline">{newLabel}</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Section title + tabs */}
+        <div className="shrink-0 px-6 pb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-800">{sectionTitle}</h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {isBooks
+                ? `${filteredBooks.length} ${filteredBooks.length === 1 ? 'book' : 'books'} in your library`
+                : `${filteredWorlds.length} world ${filteredWorlds.length === 1 ? 'bible' : 'bibles'}`
+              }
+            </p>
+          </div>
+        </div>
+
+        {/* Card grid */}
+        <main className="flex-1 overflow-y-auto px-6 pb-8">
+          {isBooks ? (
+            filteredBooks.length === 0 && !searchQuery ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <CreateCard onClick={() => setShowNewBookModal(true)} label="Create New Book" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {filteredBooks.map((book) => (
+                  <BookCard key={book.id} book={book}
+                    onOpen={handleOpenBook}
+                    onEdit={(b) => setEditBookTarget(b)}
+                    onDelete={deleteBook} />
+                ))}
+                {!searchQuery && (
+                  <CreateCard onClick={() => setShowNewBookModal(true)} label="New Book" />
+                )}
+                {searchQuery && filteredBooks.length === 0 && (
+                  <div className="col-span-full text-center py-16 text-slate-400 text-sm">
+                    No books match "{searchQuery}"
+                  </div>
+                )}
+              </div>
+            )
+          ) : (
+            filteredWorlds.length === 0 && !searchQuery ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <CreateCard onClick={() => setShowNewWorldModal(true)} label="Create New World" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {filteredWorlds.map((world) => (
+                  <WorldCard key={world.id} world={world}
+                    onOpen={handleOpenWorldBible}
+                    onEdit={(w) => setEditWorldTarget(w)}
+                    onDelete={deleteWorldBible} />
+                ))}
+                {!searchQuery && (
+                  <CreateCard onClick={() => setShowNewWorldModal(true)} label="New World" />
+                )}
+                {searchQuery && filteredWorlds.length === 0 && (
+                  <div className="col-span-full text-center py-16 text-slate-400 text-sm">
+                    No worlds match "{searchQuery}"
+                  </div>
+                )}
+              </div>
+            )
           )}
-        </div>
-      </header>
 
-      {/* ── Bookshelf area ──────────────────────────── */}
-      <main className="flex-1 overflow-y-auto relative z-10 px-4 md:px-10 pt-6 pb-4">
+          {/* Empty hint */}
+          {((isBooks && books.length === 0) || (!isBooks && worldBibles.length === 0)) && (
+            <p className="text-center text-xs text-slate-400 mt-6">{emptyHint}</p>
+          )}
+        </main>
+      </div>
 
-        {/* Section label + add button */}
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-[11px] font-bold text-white/35 uppercase tracking-[0.22em]">
-            {view === 'books' ? 'My Books' : 'My Worlds'}
-          </h2>
-          <button
-            onClick={() => view === 'books' ? setShowNewBookModal(true) : setShowNewWorldModal(true)}
-            className="flex items-center gap-1 text-[11px] text-indigo-400/60 hover:text-indigo-300 transition-colors"
-          >
-            <Plus size={12} />
-            {view === 'books' ? 'New Book' : 'New World'}
-          </button>
-        </div>
-
-        {/* ── BOOKS view ── */}
-        {view === 'books' && (
-          bookShelves.length === 0 ? (
-            <div>
-              <div className="flex gap-3 items-end pb-1 px-1">
-                <AddSlot onClick={() => setShowNewBookModal(true)} label="New Book" />
-              </div>
-              <ShelfPlank />
-              {/* Empty hint */}
-              <p className="text-center text-xs text-white/20 mt-8">
-                Your shelves are empty — add your first book above
-              </p>
-            </div>
-          ) : (
-            <>
-              {bookShelves.map((shelf, si) => (
-                <div key={si} className="mb-8">
-                  <div className="flex gap-3 items-end pb-1 px-1 overflow-x-auto">
-                    {shelf.map((book) => (
-                      <BookSpine key={book.id} book={book}
-                        onOpen={handleOpenBook}
-                        onEdit={(b) => setEditBookTarget(b)}
-                        onDelete={deleteBook} />
-                    ))}
-                    {/* Add slot only on last shelf */}
-                    {si === bookShelves.length - 1 && (
-                      <AddSlot onClick={() => setShowNewBookModal(true)} label="New Book" />
-                    )}
-                  </div>
-                  <ShelfPlank />
-                </div>
-              ))}
-            </>
-          )
-        )}
-
-        {/* ── WORLDS view ── */}
-        {view === 'worlds' && (
-          worldShelves.length === 0 ? (
-            <div>
-              <div className="flex gap-3 items-end pb-1 px-1">
-                <AddSlot onClick={() => setShowNewWorldModal(true)} label="New World" />
-              </div>
-              <ShelfPlank />
-              <p className="text-center text-xs text-white/20 mt-8">
-                No world bibles yet — create one to define your universe
-              </p>
-            </div>
-          ) : (
-            <>
-              {worldShelves.map((shelf, si) => (
-                <div key={si} className="mb-8">
-                  <div className="flex gap-3 items-end pb-1 px-1 overflow-x-auto">
-                    {shelf.map((world) => (
-                      <WorldSpine key={world.id} world={world}
-                        onOpen={handleOpenWorldBible}
-                        onEdit={(w) => setEditWorldTarget(w)}
-                        onDelete={deleteWorldBible} />
-                    ))}
-                    {si === worldShelves.length - 1 && (
-                      <AddSlot onClick={() => setShowNewWorldModal(true)} label="New World" />
-                    )}
-                  </div>
-                  <ShelfPlank />
-                </div>
-              ))}
-            </>
-          )
-        )}
-      </main>
-
-      {/* ── Modals ─────────────────────────────────── */}
+      {/* Modals */}
       {showNewBookModal && (
         <NewBookModal onClose={() => setShowNewBookModal(false)}
           onSave={handleCreateBook} initialColor={nextBookColor}

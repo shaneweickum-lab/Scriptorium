@@ -46,7 +46,8 @@ export function TopBar() {
   };
 
   return (
-    <header className="relative z-40 h-12 bg-slate-900/80 backdrop-blur border-b border-slate-700/50 flex items-center px-3 gap-2 shrink-0">
+    <header className="relative z-40 h-12 backdrop-blur border-b border-white/5 flex items-center px-3 gap-2 shrink-0"
+      style={{ background: 'rgba(13,11,23,0.85)' }}>
       {/* Mobile outline toggle */}
       <button
         onClick={() => setShowMobileSidebar(!showMobileSidebar)}

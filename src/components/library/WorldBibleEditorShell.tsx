@@ -135,7 +135,7 @@ export function WorldBibleEditorShell() {
   if (!activeWorldBible) return null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#060d18] text-slate-200">
+    <div className="flex h-screen overflow-hidden text-slate-200" style={{ background: '#0d0b17' }}>
       {/* Mobile overlay backdrop */}
       {showSidebar && (
         <div className="fixed inset-0 z-20 bg-black/50 md:hidden" onClick={() => setShowSidebar(false)} />
@@ -144,19 +144,19 @@ export function WorldBibleEditorShell() {
       {/* Sidebar: drawer on mobile, static on desktop */}
       <div className={`
         absolute inset-y-0 left-0 z-30 flex flex-col
-        bg-[#0a1628] border-r border-purple-900/30
+        border-r border-white/5
         transform transition-transform duration-200
         ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
         md:relative md:translate-x-0 md:transform-none md:transition-none md:shrink-0
         w-72 md:w-[280px]
-      `}>
+      `} style={{ background: '#0d0b17' }}>
         {/* Close button for mobile */}
         <button className="md:hidden absolute top-2 right-2 p-1 text-slate-500 hover:text-slate-300 z-10" onClick={() => setShowSidebar(false)}>
           <X size={16} />
         </button>
 
         {/* Sidebar header */}
-        <div className="p-3 pb-2 border-b border-purple-900/20">
+        <div className="p-3 pb-2 border-b border-white/5">
           {/* Back + timer row */}
           <div className="flex items-center justify-between mb-3">
             <button
@@ -174,7 +174,7 @@ export function WorldBibleEditorShell() {
             <div
               className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
               style={{
-                backgroundColor: activeWorldBible.coverColor + '30',
+                backgroundColor: activeWorldBible.coverColor + '25',
                 color: activeWorldBible.coverColor,
               }}
             >
@@ -189,21 +189,21 @@ export function WorldBibleEditorShell() {
             <div className="flex items-center gap-0.5">
               <button
                 onClick={handleSaveWorldBible}
-                className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-600 hover:text-slate-300 transition-colors"
+                className="shrink-0 p-1 rounded hover:bg-white/10 text-slate-600 hover:text-slate-300 transition-colors"
                 title="Save World Bible to file"
               >
                 <Download size={11} />
               </button>
               <button
                 onClick={() => loadFileRef.current?.click()}
-                className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-600 hover:text-slate-300 transition-colors"
+                className="shrink-0 p-1 rounded hover:bg-white/10 text-slate-600 hover:text-slate-300 transition-colors"
                 title="Load World Bible from file"
               >
                 <Upload size={11} />
               </button>
               <button
                 onClick={() => setShowEdit(true)}
-                className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-600 hover:text-slate-300 transition-colors"
+                className="shrink-0 p-1 rounded hover:bg-white/10 text-slate-600 hover:text-slate-300 transition-colors"
                 title="Edit world"
               >
                 <Pencil size={11} />
@@ -229,7 +229,8 @@ export function WorldBibleEditorShell() {
       </div>
 
       {/* Mobile header bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-10 h-12 bg-[#0a1628] border-b border-purple-900/30 flex items-center px-3 gap-2">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-10 h-12 border-b border-white/5 flex items-center px-3 gap-2"
+        style={{ background: '#0d0b17' }}>
         <button onClick={() => setShowSidebar(true)} className="p-2 text-slate-400 hover:text-slate-200">
           <Menu size={18} />
         </button>
@@ -241,7 +242,7 @@ export function WorldBibleEditorShell() {
       </div>
 
       {/* Entry editor: full width, with top padding on mobile for the header bar */}
-      <div className="flex-1 bg-[#060d18] overflow-hidden pt-12 md:pt-0">
+      <div className="flex-1 overflow-hidden pt-12 md:pt-0" style={{ background: '#0d0b17' }}>
         <EntryEditor />
       </div>
 
