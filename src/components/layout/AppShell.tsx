@@ -18,7 +18,7 @@ export function AppShell() {
   const setShowAchievementsModal = useUIStore((s) => s.setShowAchievementsModal);
 
   return (
-    <div className="flex h-screen overflow-hidden text-slate-200" style={{ background: '#0d0b17' }}>
+    <div className="flex h-screen overflow-hidden bg-white text-slate-800">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 pb-16 md:pb-0">
         <TopBar />

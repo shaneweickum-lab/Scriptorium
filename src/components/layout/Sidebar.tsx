@@ -18,20 +18,19 @@ export function Sidebar() {
   return (
     <aside className="
       fixed bottom-0 left-0 right-0 z-40 h-16 flex flex-row items-center
-      border-t border-white/5
-      md:static md:h-full md:w-52 md:flex-col md:border-t-0 md:border-r md:border-white/5
-    " style={{ background: '#0d0b17' }}>
-
+      bg-white border-t border-slate-200
+      md:static md:h-full md:w-52 md:flex-col md:border-t-0 md:border-r md:border-slate-200
+    ">
       {/* Logo — desktop only */}
-      <div className="hidden md:flex items-center gap-3 px-4 py-4 border-b border-white/5 w-full shrink-0">
+      <div className="hidden md:flex items-center gap-3 px-4 py-4 border-b border-slate-100 w-full shrink-0">
         <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
           <img src="/logo.svg" alt="" className="w-4 h-4 opacity-90"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] font-bold text-white leading-none truncate">Wizards Playground</p>
-          <p className="text-[9px] text-violet-400/60 mt-0.5 tracking-wider uppercase truncate">Toolkit</p>
+          <p className="text-[11px] font-bold text-slate-800 leading-none truncate">Wizards Playground</p>
+          <p className="text-[9px] text-teal-600/70 mt-0.5 tracking-wider uppercase truncate">Toolkit</p>
         </div>
       </div>
 
@@ -47,41 +46,40 @@ export function Sidebar() {
               flex-col justify-center w-14 h-12 text-[10px]
               md:flex-row md:w-full md:h-auto md:px-3 md:py-2.5 md:text-sm md:font-medium
               ${activeView === view
-                ? 'text-white md:border-l-2 md:border-violet-500 md:pl-[10px]'
-                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                ? 'text-violet-700 bg-violet-50 md:border-l-2 md:border-violet-500 md:pl-[10px]'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
-            style={activeView === view ? { background: 'rgba(124,58,237,0.13)' } : {}}
           >
-            <Icon size={18} className="md:w-4 md:h-4" />
+            <Icon size={16} className={`md:w-4 md:h-4 ${activeView === view ? 'text-violet-600' : 'text-slate-400'}`} />
             <span>{label}</span>
           </button>
         ))}
       </nav>
 
-      {/* Footer — Export, Settings, Back to Library */}
-      <div className="flex flex-row gap-0.5 pr-2 md:flex-col md:p-3 md:pr-3 md:border-t md:border-white/5 md:space-y-0.5">
+      {/* Footer actions */}
+      <div className="flex flex-row gap-0.5 pr-2 md:flex-col md:p-3 md:pr-3 md:border-t md:border-slate-100 md:space-y-0.5">
         <button onClick={() => setShowExportModal(true)} title="Export"
           className="flex items-center gap-3 transition-all rounded-xl
             w-12 h-12 justify-center
             md:w-full md:h-auto md:px-3 md:py-2.5 md:justify-start
-            text-slate-500 hover:text-slate-300 hover:bg-white/5">
-          <Download size={16} />
+            text-slate-500 hover:text-slate-700 hover:bg-slate-50">
+          <Download size={16} className="text-teal-500" />
           <span className="hidden md:inline text-sm font-medium">Export</span>
         </button>
         <button onClick={() => setShowProjectSettings(true)} title="Settings"
           className="flex items-center gap-3 transition-all rounded-xl
             w-12 h-12 justify-center
             md:w-full md:h-auto md:px-3 md:py-2.5 md:justify-start
-            text-slate-500 hover:text-slate-300 hover:bg-white/5">
-          <Settings size={16} />
+            text-slate-500 hover:text-slate-700 hover:bg-slate-50">
+          <Settings size={16} className="text-slate-400" />
           <span className="hidden md:inline text-sm font-medium">Settings</span>
         </button>
         <button onClick={closeBook} title="Back to Library"
           className="flex items-center gap-3 transition-all rounded-xl
             w-12 h-12 justify-center
             md:w-full md:h-auto md:px-3 md:py-2.5 md:justify-start
-            text-slate-600 hover:text-slate-400 hover:bg-white/5">
-          <ArrowLeft size={16} />
+            text-slate-400 hover:text-slate-600 hover:bg-slate-50">
+          <ArrowLeft size={16} className="text-slate-300" />
           <span className="hidden md:inline text-sm font-medium">Library</span>
         </button>
       </div>

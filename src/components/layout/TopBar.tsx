@@ -46,13 +46,12 @@ export function TopBar() {
   };
 
   return (
-    <header className="relative z-40 h-12 backdrop-blur border-b border-white/5 flex items-center px-3 gap-2 shrink-0"
-      style={{ background: 'rgba(13,11,23,0.85)' }}>
+    <header className="relative z-40 h-12 bg-white border-b border-slate-200 flex items-center px-3 gap-2 shrink-0">
       {/* Mobile outline toggle */}
       <button
         onClick={() => setShowMobileSidebar(!showMobileSidebar)}
         title="Toggle outline"
-        className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-all shrink-0"
+        className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
       >
         <Menu size={16} />
       </button>
@@ -61,30 +60,27 @@ export function TopBar() {
       <button
         onClick={closeBook}
         title="Back to Library"
-        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-all shrink-0"
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
       >
         <ArrowLeft size={14} />
-        <img src="/logo.svg" alt="" className="w-5 h-5 opacity-70" />
-        <span className="hidden sm:inline font-medium">Wizards Playground</span>
+        <img src="/logo.svg" alt="" className="w-4 h-4 opacity-60" />
+        <span className="hidden sm:inline font-medium">Library</span>
       </button>
 
       {/* XP bar (desktop) */}
       <div className="hidden md:flex items-center gap-2 px-2 py-1 shrink-0">
-        <Star size={11} className="text-amber-400 shrink-0" />
-        <span className="text-[10px] font-bold text-amber-300/80 shrink-0">Lv.{level}</span>
-        <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+        <Star size={11} className="text-amber-500 shrink-0" />
+        <span className="text-[10px] font-bold text-amber-600 shrink-0">Lv.{level}</span>
+        <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${pct}%`,
-              background: 'linear-gradient(to right, #7c3aed, #a78bfa)',
-            }}
+            style={{ width: `${pct}%`, background: 'linear-gradient(to right, #7c3aed, #0d9488)' }}
           />
         </div>
-        <span className="text-[10px] text-slate-600 shrink-0">{totalXP} XP</span>
+        <span className="text-[10px] text-slate-400 shrink-0">{totalXP} XP</span>
       </div>
 
-      <span className="text-slate-700 text-sm">|</span>
+      <span className="text-slate-200 text-sm">|</span>
 
       {/* Project title */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -98,12 +94,12 @@ export function TopBar() {
               if (e.key === 'Enter') handleTitleBlur();
               if (e.key === 'Escape') setEditingTitle(false);
             }}
-            className="bg-slate-800 border border-indigo-500 rounded px-2 py-0.5 text-sm text-slate-100 outline-none w-48"
+            className="bg-white border border-violet-400 rounded px-2 py-0.5 text-sm text-slate-800 outline-none w-48"
           />
         ) : (
           <button
             onClick={handleTitleClick}
-            className="text-sm font-medium text-slate-300 hover:text-white truncate max-w-[180px]"
+            className="text-sm font-semibold text-slate-700 hover:text-slate-900 truncate max-w-[180px]"
             title="Click to rename"
           >
             {activeBook?.title || 'Untitled'}
@@ -115,33 +111,31 @@ export function TopBar() {
             style={{ backgroundColor: activeBook.coverColor }}
           />
         )}
-        <span className="text-slate-600 text-sm hidden sm:inline">·</span>
-        <span className="text-sm text-slate-500 hidden sm:inline">{viewLabels[activeView]}</span>
+        <span className="text-slate-300 text-sm hidden sm:inline">·</span>
+        <span className="text-sm text-slate-400 hidden sm:inline">{viewLabels[activeView]}</span>
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-1">
-        {/* Focus Timer */}
         <FocusTimer />
 
-        <div className="w-px h-4 bg-slate-700/50 mx-0.5" />
+        <div className="w-px h-4 bg-slate-200 mx-0.5" />
 
-        {/* Achievements counter */}
         <button
           onClick={() => setShowAchievementsModal(true)}
           title="Achievements"
-          className="relative flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-slate-400 hover:text-amber-300 hover:bg-slate-800 transition-all"
+          className="relative flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-all"
         >
           <Trophy size={14} />
           {unlocks.length > 0 && (
-            <span className="text-[10px] font-bold text-amber-400">{unlocks.length}</span>
+            <span className="text-[10px] font-bold text-amber-500">{unlocks.length}</span>
           )}
         </button>
 
         <button
           onClick={saveProject}
           title="Save project to file"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 transition-all"
         >
           <Save size={14} />
           <span className="hidden md:inline">Save</span>
@@ -149,7 +143,7 @@ export function TopBar() {
         <button
           onClick={() => fileInputRef.current?.click()}
           title="Load project from file"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 transition-all"
         >
           <Upload size={14} />
           <span className="hidden md:inline">Load</span>
@@ -157,7 +151,7 @@ export function TopBar() {
         <button
           onClick={() => setShowExportModal(true)}
           title="Export manuscript"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-500 hover:text-teal-700 hover:bg-teal-50 transition-all"
         >
           <Download size={14} />
           <span className="hidden md:inline">Export</span>
@@ -167,8 +161,8 @@ export function TopBar() {
           title="World Reference"
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all
             ${showWorldRef
-              ? 'bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              ? 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+              : 'text-slate-500 hover:text-teal-700 hover:bg-teal-50'
             }`}
         >
           <BookOpen size={14} />
@@ -176,13 +170,7 @@ export function TopBar() {
         </button>
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileChange} className="hidden" />
     </header>
   );
 }

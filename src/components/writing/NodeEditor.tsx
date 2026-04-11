@@ -98,14 +98,14 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="px-6 pt-4 pb-2 border-b border-slate-700/30">
+      <div className="px-6 pt-4 pb-2 border-b border-slate-200">
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-xs text-slate-500 uppercase tracking-wider">{typeLabel}</span>
+          <span className="text-[10px] font-semibold text-teal-600 uppercase tracking-widest">{typeLabel}</span>
           {!distractFree && (
             <button
               onClick={() => setShowDistractFree(true)}
               title="Distraction-free mode (Esc to exit)"
-              className="p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             >
               <Maximize2 size={13} />
             </button>
@@ -114,13 +114,13 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
         <input
           value={node.title}
           onChange={(e) => updateNode(node.id, { title: e.target.value })}
-          className="w-full bg-transparent text-2xl font-bold text-slate-100 placeholder-slate-600 focus:outline-none"
+          className="w-full bg-transparent text-2xl font-bold text-slate-900 placeholder-slate-300 focus:outline-none"
           placeholder={`${typeLabel} title...`}
         />
         <input
           value={node.synopsis}
           onChange={(e) => updateNode(node.id, { synopsis: e.target.value })}
-          className="w-full bg-transparent text-sm text-slate-500 placeholder-slate-700 focus:outline-none mt-1"
+          className="w-full bg-transparent text-sm text-slate-400 placeholder-slate-300 focus:outline-none mt-1"
           placeholder="Synopsis (optional)..."
         />
       </div>

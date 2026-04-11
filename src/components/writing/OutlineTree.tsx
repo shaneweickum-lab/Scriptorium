@@ -91,14 +91,14 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Outline</span>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+        <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">Outline</span>
         <div className="flex items-center gap-1">
           {onGlobalSearch && (
             <button
               onClick={onGlobalSearch}
               title="Search all sections"
-              className="p-1 rounded text-slate-600 hover:text-slate-400 hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             >
               <Search size={13} />
             </button>
@@ -106,14 +106,14 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
           <button
             onClick={() => setShowHierarchyConfig(true)}
             title="Configure hierarchy labels"
-            className="p-1 rounded text-slate-600 hover:text-slate-400 hover:bg-slate-800 transition-colors"
+            className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           >
             <Settings2 size={14} />
           </button>
           <button
             onClick={() => addNode(bookId, null, topLevelType)}
             title={`Add ${labels[topLevelType]}`}
-            className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+            className="p-1 rounded text-violet-500 hover:text-violet-700 hover:bg-violet-50 transition-colors"
           >
             <Plus size={14} />
           </button>
@@ -122,11 +122,11 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
 
       <div className="flex-1 overflow-y-auto px-1 py-1">
         {nodes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 gap-2 text-slate-600 text-xs">
+          <div className="flex flex-col items-center justify-center h-32 gap-2 text-slate-400 text-xs">
             <p>No content yet</p>
             <button
               onClick={() => addNode(bookId, null, topLevelType)}
-              className="text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="text-violet-600 hover:text-violet-800 transition-colors"
             >
               + Add {labels[topLevelType]}
             </button>
@@ -158,31 +158,31 @@ export function OutlineTree({ onGlobalSearch }: OutlineTreeProps) {
 
       {/* Total word count footer */}
       {nodes.length > 0 && (
-        <div className="px-3 py-2 border-t border-slate-700/30 shrink-0">
+        <div className="px-3 py-2 border-t border-slate-200 shrink-0">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-slate-600 uppercase tracking-wider">Total Words</span>
-            <span className="text-xs font-semibold text-slate-400">{totalWords.toLocaleString()}</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider">Total Words</span>
+            <span className="text-xs font-semibold text-slate-600">{totalWords.toLocaleString()}</span>
           </div>
           {wordGoal ? (
             <>
-              <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${goalPct}%`,
                     background: goalPct === 100
                       ? 'linear-gradient(to right, #10b981, #34d399)'
-                      : 'linear-gradient(to right, #6366f1, #818cf8)',
+                      : 'linear-gradient(to right, #7c3aed, #0d9488)',
                   }}
                 />
               </div>
               <div className="flex items-center justify-between mt-0.5">
-                <span className="text-[9px] text-slate-700">{goalPct}% of goal</span>
-                <span className="text-[9px] text-slate-700">{wordGoal.toLocaleString()} target</span>
+                <span className="text-[9px] text-slate-400">{goalPct}% of goal</span>
+                <span className="text-[9px] text-slate-400">{wordGoal.toLocaleString()} target</span>
               </div>
             </>
           ) : (
-            <div className="w-full h-px bg-slate-800" />
+            <div className="w-full h-px bg-slate-100" />
           )}
         </div>
       )}

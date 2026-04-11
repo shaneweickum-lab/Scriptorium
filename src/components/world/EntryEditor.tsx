@@ -50,17 +50,17 @@ export function EntryEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* ARCANUM EDITOR header */}
-      <div className="px-5 pt-4 pb-3 border-b border-purple-900/20">
+      <div className="px-5 pt-4 pb-3 border-b border-slate-200">
         {/* Header label */}
         <div className="arcanum-header mb-1.5">Arcanum Editor</div>
 
         {/* Breadcrumb */}
         {section && (
           <p className="text-[11px] text-slate-500 mb-3 tracking-wide">
-            <span className="text-purple-400/60 uppercase text-[10px] font-semibold tracking-[0.1em]">
+            <span className="text-teal-600 uppercase text-[10px] font-semibold tracking-[0.1em]">
               {section.name}
             </span>
-            <span className="mx-1.5 text-slate-600">–</span>
+            <span className="mx-1.5 text-slate-400">–</span>
             <span className="text-slate-400">{entry.title || 'Untitled'}</span>
           </p>
         )}
@@ -69,22 +69,22 @@ export function EntryEditor() {
         <input
           value={entry.title}
           onChange={(e) => updateEntry(entry.id, { title: e.target.value })}
-          className="w-full bg-transparent text-xl font-semibold text-white placeholder-slate-600 focus:outline-none border-b border-transparent focus:border-violet-500/60 pb-1 transition-colors"
+          className="w-full bg-transparent text-xl font-semibold text-slate-900 placeholder-slate-400 focus:outline-none border-b border-transparent focus:border-violet-400 pb-1 transition-colors"
           placeholder="Entry title..."
         />
 
         {/* Tags */}
         <div className="flex flex-wrap items-center gap-1.5 mt-3">
-          <Tag size={12} className="text-violet-500/50" />
+          <Tag size={12} className="text-violet-400" />
           {entry.tags.map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-1 text-xs bg-violet-900/30 text-violet-300/80 border border-violet-800/30 px-2 py-0.5 rounded-full"
+              className="flex items-center gap-1 text-xs bg-violet-100 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-full"
             >
               {tag}
               <button
                 onClick={() => updateEntry(entry.id, { tags: entry.tags.filter((t) => t !== tag) })}
-                className="text-violet-500/60 hover:text-violet-300"
+                className="text-violet-400 hover:text-violet-600"
               >
                 <X size={10} />
               </button>
@@ -98,7 +98,7 @@ export function EntryEditor() {
             }}
             onBlur={handleAddTag}
             placeholder="Add tag..."
-            className="text-xs bg-transparent text-slate-400 placeholder-slate-600 focus:outline-none w-20"
+            className="text-xs bg-transparent text-slate-500 placeholder-slate-400 focus:outline-none w-20"
           />
         </div>
       </div>
@@ -115,7 +115,7 @@ export function EntryEditor() {
         </div>
 
         {/* Custom fields panel */}
-        <div className="w-64 shrink-0 border-l border-purple-900/20 overflow-y-auto p-3">
+        <div className="w-64 shrink-0 border-l border-slate-200 overflow-y-auto p-3">
           <CustomFieldEditor
             fields={entry.customFields}
             onAdd={() => addCustomField(entry.id)}

@@ -12,8 +12,8 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #0d0b17;
-  color: #e2e8f0;
+  background-color: #ffffff;
+  color: #1e293b;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -23,39 +23,39 @@ body,
   outline: none;
   min-height: 100%;
   padding: 2rem;
-  color: #e2e8f0;
+  color: #1e293b;
   /* font-family, font-size, line-height are inherited from the RichTextEditor
      scroll container so the editor appearance settings take effect */
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: #4b5563;
+  color: #94a3b8;
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
 }
 
-.ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #f1f5f9; }
-.ProseMirror h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f1f5f9; }
-.ProseMirror h3 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #f1f5f9; }
+.ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #0f172a; }
+.ProseMirror h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #0f172a; }
+.ProseMirror h3 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #0f172a; }
 .ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; margin: 0.75rem 0; }
 .ProseMirror li { margin: 0.25rem 0; }
 .ProseMirror blockquote {
-  border-left: 3px solid #818cf8;
+  border-left: 3px solid #7c3aed;
   padding-left: 1rem;
-  color: #94a3b8;
+  color: #64748b;
   font-style: italic;
   margin: 1rem 0;
 }
-.ProseMirror hr { border: none; border-top: 1px solid #334155; margin: 2rem 0; }
-.ProseMirror mark { background-color: rgba(129, 140, 248, 0.25); border-radius: 2px; }
+.ProseMirror hr { border: none; border-top: 1px solid #e2e8f0; margin: 2rem 0; }
+.ProseMirror mark { background-color: rgba(124, 58, 237, 0.12); border-radius: 2px; }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* Resize handle */
 .resize-handle {
@@ -66,16 +66,16 @@ body,
   flex-shrink: 0;
 }
 .resize-handle:hover, .resize-handle.active {
-  background: #818cf8;
+  background: #7c3aed;
 }
 
 /* World mention chips in the editor */
 .world-mention {
   display: inline-flex;
   align-items: center;
-  background-color: rgba(99, 102, 241, 0.18);
-  color: #a5b4fc;
-  border: 1px solid rgba(99, 102, 241, 0.35);
+  background-color: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.25);
   border-radius: 5px;
   padding: 0 5px;
   font-size: 0.9em;
@@ -86,23 +86,23 @@ body,
   line-height: 1.5;
 }
 .world-mention:hover {
-  background-color: rgba(99, 102, 241, 0.32);
-  border-color: rgba(99, 102, 241, 0.6);
-  color: #c7d2fe;
+  background-color: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.5);
+  color: #6d28d9;
 }
 
-/* Arcane decorative glow for active world sections */
+/* Active world section highlight */
 .arcane-active {
-  box-shadow: inset 3px 0 0 #7c3aed, inset 0 0 20px rgba(124, 58, 237, 0.08);
+  box-shadow: inset 2px 0 0 #7c3aed;
 }
 
-/* Runic section header text style */
+/* Section header text style */
 .arcane-section-header {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(196, 181, 253, 0.7);
+  color: #0d9488;
 }
 
 /* Editor images */
@@ -149,6 +149,5 @@ body,
   font-weight: 800;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(167, 139, 250, 0.8);
-  text-shadow: 0 0 20px rgba(167, 139, 250, 0.4);
+  color: #7c3aed;
 }

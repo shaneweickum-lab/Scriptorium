@@ -34,7 +34,7 @@ export function WritingSpace() {
         {/* Outline tree / Global search: drawer on mobile, static on desktop */}
         <div className={`
           absolute inset-y-0 left-0 z-30 w-64 shrink-0
-          bg-slate-900 border-r border-slate-700/50
+          bg-white border-r border-slate-200
           transform transition-transform duration-200
           ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'}
           md:relative md:w-56 md:translate-x-0 md:transform-none md:transition-none
@@ -54,7 +54,7 @@ export function WritingSpace() {
         )}
 
         {/* Editor */}
-        <div className="flex-1 overflow-hidden bg-slate-900/10 min-w-0">
+        <div className="flex-1 overflow-hidden bg-white min-w-0">
           <NodeEditor />
         </div>
 

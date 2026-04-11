@@ -55,9 +55,11 @@ export function TreeNode({
     <div ref={setNodeRef} style={style} className="select-none">
       <div
         className={`group flex items-center gap-1 py-1.5 pr-2 rounded-lg cursor-pointer transition-all ${
-          isActive ? 'bg-indigo-600/20 text-indigo-300' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          isActive
+            ? 'bg-violet-50 text-violet-700 border-l-2 border-violet-500 pl-[6px]'
+            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
         }`}
-        style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        style={{ paddingLeft: isActive ? undefined : `${depth * 16 + 8}px` }}
         onClick={() => setActiveNode(node.id)}
       >
         <div
@@ -66,12 +68,12 @@ export function TreeNode({
           className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical size={12} className="text-slate-600" />
+          <GripVertical size={12} className="text-slate-300" />
         </div>
 
         <button
           onClick={(e) => { e.stopPropagation(); onToggle(node.id); }}
-          className="shrink-0 text-slate-600 hover:text-slate-400 transition-colors"
+          className={`shrink-0 transition-colors ${isActive ? 'text-violet-500' : 'text-slate-300 hover:text-slate-500'}`}
         >
           {availableChildTypes.length > 0 ? (
             isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />
@@ -80,17 +82,17 @@ export function TreeNode({
           )}
         </button>
 
-        <Icon size={13} className="shrink-0" />
+        <Icon size={13} className={`shrink-0 ${isActive ? 'text-violet-500' : 'text-slate-400'}`} />
         <span className="text-xs flex-1 truncate">{node.title}</span>
         {node.wordCountCache > 0 && (
-          <span className="text-[10px] text-slate-600 shrink-0">{node.wordCountCache}w</span>
+          <span className="text-[10px] text-slate-400 shrink-0">{node.wordCountCache}w</span>
         )}
 
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 shrink-0" onClick={(e) => e.stopPropagation()}>
           {availableChildTypes.length > 0 && (
             <button
               onClick={() => onAddChild(node.id, availableChildTypes[0])}
-              className="p-1 rounded hover:bg-slate-700 transition-colors"
+              className="p-1 rounded hover:bg-violet-100 text-violet-500 hover:text-violet-700 transition-colors"
               title={`Add ${labels[availableChildTypes[0]] || availableChildTypes[0]}`}
             >
               <Plus size={11} />
@@ -98,14 +100,14 @@ export function TreeNode({
           )}
           <button
             onClick={() => onRename(node)}
-            className="p-1 rounded hover:bg-slate-700 transition-colors"
+            className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
             title="Rename"
           >
             <Pencil size={11} />
           </button>
           <button
             onClick={() => onDelete(node)}
-            className="p-1 rounded hover:bg-red-900/40 text-red-400 transition-colors"
+            className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
             title="Delete"
           >
             <Trash2 size={11} />

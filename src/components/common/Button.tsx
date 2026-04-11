@@ -6,13 +6,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
 }
 
-export function Button({ variant = 'secondary', size = 'md', children, className = '', ...props }: ButtonProps) {
+export function Button({ variant = 'secondary', size = 'md', children, className = '', style, ...props }: ButtonProps) {
   const base = 'inline-flex items-center gap-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
   const variants = {
-    primary: 'bg-indigo-600 hover:bg-indigo-500 text-white',
-    secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-200',
-    ghost: 'hover:bg-slate-700 text-slate-300 hover:text-slate-100',
-    danger: 'bg-red-600 hover:bg-red-500 text-white',
+    primary: 'text-white',
+    secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200',
+    ghost: 'hover:bg-slate-100 text-slate-600 hover:text-slate-800',
+    danger: 'bg-red-500 hover:bg-red-600 text-white',
   };
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',
@@ -20,8 +20,12 @@ export function Button({ variant = 'secondary', size = 'md', children, className
     lg: 'px-5 py-2.5 text-base',
   };
 
+  const primaryStyle = variant === 'primary'
+    ? { background: 'linear-gradient(135deg, #7c3aed, #0d9488)', ...style }
+    : style;
+
   return (
-    <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+    <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} style={primaryStyle} {...props}>
       {children}
     </button>
   );

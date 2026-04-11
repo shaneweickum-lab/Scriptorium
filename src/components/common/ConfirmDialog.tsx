@@ -19,21 +19,18 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal title={title} onClose={onClose} size="sm">
-      <p className="text-slate-300 mb-6">{message}</p>
+      <p className="text-slate-600 mb-6">{message}</p>
       <div className="flex justify-end gap-3">
         <button
           onClick={onClose}
-          className="px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors"
+          className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors text-sm font-medium"
         >
           Cancel
         </button>
         <button
           onClick={() => { onConfirm(); onClose(); }}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            danger
-              ? 'bg-red-600 hover:bg-red-500 text-white'
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-          }`}
+          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors text-white ${danger ? 'bg-red-500 hover:bg-red-600' : ''}`}
+          style={!danger ? { background: 'linear-gradient(135deg, #7c3aed, #0d9488)' } : {}}
         >
           {confirmLabel}
         </button>
