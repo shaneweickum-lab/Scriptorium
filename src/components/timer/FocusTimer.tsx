@@ -83,14 +83,14 @@ export function FocusTimer({ compact = false }: Props) {
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
           isRunning
             ? isUrgent
-              ? 'bg-red-900/30 text-red-300 border border-red-500/40 animate-pulse'
-              : 'bg-violet-900/30 text-violet-300 border border-violet-500/30'
-            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              ? 'bg-red-50 text-red-600 border border-red-200 animate-pulse'
+              : 'bg-violet-50 text-violet-700 border border-violet-200'
+            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
         }`}
       >
         {isRunning ? (
           <>
-            <Timer size={13} className={isUrgent ? 'text-red-400' : 'text-violet-400'} />
+            <Timer size={13} className={isUrgent ? 'text-red-500' : 'text-violet-500'} />
             <span className="font-mono tabular-nums">{formatRemaining(remaining)}</span>
             <ChevronDown size={11} className="opacity-60" />
           </>
@@ -105,39 +105,39 @@ export function FocusTimer({ compact = false }: Props) {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-[100] w-52
-          bg-[#0d1526] border border-slate-700/60 rounded-xl shadow-2xl py-2 overflow-hidden"
-          style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 20px rgba(124,58,237,0.08)' }}
+        <div
+          className="absolute right-0 top-full mt-1 z-[100] w-52 bg-white border border-slate-200 rounded-xl shadow-xl py-2 overflow-hidden"
+          style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(124,58,237,0.06)' }}
         >
           {isRunning ? (
             /* Running state — show stop + remaining */
             <div className="px-3 py-2">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Timer running</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Timer running</p>
 
               {/* Progress bar */}
-              <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-3">
+              <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-3">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${urgentPct * 100}%`,
                     background: isUrgent
                       ? 'linear-gradient(to right, #ef4444, #f97316)'
-                      : 'linear-gradient(to right, #7c3aed, #a78bfa)',
+                      : 'linear-gradient(to right, #7c3aed, #0d9488)',
                   }}
                 />
               </div>
 
               <div className="text-center mb-3">
-                <span className="text-2xl font-mono font-bold text-slate-200 tabular-nums">
+                <span className="text-2xl font-mono font-bold text-slate-800 tabular-nums">
                   {formatRemaining(remaining)}
                 </span>
-                <p className="text-[10px] text-slate-600 mt-0.5">remaining</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">remaining</p>
               </div>
 
               <button
                 onClick={() => { stopTimer(); setOpen(false); }}
                 className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg
-                  text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 border border-red-900/30
+                  text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border border-red-200
                   transition-colors"
               >
                 <Square size={11} />
@@ -147,7 +147,7 @@ export function FocusTimer({ compact = false }: Props) {
           ) : (
             /* Idle state — show presets + custom */
             <>
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider px-3 mb-1">Presets</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider px-3 mb-1">Presets</p>
               {PRESETS.map((p) => (
                 <button
                   key={p.seconds}
@@ -155,22 +155,22 @@ export function FocusTimer({ compact = false }: Props) {
                   className={`flex items-center justify-between w-full px-3 py-2 text-xs
                     transition-colors group ${
                       lastDuration === p.seconds
-                        ? 'text-violet-300 bg-violet-900/20'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        ? 'text-violet-700 bg-violet-50'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                     }`}
                 >
                   <span>{p.label}</span>
                   {lastDuration === p.seconds && (
-                    <span className="text-[9px] text-violet-500 uppercase tracking-wider">last used</span>
+                    <span className="text-[9px] text-violet-400 uppercase tracking-wider">last used</span>
                   )}
                 </button>
               ))}
 
               {/* Divider */}
-              <div className="mx-3 my-2 border-t border-slate-700/40" />
+              <div className="mx-3 my-2 border-t border-slate-100" />
 
               {/* Custom */}
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider px-3 mb-1.5">Custom</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider px-3 mb-1.5">Custom</p>
               <div className="flex gap-1.5 px-3 pb-1">
                 <input
                   type="number"
@@ -180,17 +180,17 @@ export function FocusTimer({ compact = false }: Props) {
                   value={customMin}
                   onChange={(e) => setCustomMin(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleCustomStart()}
-                  className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5
-                    text-xs text-slate-200 placeholder-slate-600 focus:outline-none
-                    focus:border-violet-500 text-center [appearance:textfield]
+                  className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5
+                    text-xs text-slate-700 placeholder-slate-400 focus:outline-none
+                    focus:border-violet-400 text-center [appearance:textfield]
                     [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <button
                   onClick={handleCustomStart}
                   disabled={!customMin || parseInt(customMin) <= 0}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold
-                    bg-violet-600 hover:bg-violet-500 text-white
-                    disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white
+                    disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
                 >
                   Start
                 </button>
