@@ -15,7 +15,7 @@ function highlight(text: string, query: string): React.ReactNode {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-amber-400/25 text-amber-200 rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
+      <mark className="bg-amber-100 text-amber-700 rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
       {text.slice(idx + query.length)}
     </>
   );
@@ -57,18 +57,18 @@ export function GlobalSearch({ onClose }: Props) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 border-r border-slate-700/50">
+    <div className="flex flex-col h-full bg-white border-r border-slate-200">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-700/50">
-        <Search size={14} className="text-slate-500 shrink-0" />
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200">
+        <Search size={14} className="text-slate-400 shrink-0" />
         <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search all sections…"
-          className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+          className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
         />
-        <button onClick={onClose} className="p-1 rounded text-slate-600 hover:text-slate-400">
+        <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
           <X size={13} />
         </button>
       </div>
@@ -76,18 +76,18 @@ export function GlobalSearch({ onClose }: Props) {
       {/* Results */}
       <div className="flex-1 overflow-y-auto">
         {query.trim() === '' ? (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-700 text-xs text-center px-4">
+          <div className="flex flex-col items-center justify-center h-32 text-slate-400 text-xs text-center px-4">
             <Search size={20} className="mb-2 opacity-40" />
             Type to search across all sections
           </div>
         ) : results.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-700 text-xs text-center px-4">
+          <div className="flex flex-col items-center justify-center h-32 text-slate-400 text-xs text-center px-4">
             <p>No matches for</p>
             <p className="text-slate-500 mt-1">"{query}"</p>
           </div>
         ) : (
-          <div className="flex flex-col divide-y divide-slate-800/60">
-            <p className="px-3 py-1.5 text-[10px] text-slate-600 uppercase tracking-wider">
+          <div className="flex flex-col divide-y divide-slate-100">
+            <p className="px-3 py-1.5 text-[10px] text-slate-400 uppercase tracking-wider">
               {results.length} result{results.length !== 1 ? 's' : ''}
             </p>
             {results.map((n) => {
@@ -98,12 +98,12 @@ export function GlobalSearch({ onClose }: Props) {
                   key={n.id}
                   onClick={() => handleSelect(n.id)}
                   className="flex flex-col items-start gap-1 px-3 py-2.5 text-left
-                    hover:bg-slate-800/60 transition-colors group"
+                    hover:bg-slate-50 transition-colors group"
                 >
                   <div className="flex items-center gap-1.5 w-full">
-                    <FileText size={11} className="text-slate-600 shrink-0" />
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider shrink-0">{typeLabel}</span>
-                    <span className="text-xs font-medium text-slate-300 group-hover:text-white truncate">
+                    <FileText size={11} className="text-teal-500 shrink-0" />
+                    <span className="text-[10px] text-teal-600 uppercase tracking-wider font-semibold shrink-0">{typeLabel}</span>
+                    <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900 truncate">
                       {highlight(n.title || 'Untitled', query.trim())}
                     </span>
                   </div>
