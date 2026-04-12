@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star, Sparkles } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useAchievementStore } from '../../store/achievementStore';
@@ -15,6 +15,8 @@ export function TopBar() {
   const setShowMobileSidebar = useUIStore((s) => s.setShowMobileSidebar);
   const showWorldRef = useUIStore((s) => s.showWorldRef);
   const setShowWorldRef = useUIStore((s) => s.setShowWorldRef);
+  const showMaven = useUIStore((s) => s.showMaven);
+  const setShowMaven = useUIStore((s) => s.setShowMaven);
   const setShowAchievementsModal = useUIStore((s) => s.setShowAchievementsModal);
   const { saveProject, loadProject } = useProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -167,6 +169,18 @@ export function TopBar() {
         >
           <BookOpen size={14} />
           <span className="hidden md:inline">World</span>
+        </button>
+        <button
+          onClick={() => setShowMaven(!showMaven)}
+          title="Maven AI Assistant"
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all
+            ${showMaven
+              ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+              : 'text-slate-500 hover:text-violet-700 hover:bg-violet-50'
+            }`}
+        >
+          <Sparkles size={14} />
+          <span className="hidden md:inline">Maven</span>
         </button>
       </div>
 

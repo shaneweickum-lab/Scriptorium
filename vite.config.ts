@@ -30,6 +30,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // The ONNX Runtime WASM bundle pushes the main chunk above Workbox's
+        // default 2 MiB precache limit. Raise it to 5 MiB.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Cache HuggingFace model weights and ONNX WASM runtime so the
         // embedding model works offline after the first online load.
         runtimeCaching: [

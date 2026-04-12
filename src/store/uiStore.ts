@@ -20,6 +20,7 @@ interface UIState {
   showWorldRef: boolean;
   showDistractFree: boolean;
   showGlobalSearch: boolean;
+  showMaven: boolean;
   toasts: Toast[];
 
   setActiveView: (view: ActiveView) => void;
@@ -31,6 +32,7 @@ interface UIState {
   setShowWorldRef: (show: boolean) => void;
   setShowDistractFree: (show: boolean) => void;
   setShowGlobalSearch: (show: boolean) => void;
+  setShowMaven: (show: boolean) => void;
   addToast: (message: string, type?: Toast['type']) => void;
   addAchievementToast: (name: string, xp: number, emoji: string) => void;
   removeToast: (id: string) => void;
@@ -46,6 +48,7 @@ export const useUIStore = create<UIState>((set) => ({
   showWorldRef: false,
   showDistractFree: false,
   showGlobalSearch: false,
+  showMaven: false,
   toasts: [],
 
   setActiveView: (view) => set({ activeView: view }),
@@ -57,6 +60,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowWorldRef: (show) => set({ showWorldRef: show }),
   setShowDistractFree: (show) => set({ showDistractFree: show }),
   setShowGlobalSearch: (show) => set({ showGlobalSearch: show }),
+  setShowMaven: (show) => set({ showMaven: show }),
 
   addToast: (message, type = 'success') => {
     const id = crypto.randomUUID();
