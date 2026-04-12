@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Plus, Globe2, BookOpen, Pencil, Trash2, MoreHorizontal,
-  Search, Star, Trophy, Download, X, Share, Settings, Menu,
+  Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload,
 } from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -22,6 +22,8 @@ import { BOOK_COLORS, WORLD_COLORS } from '../../types';
 import type { Book, WorldBible } from '../../types';
 import { getLevel, getLevelProgress } from '../../types/achievements';
 import { useStreak } from '../../store/streakStore';
+import { db } from '../../db/database';
+import { libraryRepository } from '../../db/libraryRepository';
 
 /* ── Color helper ─────────────────────────────────────────── */
 function shiftColor(hex: string, amount: number): string {
@@ -443,6 +445,8 @@ export function Library() {
   const [editWorldTarget, setEditWorldTarget] = useState<WorldBible | null>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const loadFileRef = useRef<HTMLInputElement>(null);
+  const addToast = useUIStore((s) => s.addToast);
 
   const onUnlock = (name: string, xp: number, emoji: string) => addAchievementToast(name, xp, emoji);
 
@@ -467,6 +471,50 @@ export function Library() {
     const wb = await createWorldBible(name, description, color);
     await checkGlobal(books.length, worldBibles.length + 1, onUnlock);
     await handleOpenWorldBible(wb.id);
+  };
+
+  const handleLoadFile = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (data.type === 'worldBible' && data.worldBible) {
+        // World Bible file
+        const wbId = data.worldBible.id;
+        await db.worldSections.where('bookId').equals(wbId).delete();
+        await db.worldEntries.where('bookId').equals(wbId).delete();
+        await db.worldBibles.put(data.worldBible);
+        if (data.sections?.length) await db.worldSections.bulkPut(data.sections);
+        if (data.entries?.length) await db.worldEntries.bulkPut(data.entries);
+        addToast('World Bible loaded');
+      } else if (data.version && data.writingNodes && data.book) {
+        // Book project file (v2+)
+        const bookId = data.book.id;
+        await db.worldSections.where('bookId').equals(bookId).delete();
+        await db.worldEntries.where('bookId').equals(bookId).delete();
+        await db.writingNodes.where('bookId').equals(bookId).delete();
+        await db.assemblies.where('bookId').equals(bookId).delete();
+        await libraryRepository.addBook(data.book);
+        if (data.worldSections?.length) await db.worldSections.bulkPut(data.worldSections);
+        if (data.worldEntries?.length) await db.worldEntries.bulkPut(data.worldEntries);
+        if (data.writingNodes?.length) await db.writingNodes.bulkPut(data.writingNodes);
+        if (data.assemblies?.length) await db.assemblies.bulkPut(data.assemblies);
+        if (data.linkedWorldBible) {
+          const { worldBible, sections: wbSections, entries: wbEntries } = data.linkedWorldBible;
+          const wbId = worldBible.id;
+          await db.worldSections.where('bookId').equals(wbId).delete();
+          await db.worldEntries.where('bookId').equals(wbId).delete();
+          await db.worldBibles.put(worldBible);
+          if (wbSections?.length) await db.worldSections.bulkPut(wbSections);
+          if (wbEntries?.length) await db.worldEntries.bulkPut(wbEntries);
+        }
+        addToast('Book loaded — it now appears in your library');
+      } else {
+        addToast('Unrecognised file format', 'error');
+      }
+    } catch {
+      addToast('Failed to load file', 'error');
+    }
   };
 
   const nextBookColor = BOOK_COLORS[books.length % BOOK_COLORS.length];
@@ -541,6 +589,26 @@ export function Library() {
             <div className="hidden sm:block">
               <FocusTimer />
             </div>
+
+            {/* Load button */}
+            <button
+              onClick={() => loadFileRef.current?.click()}
+              title="Load a book or world bible from a file"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-full text-sm font-semibold text-slate-600
+                border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shrink-0">
+              <Upload size={15} />
+              <span className="hidden sm:inline">Load</span>
+            </button>
+            <input
+              ref={loadFileRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) { handleLoadFile(file); e.target.value = ''; }
+              }}
+            />
 
             {/* New button */}
             <button

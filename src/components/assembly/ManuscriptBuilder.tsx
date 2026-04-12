@@ -23,22 +23,22 @@ function SortableItem({ item, nodeTitle, onRemove }: {
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700/50 group">
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400">
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-slate-200 group">
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600">
         <GripVertical size={14} />
       </div>
       <div className="flex-1 min-w-0">
         {item.type === 'break' ? (
-          <span className="text-slate-500 text-sm italic">— Section Break —</span>
+          <span className="text-slate-400 text-sm italic">— Section Break —</span>
         ) : item.type === 'frontmatter' ? (
-          <span className="text-slate-400 text-sm">Front Matter: {item.customTitle || 'Untitled'}</span>
+          <span className="text-slate-500 text-sm">Front Matter: {item.customTitle || 'Untitled'}</span>
         ) : (
-          <span className="text-sm text-slate-300 truncate">{nodeTitle}</span>
+          <span className="text-sm text-slate-700 truncate">{nodeTitle}</span>
         )}
       </div>
       <button
         onClick={() => onRemove(item.id)}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-900/40 text-red-400 transition-all"
+        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
         title="Remove"
       >
         <Trash2 size={12} />
@@ -81,12 +81,12 @@ export function ManuscriptBuilder() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
-        <h3 className="text-sm font-semibold text-slate-300">Manuscript Order</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+        <h3 className="text-sm font-semibold text-slate-700">Manuscript Order</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={() => addBreakItem(bookId)}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 px-2 py-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
             title="Add section break"
           >
             <Minus size={12} />
@@ -94,7 +94,7 @@ export function ManuscriptBuilder() {
           </button>
           <button
             onClick={() => setShowNodePicker(!showNodePicker)}
-            className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1.5 rounded-lg hover:bg-indigo-900/30 transition-colors"
+            className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 px-2 py-1.5 rounded-lg hover:bg-violet-50 transition-colors"
           >
             <Plus size={12} />
             Add Content
@@ -103,7 +103,7 @@ export function ManuscriptBuilder() {
       </div>
 
       {showNodePicker && (
-        <div className="border-b border-slate-700/50 bg-slate-800/50 max-h-48 overflow-y-auto p-2">
+        <div className="border-b border-slate-200 bg-slate-50 max-h-48 overflow-y-auto p-2">
           <p className="text-xs text-slate-500 px-2 mb-1">Select content to add:</p>
           {flatNodes.map((item) => {
             const alreadyAdded = items.some((i) => i.nodeId === item.id);
@@ -114,14 +114,14 @@ export function ManuscriptBuilder() {
                 onClick={() => { addNodeItem(bookId, item.id); setShowNodePicker(false); }}
                 className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
                   alreadyAdded
-                    ? 'text-slate-600 cursor-not-allowed'
-                    : 'text-slate-300 hover:bg-slate-700'
+                    ? 'text-slate-400 cursor-not-allowed'
+                    : 'text-slate-600 hover:bg-white hover:text-slate-800'
                 }`}
                 style={{ paddingLeft: `${item.depth * 12 + 8}px` }}
               >
-                <span className="text-slate-500">{labels[item.type] || item.type}</span>
+                <span className="text-teal-600 font-medium">{labels[item.type] || item.type}</span>
                 <span className="truncate">{item.title}</span>
-                {alreadyAdded && <span className="ml-auto text-slate-600">added</span>}
+                {alreadyAdded && <span className="ml-auto text-slate-400 text-[10px]">added</span>}
               </button>
             );
           })}
@@ -130,7 +130,7 @@ export function ManuscriptBuilder() {
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-600 text-sm gap-2">
+          <div className="flex flex-col items-center justify-center h-32 text-slate-400 text-sm gap-2">
             <p>No content added yet</p>
             <p className="text-xs">Click "Add Content" to build your manuscript</p>
           </div>
