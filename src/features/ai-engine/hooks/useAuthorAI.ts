@@ -153,6 +153,11 @@ export interface UseAuthorAIReturn {
   cancel: () => void;
   /** Clear streamed output and reset status to 'idle' without touching history. */
   reset: () => void;
+  /**
+   * Ping the Ollama server to confirm it is reachable.
+   * Returns false (never throws) — safe to call speculatively for health checks.
+   */
+  checkHealth: () => Promise<boolean>;
 
   // ── Lore Sentinel ──────────────────────────────────────────────────────────
   /**
@@ -442,6 +447,11 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     setStatus('idle');
   }, []);
 
+  const checkHealth = useCallback(
+    (): Promise<boolean> => ollamaRef.current!.checkHealth(),
+    [],
+  );
+
   return {
     status,
     streamedText,
@@ -458,6 +468,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     suggest,
     cancel,
     reset,
+    checkHealth,
     scanForLoreChanges,
     loreScanSummary,
     loreProposals,

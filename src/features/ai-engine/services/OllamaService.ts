@@ -94,6 +94,7 @@ export class OllamaService {
     try {
       const res = await fetch(`${this.baseUrl}/api/tags`, {
         method: 'GET',
+        mode: 'cors',
         signal,
       });
       return res.ok;
@@ -212,7 +213,7 @@ export class OllamaService {
   private async fetchOrThrow(url: string, init: RequestInit): Promise<Response> {
     let res: Response;
     try {
-      res = await fetch(url, init);
+      res = await fetch(url, { ...init, mode: 'cors' });
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') throw err;
       throw new OllamaError(

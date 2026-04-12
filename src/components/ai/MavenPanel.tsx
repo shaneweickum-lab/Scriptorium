@@ -15,6 +15,8 @@ import {
   ScanSearch,
   Check,
   SkipForward,
+  WifiOff,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuthorAI, type LoreProposal } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -166,6 +168,7 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
     suggest,
     cancel,
     reset,
+    checkHealth,
     scanForLoreChanges,
     loreScanSummary,
     loreProposals,
@@ -184,6 +187,24 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
   const responseRef = useRef<HTMLDivElement>(null);
+
+  // ── Ollama connection health ──────────────────────────────────────────────
+  type OllamaStatus = 'checking' | 'ok' | 'unreachable';
+  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus>('checking');
+
+  const probeHealth = useCallback(async () => {
+    setOllamaStatus('checking');
+    const ok = await checkHealth();
+    setOllamaStatus(ok ? 'ok' : 'unreachable');
+  }, [checkHealth]);
+
+  // Probe once on mount
+  useEffect(() => { probeHealth(); }, [probeHealth]);
+
+  // Auto-clear the warning once a successful stream completes
+  useEffect(() => {
+    if (status === 'generating' || status === 'done') setOllamaStatus('ok');
+  }, [status]);
 
   // Auto-scroll as tokens arrive
   useEffect(() => {
@@ -346,6 +367,47 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
               Reading:{' '}
               <span className="text-slate-500 font-medium">{activeNodeTitle}</span>
             </span>
+          </div>
+        )}
+
+        {/* Ollama connection banner */}
+        {ollamaStatus === 'unreachable' && (
+          <div className="mx-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs shrink-0 space-y-2">
+            <div className="flex items-center gap-1.5 text-amber-700 font-medium">
+              <WifiOff size={12} className="shrink-0" />
+              Cannot reach Ollama at localhost:11434
+            </div>
+            <p className="text-amber-600 leading-relaxed">
+              Either Ollama isn't running, or it's blocking this origin.
+            </p>
+            <div className="space-y-1.5">
+              <p className="text-amber-700 font-medium">If Ollama isn't running:</p>
+              <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all">
+                ollama serve
+              </code>
+              <p className="text-amber-700 font-medium mt-1.5">If CORS is blocking the PWA:</p>
+              <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all leading-relaxed">
+                OLLAMA_ORIGINS=http://localhost:5173 ollama serve
+              </code>
+              <p className="text-[10px] text-amber-500 leading-relaxed">
+                For an installed (standalone) PWA, use{' '}
+                <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
+              </p>
+            </div>
+            <button
+              onClick={probeHealth}
+              className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-md border border-amber-300 text-amber-700 hover:bg-amber-100 transition-all font-medium"
+            >
+              <RefreshCw size={11} />
+              Retry connection
+            </button>
+          </div>
+        )}
+
+        {ollamaStatus === 'checking' && (
+          <div className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-slate-400 shrink-0">
+            <Loader2 size={10} className="animate-spin shrink-0" />
+            Checking Ollama connection…
           </div>
         )}
 
