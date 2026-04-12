@@ -68,12 +68,12 @@ export function WritingSpace() {
 
       {/* Distraction-free overlay */}
       {showDistractFree && (
-        <div className="fixed inset-0 z-[90] bg-[#07080f] flex flex-col">
+        <div className="fixed inset-0 z-[90] bg-white flex flex-col">
           {/* Minimal exit bar — fades on hover */}
           <div className="absolute top-0 left-0 right-0 flex justify-end px-4 py-2 opacity-0 hover:opacity-100 transition-opacity z-10">
             <button
               onClick={() => setShowDistractFree(false)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
               title="Exit distraction-free (Esc)"
             >
               <X size={13} />

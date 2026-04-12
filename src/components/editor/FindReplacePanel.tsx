@@ -67,7 +67,6 @@ export function FindReplacePanel({ editor, onClose }: Props) {
     });
     dispatch(tr);
 
-    // Scroll to the new match
     const updated = searchPluginKey.getState(editor.view.state);
     if (updated && updated.results[newIndex]) {
       scrollToMatch(editor.view, updated.results[newIndex]);
@@ -77,23 +76,18 @@ export function FindReplacePanel({ editor, onClose }: Props) {
   const handleReplace = () => {
     const ps = getPluginState();
     if (!ps || ps.results.length === 0) return;
-
     const match = ps.results[ps.currentIndex];
     if (!match) return;
-
     editor.view.dispatch(
       editor.view.state.tr.insertText(replaceTerm, match.from, match.to)
     );
-    // Plugin state re-calculates on docChanged; navigate to next
     navigate('next');
   };
 
   const handleReplaceAll = () => {
     const ps = getPluginState();
     if (!ps || ps.results.length === 0) return;
-
     const { tr } = editor.view.state;
-    // Replace from end to start to preserve positions
     const sorted = [...ps.results].sort((a, b) => b.from - a.from);
     for (const match of sorted) {
       tr.insertText(replaceTerm, match.from, match.to);
@@ -120,7 +114,7 @@ export function FindReplacePanel({ editor, onClose }: Props) {
 
   return (
     <div
-      className="absolute top-0 right-0 z-50 bg-slate-800 border border-slate-600 rounded-bl-lg shadow-2xl p-2"
+      className="absolute top-0 right-0 z-50 bg-white border border-slate-200 rounded-bl-xl shadow-xl p-2"
       style={{ minWidth: '300px' }}
       onKeyDown={handleKeyDown}
     >
@@ -133,11 +127,11 @@ export function FindReplacePanel({ editor, onClose }: Props) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Find..."
-            className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200
-              placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm text-slate-800
+              placeholder-slate-400 focus:outline-none focus:border-violet-400"
           />
           {matchLabel && (
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-500 pointer-events-none">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
               {matchLabel}
             </span>
           )}
@@ -150,9 +144,10 @@ export function FindReplacePanel({ editor, onClose }: Props) {
           title="Case sensitive"
           className={`p-1.5 rounded transition-colors ${
             caseSensitive
-              ? 'bg-indigo-600 text-white'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+              ? 'text-white'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
           }`}
+          style={caseSensitive ? { background: 'linear-gradient(135deg, #7c3aed, #0d9488)' } : undefined}
         >
           <CaseSensitive size={14} />
         </button>
@@ -163,7 +158,7 @@ export function FindReplacePanel({ editor, onClose }: Props) {
           onClick={() => navigate('prev')}
           disabled={total === 0}
           title="Previous match (Shift+Enter)"
-          className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-700 disabled:opacity-30 transition-colors"
+          className="p-1.5 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 transition-colors"
         >
           <ChevronUp size={14} />
         </button>
@@ -172,7 +167,7 @@ export function FindReplacePanel({ editor, onClose }: Props) {
           onClick={() => navigate('next')}
           disabled={total === 0}
           title="Next match (Enter)"
-          className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-700 disabled:opacity-30 transition-colors"
+          className="p-1.5 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 transition-colors"
         >
           <ChevronDown size={14} />
         </button>
@@ -184,8 +179,8 @@ export function FindReplacePanel({ editor, onClose }: Props) {
           title="Toggle replace"
           className={`p-1.5 rounded transition-colors ${
             showReplace
-              ? 'bg-slate-700 text-slate-200'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+              ? 'bg-slate-100 text-slate-700'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
           }`}
         >
           <Replace size={14} />
@@ -196,7 +191,7 @@ export function FindReplacePanel({ editor, onClose }: Props) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={onClose}
           title="Close (Escape)"
-          className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+          className="p-1.5 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
         >
           <X size={14} />
         </button>
@@ -204,23 +199,24 @@ export function FindReplacePanel({ editor, onClose }: Props) {
 
       {/* Replace row */}
       {showReplace && (
-        <div className="flex items-center gap-1 mt-1">
+        <div className="flex items-center gap-1 mt-1.5">
           <input
             type="text"
             value={replaceTerm}
             onChange={(e) => setReplaceTerm(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Replace with..."
-            className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200
-              placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm text-slate-800
+              placeholder-slate-400 focus:outline-none focus:border-violet-400"
           />
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleReplace}
             disabled={total === 0}
             title="Replace current"
-            className="px-2 py-1 rounded text-xs bg-indigo-700 hover:bg-indigo-600 text-white
-              disabled:opacity-30 transition-colors whitespace-nowrap"
+            className="px-2.5 py-1 rounded-lg text-xs text-white font-medium
+              disabled:opacity-30 transition-opacity hover:opacity-90 whitespace-nowrap"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
           >
             Replace
           </button>
@@ -229,7 +225,7 @@ export function FindReplacePanel({ editor, onClose }: Props) {
             onClick={handleReplaceAll}
             disabled={total === 0}
             title="Replace all"
-            className="px-2 py-1 rounded text-xs bg-slate-700 hover:bg-slate-600 text-slate-200
+            className="px-2.5 py-1 rounded-lg text-xs bg-slate-100 hover:bg-slate-200 text-slate-700
               disabled:opacity-30 transition-colors whitespace-nowrap"
           >
             All
