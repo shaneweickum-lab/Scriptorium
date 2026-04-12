@@ -8,19 +8,51 @@ import {
   ChevronDown,
   BookOpen,
   Eye,
+  PenLine,
+  MessageSquare,
+  CornerDownRight,
 } from 'lucide-react';
 import { useAuthorAI } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useLibraryStore } from '../../store/libraryStore';
-import { useEditorStore } from '../../store/editorStore';
+import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type PanelMode = 'chat' | 'write';
 
 interface MavenPanelProps {
   onClose: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/** Wrap a user direction so Maven writes pure prose, no meta-commentary. */
+function toWritePrompt(direction: string): string {
+  return (
+    'Write only prose — no preamble, no explanation, no meta-commentary. ' +
+    'Produce the text directly, as it would appear in the finished novel. ' +
+    "Author's direction:\n\n" +
+    direction
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function MavenPanel({ onClose }: MavenPanelProps) {
   const activeBook = useLibraryStore((s) => s.activeBook);
   const liveContent = useEditorStore((s) => s.liveContent);
   const activeNodeTitle = useEditorStore((s) => s.activeNodeTitle);
+  const setPendingSuggestion = useEditorStore((s) => s.setPendingSuggestion);
 
   const {
     status,
@@ -41,6 +73,7 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
     sceneTitle: activeNodeTitle,
   });
 
+  const [mode, setMode] = useState<PanelMode>('chat');
   const [prompt, setPrompt] = useState('');
   const [showSources, setShowSources] = useState(false);
   const responseRef = useRef<HTMLDivElement>(null);
@@ -52,11 +85,19 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
     }
   }, [streamedText]);
 
+  // Clear response when switching modes to avoid confusion
+  const handleModeSwitch = (next: PanelMode) => {
+    if (next !== mode) {
+      reset();
+      setMode(next);
+    }
+  };
+
   const handleSubmit = () => {
     if (!prompt.trim() || isStreaming) return;
     const p = prompt.trim();
     setPrompt('');
-    suggest(p);
+    suggest(mode === 'write' ? toWritePrompt(p) : p);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -66,12 +107,24 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
     }
   };
 
+  /** Stage Maven's prose into the editor approval flow, then clear the panel. */
+  const handleSendToEditor = (action: SuggestionAction) => {
+    if (!streamedText) return;
+    setPendingSuggestion({ text: streamedText, action });
+    reset();
+  };
+
   const statusMessage =
     status === 'retrieving'
       ? 'Searching World Bible\u2026'
       : status === 'generating'
-      ? 'Writing\u2026'
+      ? mode === 'write'
+        ? 'Weaving prose\u2026'
+        : 'Writing\u2026'
       : null;
+
+  // Write mode: show action row when generation is done and there's output
+  const showWriteActions = mode === 'write' && streamedText && !isStreaming;
 
   return (
     <>
@@ -105,19 +158,46 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
           </button>
         </div>
 
+        {/* Mode toggle */}
+        <div className="flex gap-0.5 bg-slate-100 rounded-lg mx-3 mt-2 mb-1 p-0.5 shrink-0">
+          <button
+            onClick={() => handleModeSwitch('chat')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+              mode === 'chat'
+                ? 'bg-white text-slate-700 shadow-sm'
+                : 'text-slate-400 hover:text-slate-500'
+            }`}
+          >
+            <MessageSquare size={11} />
+            Chat
+          </button>
+          <button
+            onClick={() => handleModeSwitch('write')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+              mode === 'write'
+                ? 'bg-white text-violet-600 shadow-sm'
+                : 'text-slate-400 hover:text-slate-500'
+            }`}
+          >
+            <PenLine size={11} />
+            Write
+          </button>
+        </div>
+
         {/* Scene awareness indicator */}
         {liveContent && activeNodeTitle && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border-b border-slate-100 shrink-0">
-            <Eye size={10} className="text-slate-400 shrink-0" />
+          <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+            <Eye size={10} className="text-slate-300 shrink-0" />
             <span className="text-[10px] text-slate-400 truncate">
-              Reading: <span className="text-slate-500 font-medium">{activeNodeTitle}</span>
+              Reading:{' '}
+              <span className="text-slate-500 font-medium">{activeNodeTitle}</span>
             </span>
           </div>
         )}
 
         {/* Status bar */}
         {statusMessage && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 border-b border-violet-100 shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 border-y border-violet-100 shrink-0">
             <Loader2 size={12} className="text-violet-500 animate-spin shrink-0" />
             <span className="text-xs text-violet-600">{statusMessage}</span>
           </div>
@@ -125,7 +205,7 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
 
         {/* Error bar */}
         {status === 'error' && error && (
-          <div className="flex items-start gap-2 px-3 py-2 bg-red-50 border-b border-red-100 shrink-0">
+          <div className="flex items-start gap-2 px-3 py-2 bg-red-50 border-y border-red-100 shrink-0">
             <AlertCircle size={12} className="text-red-500 mt-0.5 shrink-0" />
             <span className="text-xs text-red-600">{error}</span>
           </div>
@@ -146,14 +226,54 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
           ) : status === 'idle' && history.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-8">
               <Sparkles size={28} className="text-slate-200" />
-              <p className="text-xs text-slate-400 max-w-[200px]">
-                {liveContent
-                  ? 'Maven is watching your scene. Ask her anything and she\'ll weave from what you\'ve written.'
-                  : 'Ask Maven anything about your story. She will ground her suggestions in your World Bible lore.'}
-              </p>
+              {mode === 'write' ? (
+                <p className="text-xs text-slate-400 max-w-[200px]">
+                  Tell Maven what to write and she'll weave prose you can insert directly into your scene.
+                </p>
+              ) : (
+                <p className="text-xs text-slate-400 max-w-[200px]">
+                  {liveContent
+                    ? "Maven is watching your scene. Ask her anything and she'll weave from what you've written."
+                    : 'Ask Maven anything about your story. She will ground her suggestions in your World Bible lore.'}
+                </p>
+              )}
             </div>
           ) : null}
         </div>
+
+        {/* Write mode: Send to Editor action row */}
+        {showWriteActions && (
+          <div className="border-t border-violet-100 bg-violet-50 px-3 py-2 shrink-0">
+            <p className="text-[10px] text-violet-500 mb-1.5 font-medium">
+              {countWords(streamedText)} words — send to editor:
+            </p>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => handleSendToEditor('insert_at_cursor')}
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-md text-white transition-all"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
+                title="Insert Maven's text at the current cursor position"
+              >
+                <CornerDownRight size={11} />
+                At cursor
+              </button>
+              <button
+                onClick={() => handleSendToEditor('append')}
+                className="flex-1 py-1.5 text-xs font-medium rounded-md border border-violet-300 text-violet-700 hover:bg-violet-100 transition-all"
+                title="Append Maven's text to the end of the current scene"
+              >
+                Append
+              </button>
+              <button
+                onClick={reset}
+                className="px-2.5 py-1.5 text-xs rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                title="Discard Maven's suggestion"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Sources accordion */}
         {retrievedEntries.length > 0 && (
@@ -206,7 +326,11 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isStreaming}
-            placeholder="Ask Maven… (Enter to send, Shift+Enter for newline)"
+            placeholder={
+              mode === 'write'
+                ? 'What should Maven write? (Enter to generate)'
+                : 'Ask Maven\u2026 (Enter to send, Shift+Enter for newline)'
+            }
             rows={3}
             className="w-full text-sm text-slate-700 placeholder-slate-300 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-violet-300 focus:bg-white resize-none transition-all disabled:opacity-50"
           />
@@ -225,7 +349,7 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
                 className="flex-1 py-1.5 text-xs font-medium rounded-lg text-white disabled:opacity-40 transition-all"
                 style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
               >
-                Generate
+                {mode === 'write' ? 'Write' : 'Generate'}
               </button>
             )}
             <button

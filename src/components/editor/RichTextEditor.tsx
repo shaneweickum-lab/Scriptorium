@@ -10,6 +10,7 @@ import Highlight from '@tiptap/extension-highlight';
 import Mention from '@tiptap/extension-mention';
 import Image from '@tiptap/extension-image';
 import type { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
+import { Sparkles, Check, X as XIcon } from 'lucide-react';
 import { EditorToolbar } from './EditorToolbar';
 import { MentionPopup, INITIAL_MENTION_STATE } from './MentionPopup';
 import type { MentionSuggestionState, MentionPopupHandle } from './MentionPopup';
@@ -18,6 +19,7 @@ import { SearchAndReplace } from './SearchAndReplace';
 import { CommentsPanel } from './CommentsPanel';
 import { CommentMark } from '../../extensions/CommentMark';
 import { useEditorSettings, getEditorFont } from '../../store/editorSettingsStore';
+import { useEditorStore } from '../../store/editorStore';
 import type { WorldEntry, WorldSection } from '../../types';
 
 interface CommentDraft {
@@ -217,6 +219,34 @@ export function RichTextEditor({
     setShowComments(true);
   }, [editor, nodeId]);
 
+  // ── Maven suggestion approval ──────────────────────────────────────────────
+  const pendingSuggestion = useEditorStore((s) => s.pendingSuggestion);
+  const clearPendingSuggestion = useEditorStore((s) => s.clearPendingSuggestion);
+
+  const handleApplySuggestion = useCallback(() => {
+    if (!editor || !pendingSuggestion) return;
+
+    // Convert Maven's plain-text prose (with \n\n paragraph breaks) to HTML
+    const html = pendingSuggestion.text
+      .split(/\n\n+/)
+      .filter((p) => p.trim())
+      .map((p) => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`)
+      .join('');
+
+    if (pendingSuggestion.action === 'append') {
+      editor.chain().focus('end').insertContent(html).run();
+    } else {
+      // insert_at_cursor — respects wherever the author's cursor was last
+      editor.chain().focus().insertContent(html).run();
+    }
+
+    clearPendingSuggestion();
+  }, [editor, pendingSuggestion, clearPendingSuggestion]);
+
+  const suggestionWordCount = pendingSuggestion
+    ? pendingSuggestion.text.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+
   if (!editor) return null;
 
   return (
@@ -243,6 +273,33 @@ export function RichTextEditor({
           onToggleComments={nodeId ? () => setShowComments((v) => !v) : undefined}
           commentsOpen={showComments}
         />
+      )}
+
+      {/* Maven suggestion approval banner */}
+      {pendingSuggestion && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-violet-50 border-b border-violet-200 shrink-0">
+          <Sparkles size={13} className="text-violet-500 shrink-0" />
+          <span className="text-xs text-violet-700 flex-1 truncate">
+            Maven wrote{' '}
+            <span className="font-semibold">{suggestionWordCount} words</span>
+            {pendingSuggestion.action === 'append' ? ' — appending to scene' : ' — inserting at cursor'}
+          </span>
+          <button
+            onClick={handleApplySuggestion}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md text-white transition-all shrink-0"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
+          >
+            <Check size={11} />
+            Insert
+          </button>
+          <button
+            onClick={clearPendingSuggestion}
+            className="flex items-center justify-center w-6 h-6 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all shrink-0"
+            title="Discard Maven's suggestion"
+          >
+            <XIcon size={13} />
+          </button>
+        </div>
       )}
 
       {/* Editor + Comments panel side by side */}
