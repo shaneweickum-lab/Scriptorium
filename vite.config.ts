@@ -30,8 +30,38 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [],
+        // Cache HuggingFace model weights and ONNX WASM runtime so the
+        // embedding model works offline after the first online load.
+        runtimeCaching: [
+          {
+            // HuggingFace CDN — model weights (*.bin, *.onnx, tokeniser JSON)
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/npm\/@xenova\/transformers/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'hf-models',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // HuggingFace Hub model files
+            urlPattern: /^https:\/\/huggingface\.co\/.+\/resolve\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'hf-models',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],
+
+  optimizeDeps: {
+    // Exclude @xenova/transformers from Vite pre-bundling.
+    // It loads ONNX Runtime WebAssembly dynamically; pre-bundling breaks the
+    // WASM file paths and worker thread instantiation.
+    exclude: ['@xenova/transformers'],
+  },
 });
