@@ -122,22 +122,25 @@ export function ExportModal({ onClose }: Props) {
 
   return (
     <Modal title="Export Manuscript" onClose={onClose} size="md">
-      <div className="space-y-3 mb-4">
+      <div className="space-y-2 mb-4">
         {FORMATS.map((fmt) => {
           const Icon = fmt.icon;
+          const isSelected = selected === fmt.id;
           return (
             <button
               key={fmt.id}
               onClick={() => setSelected(fmt.id)}
               className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                selected === fmt.id
-                  ? 'border-indigo-500 bg-indigo-900/20 text-slate-200'
-                  : 'border-slate-700 hover:border-slate-500 text-slate-400'
+                isSelected
+                  ? 'border-violet-300 bg-violet-50 text-slate-800'
+                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600'
               }`}
             >
-              <Icon size={20} className={selected === fmt.id ? 'text-indigo-400' : 'text-slate-500'} />
+              <Icon size={20} className={isSelected ? 'text-violet-600' : 'text-slate-400'} />
               <div>
-                <div className="font-medium text-sm">{fmt.label}</div>
+                <div className={`font-semibold text-sm ${isSelected ? 'text-violet-700' : 'text-slate-700'}`}>
+                  {fmt.label}
+                </div>
                 <div className="text-xs text-slate-500">{fmt.desc}</div>
               </div>
             </button>
@@ -147,21 +150,21 @@ export function ExportModal({ onClose }: Props) {
 
       {/* KDP Settings panel */}
       {selected === 'docx-kdp' && (
-        <div className="mb-4 rounded-xl border border-violet-700/50 bg-slate-800/60 p-4 space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-violet-400">
+        <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50 p-4 space-y-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-violet-700">
             KDP Publishing Settings
           </p>
 
           {/* Page Size */}
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Page Size</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Page Size</label>
             <select
               value={`${kdpPageSize.w}x${kdpPageSize.h}`}
               onChange={(e) => {
                 const found = PAGE_SIZES.find((s) => `${s.w}x${s.h}` === e.target.value);
                 if (found) setKdpPageSize({ w: found.w, h: found.h });
               }}
-              className="w-full rounded-lg bg-slate-700 border border-slate-600 text-slate-200 text-sm px-3 py-2 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-lg bg-white border border-slate-200 text-slate-700 text-sm px-3 py-2 focus:outline-none focus:border-violet-400"
             >
               {PAGE_SIZES.map((s) => (
                 <option key={`${s.w}x${s.h}`} value={`${s.w}x${s.h}`}>
@@ -173,11 +176,11 @@ export function ExportModal({ onClose }: Props) {
 
           {/* Estimated Page Count */}
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Estimated Page Count</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Estimated Page Count</label>
             <select
               value={kdpPageRange}
               onChange={(e) => setKdpPageRange(e.target.value as PageCountRange)}
-              className="w-full rounded-lg bg-slate-700 border border-slate-600 text-slate-200 text-sm px-3 py-2 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-lg bg-white border border-slate-200 text-slate-700 text-sm px-3 py-2 focus:outline-none focus:border-violet-400"
             >
               {PAGE_COUNT_RANGES.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -194,30 +197,30 @@ export function ExportModal({ onClose }: Props) {
 
           {/* Dedication */}
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Dedication (optional)</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Dedication (optional)</label>
             <textarea
               value={kdpDedication}
               onChange={(e) => setKdpDedication(e.target.value)}
               placeholder="For..."
               rows={2}
-              className="w-full rounded-lg bg-slate-700 border border-slate-600 text-slate-200 text-sm px-3 py-2 focus:outline-none focus:border-indigo-500 resize-none placeholder:text-slate-600"
+              className="w-full rounded-lg bg-white border border-slate-200 text-slate-700 text-sm px-3 py-2 focus:outline-none focus:border-violet-400 resize-none placeholder:text-slate-400"
             />
           </div>
 
           {/* Chapter on own page */}
-          <label className="flex items-center gap-2 cursor-pointer select-none">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={kdpChapterOwn}
               onChange={(e) => setKdpChapterOwn(e.target.checked)}
-              className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-900"
+              className="rounded border-slate-300 bg-white text-violet-600 focus:ring-violet-500 focus:ring-offset-white w-4 h-4"
             />
-            <span className="text-sm text-slate-300">Start each chapter on a new page</span>
+            <span className="text-sm text-slate-700">Start each chapter on a new page</span>
           </label>
 
           {/* Info note */}
           <div className="flex gap-2 text-xs text-slate-500">
-            <Info size={14} className="shrink-0 mt-0.5 text-indigo-400" />
+            <Info size={14} className="shrink-0 mt-0.5 text-teal-500" />
             <span>
               The table of contents will auto-update when opened in Microsoft Word
               (right-click TOC → Update Field).
@@ -227,7 +230,7 @@ export function ExportModal({ onClose }: Props) {
       )}
 
       {assembly && (
-        <p className="text-xs text-slate-500 mb-4">
+        <p className="text-xs text-slate-400 mb-4">
           {assembly.items.length} item(s) in assembly · {activeBook?.title || 'Untitled'}
         </p>
       )}

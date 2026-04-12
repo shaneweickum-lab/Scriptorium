@@ -21,7 +21,8 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       onClick={() => !disabled && onChange(!checked)}
       className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
         disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-      } ${checked ? 'bg-indigo-600' : 'bg-slate-700'}`}
+      } ${checked ? '' : 'bg-slate-200'}`}
+      style={checked ? { background: 'linear-gradient(135deg, #7c3aed, #0d9488)' } : {}}
     >
       <span
         className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
@@ -74,13 +75,13 @@ export function ProjectSettings({ onClose }: Props) {
   return (
     <Modal title="Book Settings" onClose={onClose} size="md">
       {/* Tab bar */}
-      <div className="flex gap-1 mb-5 border-b border-slate-700/40 pb-0">
+      <div className="flex gap-1 mb-5 border-b border-slate-200 pb-0">
         {(['settings', 'achievements'] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 text-xs font-semibold capitalize rounded-t-lg transition-colors border-b-2 -mb-px ${
               tab === t
-                ? 'text-violet-300 border-violet-500'
-                : 'text-slate-500 border-transparent hover:text-slate-300'
+                ? 'text-violet-600 border-violet-500'
+                : 'text-slate-400 border-transparent hover:text-slate-600'
             }`}>
             {t === 'achievements' ? `Achievements (${unlockedCount}/${bookAchievements.length})` : t}
           </button>
@@ -110,12 +111,12 @@ export function ProjectSettings({ onClose }: Props) {
               inputMode="numeric"
             />
             <div>
-              <p className="text-sm text-slate-400 mb-2">Accent Color</p>
+              <p className="text-sm font-medium text-slate-600 mb-2">Accent Color</p>
               <div className="flex gap-2 flex-wrap">
                 {BOOK_COLORS.map((c) => (
                   <button key={c} onClick={() => setColor(c)}
                     className="w-6 h-6 rounded-full transition-transform hover:scale-110"
-                    style={{ backgroundColor: c, outline: color === c ? '3px solid white' : 'none', outlineOffset: '2px' }} />
+                    style={{ backgroundColor: c, outline: color === c ? `3px solid ${c}` : 'none', outlineOffset: '2px', filter: color === c ? 'brightness(0.8)' : 'none' }} />
                 ))}
               </div>
             </div>
@@ -123,7 +124,7 @@ export function ProjectSettings({ onClose }: Props) {
 
           {/* Row 4: Outline Structure — compact toggle rows */}
           <div>
-            <p className="text-sm text-slate-400 mb-2">Outline Structure</p>
+            <p className="text-sm font-medium text-slate-600 mb-2">Outline Structure</p>
             <div className="flex flex-col gap-1.5">
               {(['part', 'chapter', 'scene'] as const).map((key) => {
                 const enabledCount = Object.values(enabledLevels).filter(Boolean).length;
@@ -132,8 +133,8 @@ export function ProjectSettings({ onClose }: Props) {
                   <div key={key}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors ${
                       enabledLevels[key]
-                        ? 'bg-slate-800/60 border-slate-700/40'
-                        : 'bg-slate-800/20 border-slate-700/20'
+                        ? 'bg-white border-slate-200'
+                        : 'bg-slate-50 border-slate-100'
                     }`}
                   >
                     <Toggle
@@ -146,26 +147,26 @@ export function ProjectSettings({ onClose }: Props) {
                       onChange={(e) => setLabels({ ...labels, [key]: e.target.value })}
                       disabled={!enabledLevels[key]}
                       placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
-                      className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
                     />
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">
                       {key}
                     </span>
                   </div>
                 );
               })}
               {/* Note — always on */}
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/40">
+              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white border border-slate-200">
                 <div className="w-9 h-5 flex items-center justify-center">
-                  <span className="text-[10px] text-slate-600">—</span>
+                  <span className="text-[10px] text-slate-400">—</span>
                 </div>
                 <input
                   value={labels.note}
                   onChange={(e) => setLabels({ ...labels, note: e.target.value })}
                   placeholder="Note"
-                  className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                  className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
                 />
-                <span className="text-[10px] text-slate-600 uppercase tracking-wider">note</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider">note</span>
               </div>
             </div>
           </div>
@@ -180,7 +181,7 @@ export function ProjectSettings({ onClose }: Props) {
       {tab === 'achievements' && (
         <div className="flex flex-col gap-3">
           <p className="text-xs text-slate-500">
-            Per-book achievements for <span className="text-slate-300">{activeBook?.title || 'this book'}</span>.
+            Per-book achievements for <span className="text-slate-700 font-medium">{activeBook?.title || 'this book'}</span>.
             Each book has its own set — keep writing to unlock them all!
           </p>
 
@@ -191,25 +192,23 @@ export function ProjectSettings({ onClose }: Props) {
                 <div key={a.id}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
                     unlocked
-                      ? 'border-violet-500/30 bg-violet-950/20'
-                      : 'border-slate-700/20 bg-slate-800/10 opacity-45'
+                      ? 'border-violet-200 bg-violet-50'
+                      : 'border-slate-200 bg-slate-50 opacity-50'
                   }`}
-                  style={unlocked ? { boxShadow: '0 0 10px rgba(124,58,237,0.1)' } : {}}
                   title={a.description}
                 >
                   <div
                     className={`w-11 h-11 rounded-full flex items-center justify-center text-xl bg-gradient-to-br ${
-                      unlocked ? CATEGORY_COLORS[a.category] : 'from-slate-700 to-slate-800'
+                      unlocked ? CATEGORY_COLORS[a.category] : 'from-slate-200 to-slate-300'
                     }`}
-                    style={unlocked ? { boxShadow: '0 0 12px rgba(124,58,237,0.25)' } : {}}
                   >
-                    {unlocked ? a.emoji : <Lock size={14} className="text-slate-600" />}
+                    {unlocked ? a.emoji : <Lock size={14} className="text-slate-400" />}
                   </div>
-                  <p className={`text-[10px] font-semibold text-center leading-tight ${unlocked ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <p className={`text-[10px] font-semibold text-center leading-tight ${unlocked ? 'text-slate-700' : 'text-slate-400'}`}>
                     {a.name}
                   </p>
                   {a.xp > 0 && (
-                    <span className={`text-[9px] font-bold ${unlocked ? 'text-amber-400' : 'text-slate-700'}`}>
+                    <span className={`text-[9px] font-bold ${unlocked ? 'text-amber-500' : 'text-slate-400'}`}>
                       +{a.xp} XP
                     </span>
                   )}

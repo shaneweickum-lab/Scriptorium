@@ -23,7 +23,7 @@ export function HierarchyConfig() {
 
   return (
     <Modal title="Customize Hierarchy Labels" onClose={() => setShowHierarchyConfig(false)} size="sm">
-      <p className="text-sm text-slate-400 mb-4">
+      <p className="text-sm text-slate-500 mb-4">
         Rename the levels of your story structure to match your workflow.
       </p>
       <div className="space-y-3">
