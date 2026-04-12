@@ -48,7 +48,7 @@ import {
   OLLAMA_DEFAULT_URL,
   type OllamaMessage,
 } from '../services/OllamaService';
-import { RagService } from '../services/RagService';
+import { RagService, type SceneContext } from '../services/RagService';
 import { VectorIndexService } from '../services/VectorIndexService';
 import {
   analyzeStyle,
@@ -85,6 +85,15 @@ export interface UseAuthorAIOptions {
    * When omitted, style profiles are not persisted across page reloads.
    */
   bookId?: string;
+  /**
+   * Live plain-text content of the scene the author is currently writing.
+   * When provided, Maven sees what is on the page and can make contextually
+   * grounded suggestions without the author having to paste it in manually.
+   * Updated from editorStore on every debounced save (~500 ms).
+   */
+  sceneText?: string;
+  /** Title of the active writing node — shown in the scene context fence. */
+  sceneTitle?: string;
 }
 
 export interface UseAuthorAIReturn {
@@ -160,6 +169,8 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     minScore = 0.3,
     temperature = 0.7,
     bookId,
+    sceneText,
+    sceneTitle,
   } = options;
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -184,6 +195,9 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   historyRef.current = history;
   const styleProfileRef = useRef<StyleProfile | null>(null);
   styleProfileRef.current = styleProfile;
+  const sceneContextRef = useRef<SceneContext | undefined>(undefined);
+  sceneContextRef.current =
+    sceneText?.trim() ? { text: sceneText, title: sceneTitle ?? '' } : undefined;
 
   // OllamaService instance — recreated only when the base URL changes
   const ollamaRef = useRef<OllamaService | null>(null);
@@ -246,17 +260,20 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
           topK,
           minScore,
           styleProfileRef.current ?? undefined,
+          sceneContextRef.current,
         );
       } catch {
-        // RAG failure is non-fatal — use bare prompt with style if available
+        // RAG failure is non-fatal — use bare prompt with style/scene if available
         context = {
           entries: [],
           systemPrompt: RagService.buildSystemPrompt(
             [],
             styleProfileRef.current ?? undefined,
+            sceneContextRef.current,
           ),
           loreInjected: false,
           styleInjected: !!styleProfileRef.current,
+          sceneInjected: !!sceneContextRef.current,
         };
       }
 

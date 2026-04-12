@@ -4,12 +4,14 @@ import { useLibraryStore } from '../../store/libraryStore';
 import { useWorldStore } from '../../store/worldStore';
 import { useAchievementStore } from '../../store/achievementStore';
 import { useUIStore } from '../../store/uiStore';
+import { useEditorStore } from '../../store/editorStore';
 import { streakStore } from '../../store/streakStore';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { WorldReferencePanel } from './WorldReferencePanel';
 import { EmptyState } from '../common/EmptyState';
 import { PenLine, Maximize2 } from 'lucide-react';
 import { useAutoSave } from '../../hooks/useAutoSave';
+import { tiptapJsonToText } from '../../utils/tiptapToHtml';
 
 interface NodeEditorProps { distractFree?: boolean; }
 export function NodeEditor({ distractFree = false }: NodeEditorProps) {
@@ -31,6 +33,8 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
   } = useAchievementStore();
   const addAchievementToast = useUIStore((s) => s.addAchievementToast);
   const setShowDistractFree = useUIStore((s) => s.setShowDistractFree);
+  const setLiveContext = useEditorStore((s) => s.setLiveContext);
+  const clearLiveContext = useEditorStore((s) => s.clearLiveContext);
 
   // Track session word count delta
   const sessionBaseWords = useRef<number | null>(null);
@@ -49,12 +53,25 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
 
   const saveContent = useCallback(
     async (content: string) => {
-      if (node) await updateNode(node.id, { content });
+      if (!node) return;
+      await updateNode(node.id, { content });
+      // Keep Maven's live context in sync with every debounced save
+      setLiveContext(tiptapJsonToText(content), node.title);
     },
-    [node, updateNode]
+    [node, updateNode, setLiveContext]
   );
 
   const { save: debouncedSave } = useAutoSave(saveContent, 500);
+
+  // Seed live context when the active node changes (scene switch, initial load)
+  useEffect(() => {
+    if (node) {
+      setLiveContext(tiptapJsonToText(node.content ?? ''), node.title);
+    } else {
+      clearLiveContext();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node?.id]);
 
   // Check achievements whenever nodes change
   useEffect(() => {

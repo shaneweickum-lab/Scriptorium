@@ -34,6 +34,16 @@ export interface RagContext {
   loreInjected: boolean;
   /** True when a StyleProfile was available and injected into the prompt. */
   styleInjected: boolean;
+  /** True when the author's current scene text was injected into the prompt. */
+  sceneInjected: boolean;
+}
+
+/** Scene context published by the active editor for Maven's awareness. */
+export interface SceneContext {
+  /** Plain text of the current writing node (last ~400 words used). */
+  text: string;
+  /** Title of the node (scene / chapter / note). */
+  title: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -154,19 +164,20 @@ export class RagService {
   /**
    * Build the system prompt.
    *
-   * When `entries` is non-empty, each entry is formatted as a titled block
-   * between the RAG fences.  When `styleProfile` is provided, a dedicated
-   * style section is appended, giving the model explicit voice constraints:
+   * Section order (highest → lowest priority):
+   *   1. Maven identity + oaths (persona + lore rules)
+   *   2. Lore entries from the World Bible (when available)
+   *   3. Current scene in progress (when available) — last ~400 words
+   *   4. Author's voice / style profile (when available)
    *
-   *   "Write in a dark, mysterious, archaic voice with short, punchy
-   *    sentences (~9 words avg). Match the author's established style."
-   *
-   * @param entries      Retrieved lore chunks (may be empty).
-   * @param styleProfile Optional: StyleProfile from StyleAnalyzer.
+   * @param entries       Retrieved lore chunks (may be empty).
+   * @param styleProfile  Optional: StyleProfile from StyleAnalyzer.
+   * @param sceneContext  Optional: live plain-text from the active editor.
    */
   static buildSystemPrompt(
     entries: SearchResult[],
     styleProfile?: StyleProfile,
+    sceneContext?: SceneContext,
   ): string {
     let prompt: string;
 
@@ -192,6 +203,23 @@ export class RagService {
       prompt = [RAG_PREAMBLE, '', ...blocks, '', RAG_POSTAMBLE].join('\n');
     }
 
+    // Inject the active scene so Maven knows what the author is currently writing
+    if (sceneContext?.text?.trim()) {
+      // Limit to the last ~400 words to avoid blowing out the context window
+      const words = sceneContext.text.trim().split(/\s+/);
+      const excerpt = words.slice(-400).join(' ');
+      const label = sceneContext.title
+        ? `SCENE IN PROGRESS: "${sceneContext.title}"`
+        : 'SCENE IN PROGRESS';
+      prompt +=
+        `\n\n--- ${label} ---\n` +
+        excerpt +
+        `\n--- END OF SCENE ---\n` +
+        `\nThe author is actively writing the scene above. ` +
+        `Your suggestions should feel continuous with it — ` +
+        `same characters, same moment, same atmosphere.`;
+    }
+
     // Append style constraints when a profile is available
     if (styleProfile?.styleConstraints) {
       prompt += '\n\n' + formatStyleSection(styleProfile);
@@ -205,6 +233,7 @@ export class RagService {
    * This is the main entry point used by useAuthorAI.
    *
    * @param styleProfile  Optional: inject style constraints into the system prompt.
+   * @param sceneContext  Optional: live plain-text from the active editor.
    */
   static async buildContext(
     query: string,
@@ -212,6 +241,7 @@ export class RagService {
     topK = 3,
     minScore = 0.3,
     styleProfile?: StyleProfile,
+    sceneContext?: SceneContext,
   ): Promise<RagContext> {
     const entries = await RagService.retrieveEntries(
       query,
@@ -219,12 +249,13 @@ export class RagService {
       topK,
       minScore,
     );
-    const systemPrompt = RagService.buildSystemPrompt(entries, styleProfile);
+    const systemPrompt = RagService.buildSystemPrompt(entries, styleProfile, sceneContext);
     return {
       entries,
       systemPrompt,
       loreInjected: entries.length > 0,
       styleInjected: !!styleProfile?.styleConstraints,
+      sceneInjected: !!sceneContext?.text?.trim(),
     };
   }
 

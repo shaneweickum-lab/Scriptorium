@@ -7,9 +7,11 @@ import {
   ChevronRight,
   ChevronDown,
   BookOpen,
+  Eye,
 } from 'lucide-react';
 import { useAuthorAI } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useLibraryStore } from '../../store/libraryStore';
+import { useEditorStore } from '../../store/editorStore';
 
 interface MavenPanelProps {
   onClose: () => void;
@@ -17,6 +19,8 @@ interface MavenPanelProps {
 
 export function MavenPanel({ onClose }: MavenPanelProps) {
   const activeBook = useLibraryStore((s) => s.activeBook);
+  const liveContent = useEditorStore((s) => s.liveContent);
+  const activeNodeTitle = useEditorStore((s) => s.activeNodeTitle);
 
   const {
     status,
@@ -31,7 +35,11 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
     suggest,
     cancel,
     reset,
-  } = useAuthorAI({ bookId: activeBook?.id });
+  } = useAuthorAI({
+    bookId: activeBook?.id,
+    sceneText: liveContent,
+    sceneTitle: activeNodeTitle,
+  });
 
   const [prompt, setPrompt] = useState('');
   const [showSources, setShowSources] = useState(false);
@@ -97,6 +105,16 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
           </button>
         </div>
 
+        {/* Scene awareness indicator */}
+        {liveContent && activeNodeTitle && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border-b border-slate-100 shrink-0">
+            <Eye size={10} className="text-slate-400 shrink-0" />
+            <span className="text-[10px] text-slate-400 truncate">
+              Reading: <span className="text-slate-500 font-medium">{activeNodeTitle}</span>
+            </span>
+          </div>
+        )}
+
         {/* Status bar */}
         {statusMessage && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 border-b border-violet-100 shrink-0">
@@ -129,7 +147,9 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
             <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-8">
               <Sparkles size={28} className="text-slate-200" />
               <p className="text-xs text-slate-400 max-w-[200px]">
-                Ask Maven anything about your story. It will ground suggestions in your World Bible lore.
+                {liveContent
+                  ? 'Maven is watching your scene. Ask her anything and she\'ll weave from what you\'ve written.'
+                  : 'Ask Maven anything about your story. She will ground her suggestions in your World Bible lore.'}
               </p>
             </div>
           ) : null}
