@@ -302,4 +302,147 @@ export class RagService {
     const messages = RagService.buildMessages(userPrompt, context, history);
     return { messages, context };
   }
+
+  // ── Lore Sentinel ──────────────────────────────────────────────────────────
+
+  /**
+   * Build the message array for the World Bible sentinel scan.
+   *
+   * Maven is given the retrieved lore entries (as ground truth to check
+   * against) and the current scene passage.  She identifies facts that
+   * have changed and outputs a structured JSON block alongside a
+   * plain-English summary.
+   *
+   * Uses sourceId in each entry label so Maven can reference the exact
+   * WorldEntry record in her JSON proposals.
+   */
+  static buildSentinelMessages(
+    entries: SearchResult[],
+    scene: SceneContext,
+  ): OllamaMessage[] {
+    const entryBlocks = entries.length > 0
+      ? entries.map((e, i) => {
+          const header = e.sectionName
+            ? `[${e.sectionName}] ${e.title}`
+            : e.title;
+          return `${i + 1}. ${header}\n    sourceId: ${e.sourceId}\n${e.text}`;
+        }).join('\n\n')
+      : 'No entries retrieved — the vector index may not be initialised.';
+
+    // Limit scene to ~600 words to keep the prompt manageable
+    const sceneWords = scene.text.trim().split(/\s+/);
+    const sceneExcerpt = sceneWords.slice(0, 600).join(' ');
+    const truncated = sceneWords.length > 600;
+
+    const system: OllamaMessage = {
+      role: 'system',
+      content: `\
+You are Maven — a mystical lore-keeper watching over an author's World Bible.
+
+A new passage has been written. Your task: identify every fact established or \
+changed in this passage that should update the World Bible entries provided.
+
+Look for:
+• Character status changes (death, injury, transformation, new name or title)
+• Relationship shifts (alliances formed or broken, enemies made, loves discovered)
+• Location revelations (a new place found, a known place destroyed or changed)
+• Object / artefact events (created, destroyed, obtained, lost, revealed)
+• Plot revelations (secrets uncovered, prophecies fulfilled or broken)
+
+Respond in exactly two parts:
+
+PART 1 — Plain-English summary (2–3 sentences, written in your voice):
+Describe what lore changes you found, or say plainly that none were needed.
+
+PART 2 — Structured proposals. Omit this block entirely if no changes are needed.
+
+\`\`\`lore-proposals
+[
+  {
+    "entryId": "the-exact-sourceId-shown-in-the-entries-below",
+    "entryTitle": "Entry Title",
+    "changeType": "append_content",
+    "description": "One sentence: what changed and why it matters to the lore.",
+    "proposed": "The exact text to add to the entry."
+  }
+]
+\`\`\`
+
+changeType must be exactly "append_content" (add a sentence to the entry body) \
+or "add_tag" (for add_tag, proposed is a single lowercase tag word, e.g. "deceased").
+
+CRITICAL: use only sourceId values that appear in the entry list below. \
+Do not invent IDs. If no World Bible entries were retrieved, say so and omit the JSON block.`,
+    };
+
+    const user: OllamaMessage = {
+      role: 'user',
+      content: `\
+--- WORLD BIBLE ENTRIES TO CHECK ---
+${entryBlocks}
+--- END OF ENTRIES ---
+
+--- NEW PASSAGE${scene.title ? `: "${scene.title}"` : ''}${truncated ? ' (first 600 words shown)' : ''} ---
+${sceneExcerpt}
+--- END OF PASSAGE ---
+
+Identify what lore has changed and propose World Bible updates.`,
+    };
+
+    return [system, user];
+  }
+
+  /**
+   * Parse Maven's sentinel response and extract structured lore proposals.
+   *
+   * Looks for a fenced ```lore-proposals block and parses the JSON inside.
+   * Returns an empty array on parse failure so callers degrade gracefully.
+   *
+   * Also extracts the plain-English summary (everything before the fence)
+   * for display in the UI.
+   */
+  static parseSentinelResponse(response: string): {
+    summary: string;
+    rawProposals: Array<{
+      entryId: string;
+      entryTitle: string;
+      changeType: 'append_content' | 'add_tag';
+      description: string;
+      proposed: string;
+    }>;
+  } {
+    const fenceMatch = response.match(/```lore-proposals\s*([\s\S]*?)```/);
+    const summary = (fenceMatch
+      ? response.slice(0, response.indexOf('```lore-proposals'))
+      : response
+    ).trim();
+
+    if (!fenceMatch) return { summary, rawProposals: [] };
+
+    try {
+      const parsed = JSON.parse(fenceMatch[1]) as Array<{
+        entryId: string;
+        entryTitle: string;
+        changeType: string;
+        description: string;
+        proposed: string;
+      }>;
+
+      const rawProposals = parsed
+        .filter((p) => p.entryId && p.proposed)
+        .map((p) => ({
+          entryId: p.entryId,
+          entryTitle: p.entryTitle ?? '',
+          changeType: (p.changeType === 'add_tag'
+            ? 'add_tag'
+            : 'append_content') as 'append_content' | 'add_tag',
+          description: p.description ?? '',
+          proposed: p.proposed,
+        }));
+
+      return { summary, rawProposals };
+    } catch {
+      return { summary, rawProposals: [] };
+    }
+  }
 }
