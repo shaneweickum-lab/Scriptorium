@@ -16,6 +16,7 @@ import type { OllamaMessage } from './OllamaService';
 import type { SearchResult } from './VectorStore';
 import type { VectorIndexService } from './VectorIndexService';
 import type { StyleProfile } from './StyleAnalyzer';
+import type { OracleProfile } from './OracleMLService';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -36,6 +37,8 @@ export interface RagContext {
   styleInjected: boolean;
   /** True when the author's current scene text was injected into the prompt. */
   sceneInjected: boolean;
+  /** True when an OracleProfile was available and injected into the prompt. */
+  oracleInjected: boolean;
 }
 
 /** Scene context published by the active editor for Maven's awareness. */
@@ -135,6 +138,11 @@ function formatStyleSection(profile: StyleProfile): string {
   return lines.join('\n');
 }
 
+function formatOracleSection(profile: OracleProfile): string {
+  // The profile already contains a fully-rendered oracleKnowledge string
+  return profile.oracleKnowledge;
+}
+
 // ---------------------------------------------------------------------------
 // RagService
 // ---------------------------------------------------------------------------
@@ -169,15 +177,18 @@ export class RagService {
    *   2. Lore entries from the World Bible (when available)
    *   3. Current scene in progress (when available) — last ~400 words
    *   4. Author's voice / style profile (when available)
+   *   5. OracleML corpus knowledge (when available)
    *
-   * @param entries       Retrieved lore chunks (may be empty).
-   * @param styleProfile  Optional: StyleProfile from StyleAnalyzer.
-   * @param sceneContext  Optional: live plain-text from the active editor.
+   * @param entries        Retrieved lore chunks (may be empty).
+   * @param styleProfile   Optional: StyleProfile from StyleAnalyzer.
+   * @param sceneContext   Optional: live plain-text from the active editor.
+   * @param oracleProfile  Optional: OracleProfile from OracleMLService.
    */
   static buildSystemPrompt(
     entries: SearchResult[],
     styleProfile?: StyleProfile,
     sceneContext?: SceneContext,
+    oracleProfile?: OracleProfile,
   ): string {
     let prompt: string;
 
@@ -225,6 +236,12 @@ export class RagService {
       prompt += '\n\n' + formatStyleSection(styleProfile);
     }
 
+    // Append OracleML corpus knowledge — deepest layer, woven in last so it
+    // colours everything Maven says with the author's full craft signature.
+    if (oracleProfile?.oracleKnowledge) {
+      prompt += '\n\n' + formatOracleSection(oracleProfile);
+    }
+
     return prompt;
   }
 
@@ -232,8 +249,9 @@ export class RagService {
    * Assemble the full context object (retrieval + prompt construction) in one call.
    * This is the main entry point used by useAuthorAI.
    *
-   * @param styleProfile  Optional: inject style constraints into the system prompt.
-   * @param sceneContext  Optional: live plain-text from the active editor.
+   * @param styleProfile   Optional: inject style constraints into the system prompt.
+   * @param sceneContext   Optional: live plain-text from the active editor.
+   * @param oracleProfile  Optional: inject OracleML corpus knowledge.
    */
   static async buildContext(
     query: string,
@@ -242,6 +260,7 @@ export class RagService {
     minScore = 0.3,
     styleProfile?: StyleProfile,
     sceneContext?: SceneContext,
+    oracleProfile?: OracleProfile,
   ): Promise<RagContext> {
     const entries = await RagService.retrieveEntries(
       query,
@@ -249,13 +268,14 @@ export class RagService {
       topK,
       minScore,
     );
-    const systemPrompt = RagService.buildSystemPrompt(entries, styleProfile, sceneContext);
+    const systemPrompt = RagService.buildSystemPrompt(entries, styleProfile, sceneContext, oracleProfile);
     return {
       entries,
       systemPrompt,
       loreInjected: entries.length > 0,
       styleInjected: !!styleProfile?.styleConstraints,
       sceneInjected: !!sceneContext?.text?.trim(),
+      oracleInjected: !!oracleProfile?.oracleKnowledge,
     };
   }
 
@@ -282,7 +302,8 @@ export class RagService {
   /**
    * Convenience: run buildContext() then buildMessages() in one step.
    *
-   * @param styleProfile  Optional style constraints.
+   * @param styleProfile   Optional style constraints.
+   * @param oracleProfile  Optional OracleML corpus knowledge.
    */
   static async buildRagMessages(
     userPrompt: string,
@@ -291,6 +312,7 @@ export class RagService {
     topK = 3,
     minScore = 0.3,
     styleProfile?: StyleProfile,
+    oracleProfile?: OracleProfile,
   ): Promise<{ messages: OllamaMessage[]; context: RagContext }> {
     const context = await RagService.buildContext(
       userPrompt,
@@ -298,6 +320,8 @@ export class RagService {
       topK,
       minScore,
       styleProfile,
+      undefined,
+      oracleProfile,
     );
     const messages = RagService.buildMessages(userPrompt, context, history);
     return { messages, context };

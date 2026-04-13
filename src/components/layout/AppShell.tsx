@@ -10,6 +10,7 @@ import { ToastContainer } from '../common/Toast';
 import { AchievementsModal } from '../achievements/AchievementsModal';
 import { MavenPanel } from '../ai/MavenPanel';
 import { useVectorIndex } from '../../features/ai-engine/hooks/useVectorIndex';
+import { useOracleML } from '../../features/ai-engine/hooks/useOracleML';
 
 export function AppShell() {
   const activeView = useUIStore((s) => s.activeView);
@@ -24,6 +25,7 @@ export function AppShell() {
 
   const activeBook = useLibraryStore((s) => s.activeBook);
   const { indexStatus, indexProgress } = useVectorIndex(activeBook?.id);
+  const { oracleProfile, isAnalyzing: isOracleAnalyzing, analyzeNow } = useOracleML(activeBook?.id);
 
   return (
     <div className="flex h-screen overflow-hidden bg-white text-slate-800">
@@ -40,6 +42,9 @@ export function AppShell() {
               onClose={() => setShowMaven(false)}
               indexStatus={indexStatus}
               indexProgress={indexProgress}
+              oracleProfile={oracleProfile}
+              isOracleAnalyzing={isOracleAnalyzing}
+              onRefreshOracle={analyzeNow}
             />
           )}
         </div>

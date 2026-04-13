@@ -24,6 +24,7 @@ import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 import { useWorldStore } from '../../store/worldStore';
 import { VectorIndexService } from '../../features/ai-engine/services/VectorIndexService';
 import type { VectorIndexStatus, UseVectorIndexReturn } from '../../features/ai-engine/hooks/useVectorIndex';
+import type { OracleProfile } from '../../features/ai-engine/services/OracleMLService';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,6 +36,9 @@ interface MavenPanelProps {
   onClose: () => void;
   indexStatus: VectorIndexStatus;
   indexProgress: UseVectorIndexReturn['indexProgress'];
+  oracleProfile?: OracleProfile | null;
+  isOracleAnalyzing?: boolean;
+  onRefreshOracle?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -147,7 +151,14 @@ function ProposalCard({ proposal, applied, skipped, onApply, onSkip }: ProposalC
 // Main component
 // ---------------------------------------------------------------------------
 
-export function MavenPanel({ onClose, indexStatus, indexProgress }: MavenPanelProps) {
+export function MavenPanel({
+  onClose,
+  indexStatus,
+  indexProgress,
+  oracleProfile,
+  isOracleAnalyzing,
+  onRefreshOracle,
+}: MavenPanelProps) {
   const activeBook = useLibraryStore((s) => s.activeBook);
   const liveContent = useEditorStore((s) => s.liveContent);
   const activeNodeTitle = useEditorStore((s) => s.activeNodeTitle);
@@ -181,6 +192,7 @@ export function MavenPanel({ onClose, indexStatus, indexProgress }: MavenPanelPr
     bookId: activeBook?.id,
     sceneText: liveContent,
     sceneTitle: activeNodeTitle,
+    oracleProfile: oracleProfile ?? undefined,
   });
 
   const [tab, setTab] = useState<PanelTab>('chat');
@@ -651,6 +663,65 @@ export function MavenPanel({ onClose, indexStatus, indexProgress }: MavenPanelPr
                 <span className="text-[10px] text-teal-600 truncate">
                   {styleProfile.atmosphere.dominant} · {styleProfile.sentences.category} sentences
                 </span>
+              </div>
+            )}
+
+            {/* Oracle Intelligence indicator */}
+            {oracleProfile && (
+              <div className="border-t border-slate-100 shrink-0">
+                <div className="flex items-center gap-2 px-3 py-1.5">
+                  <Sparkles size={10} className="text-violet-400 shrink-0" />
+                  <span className="text-[10px] text-slate-500 flex-1 truncate">
+                    <span className={`font-semibold mr-1 ${
+                      oracleProfile.oracleLevel === 'oracle' ? 'text-violet-600'
+                      : oracleProfile.oracleLevel === 'master' ? 'text-violet-500'
+                      : oracleProfile.oracleLevel === 'journeyman' ? 'text-teal-600'
+                      : 'text-slate-400'
+                    }`}>
+                      {oracleProfile.oracleLevel.charAt(0).toUpperCase() + oracleProfile.oracleLevel.slice(1)}
+                    </span>
+                    Oracle · {oracleProfile.wordsAnalyzed.toLocaleString()} words learned
+                  </span>
+                  <button
+                    onClick={onRefreshOracle}
+                    disabled={isOracleAnalyzing}
+                    title="Re-analyse writing corpus"
+                    className="text-slate-300 hover:text-violet-400 disabled:opacity-40 transition-all shrink-0"
+                  >
+                    <RefreshCw size={10} className={isOracleAnalyzing ? 'animate-spin' : ''} />
+                  </button>
+                </div>
+                {oracleProfile.pov !== 'unknown' && (
+                  <div className="flex flex-wrap gap-1 px-3 pb-1.5">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-500 font-medium">
+                      {oracleProfile.pov}-person
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                      {oracleProfile.pacingStyle}
+                    </span>
+                    {oracleProfile.themes.slice(0, 1).map((t) => (
+                      <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!oracleProfile && !isOracleAnalyzing && (
+              <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+                <Sparkles size={10} className="text-slate-300 shrink-0" />
+                <span className="text-[10px] text-slate-400">
+                  OracleML learns your voice as you write
+                </span>
+              </div>
+            )}
+
+            {isOracleAnalyzing && (
+              <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+                <Loader2 size={10} className="animate-spin text-violet-300 shrink-0" />
+                <span className="text-[10px] text-slate-400">OracleML studying your writing…</span>
               </div>
             )}
 

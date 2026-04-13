@@ -56,6 +56,7 @@ import {
   type StyleProfile,
 } from '../services/StyleAnalyzer';
 import { StyleProfileStore } from '../services/StyleProfileStore';
+import type { OracleProfile } from '../services/OracleMLService';
 import type { SearchResult } from '../services/VectorStore';
 
 // ---------------------------------------------------------------------------
@@ -94,6 +95,12 @@ export interface UseAuthorAIOptions {
   sceneText?: string;
   /** Title of the active writing node — shown in the scene context fence. */
   sceneTitle?: string;
+  /**
+   * OracleML corpus profile for this book. When provided, Maven's system
+   * prompt is enriched with the author's full craft signature so her
+   * suggestions feel increasingly native to their voice over time.
+   */
+  oracleProfile?: OracleProfile;
 }
 
 export interface UseAuthorAIReturn {
@@ -211,6 +218,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     bookId,
     sceneText,
     sceneTitle,
+    oracleProfile,
   } = options;
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -241,6 +249,9 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   const sceneContextRef = useRef<SceneContext | undefined>(undefined);
   sceneContextRef.current =
     sceneText?.trim() ? { text: sceneText, title: sceneTitle ?? '' } : undefined;
+
+  const oracleProfileRef = useRef<OracleProfile | undefined>(undefined);
+  oracleProfileRef.current = oracleProfile;
 
   // OllamaService instance — recreated only when the base URL changes
   const ollamaRef = useRef<OllamaService | null>(null);
@@ -304,19 +315,22 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
           minScore,
           styleProfileRef.current ?? undefined,
           sceneContextRef.current,
+          oracleProfileRef.current,
         );
       } catch {
-        // RAG failure is non-fatal — use bare prompt with style/scene if available
+        // RAG failure is non-fatal — use bare prompt with style/scene/oracle if available
         context = {
           entries: [],
           systemPrompt: RagService.buildSystemPrompt(
             [],
             styleProfileRef.current ?? undefined,
             sceneContextRef.current,
+            oracleProfileRef.current,
           ),
           loreInjected: false,
           styleInjected: !!styleProfileRef.current,
           sceneInjected: !!sceneContextRef.current,
+          oracleInjected: !!oracleProfileRef.current,
         };
       }
 
