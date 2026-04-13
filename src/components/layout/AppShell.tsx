@@ -1,6 +1,7 @@
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useUIStore } from '../../store/uiStore';
+import { useLibraryStore } from '../../store/libraryStore';
 import { WritingSpace } from '../writing/WritingSpace';
 import { Assembly } from '../assembly/Assembly';
 import { ExportModal } from '../export/ExportModal';
@@ -8,6 +9,7 @@ import { ProjectSettings } from './ProjectSettings';
 import { ToastContainer } from '../common/Toast';
 import { AchievementsModal } from '../achievements/AchievementsModal';
 import { MavenPanel } from '../ai/MavenPanel';
+import { useVectorIndex } from '../../features/ai-engine/hooks/useVectorIndex';
 
 export function AppShell() {
   const activeView = useUIStore((s) => s.activeView);
@@ -20,6 +22,9 @@ export function AppShell() {
   const showMaven = useUIStore((s) => s.showMaven);
   const setShowMaven = useUIStore((s) => s.setShowMaven);
 
+  const activeBook = useLibraryStore((s) => s.activeBook);
+  const { indexStatus, indexProgress } = useVectorIndex(activeBook?.id);
+
   return (
     <div className="flex h-screen overflow-hidden bg-white text-slate-800">
       <Sidebar />
@@ -30,7 +35,13 @@ export function AppShell() {
             {activeView === 'writing' && <WritingSpace />}
             {activeView === 'assembly' && <Assembly />}
           </main>
-          {showMaven && <MavenPanel onClose={() => setShowMaven(false)} />}
+          {showMaven && (
+            <MavenPanel
+              onClose={() => setShowMaven(false)}
+              indexStatus={indexStatus}
+              indexProgress={indexProgress}
+            />
+          )}
         </div>
       </div>
 

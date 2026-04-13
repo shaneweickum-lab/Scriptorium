@@ -23,6 +23,7 @@ import { useLibraryStore } from '../../store/libraryStore';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 import { useWorldStore } from '../../store/worldStore';
 import { VectorIndexService } from '../../features/ai-engine/services/VectorIndexService';
+import type { VectorIndexStatus, UseVectorIndexReturn } from '../../features/ai-engine/hooks/useVectorIndex';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,6 +33,8 @@ type PanelTab = 'chat' | 'write' | 'lore';
 
 interface MavenPanelProps {
   onClose: () => void;
+  indexStatus: VectorIndexStatus;
+  indexProgress: UseVectorIndexReturn['indexProgress'];
 }
 
 // ---------------------------------------------------------------------------
@@ -144,7 +147,7 @@ function ProposalCard({ proposal, applied, skipped, onApply, onSkip }: ProposalC
 // Main component
 // ---------------------------------------------------------------------------
 
-export function MavenPanel({ onClose }: MavenPanelProps) {
+export function MavenPanel({ onClose, indexStatus, indexProgress }: MavenPanelProps) {
   const activeBook = useLibraryStore((s) => s.activeBook);
   const liveContent = useEditorStore((s) => s.liveContent);
   const activeNodeTitle = useEditorStore((s) => s.activeNodeTitle);
@@ -366,6 +369,44 @@ export function MavenPanel({ onClose }: MavenPanelProps) {
             <span className="text-[10px] text-slate-400 truncate">
               Reading:{' '}
               <span className="text-slate-500 font-medium">{activeNodeTitle}</span>
+            </span>
+          </div>
+        )}
+
+        {/* Vector index status */}
+        {indexStatus === 'loading-model' && (
+          <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+            <Loader2 size={10} className="animate-spin text-violet-400 shrink-0" />
+            <span className="text-[10px] text-slate-400">
+              Loading embedding model
+              {indexProgress && indexProgress.phase === 'model' && indexProgress.completed > 0
+                ? ` — ${indexProgress.completed}%`
+                : '…'}
+            </span>
+          </div>
+        )}
+        {indexStatus === 'indexing' && (
+          <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+            <Loader2 size={10} className="animate-spin text-teal-400 shrink-0" />
+            <span className="text-[10px] text-slate-400">
+              Indexing lore
+              {indexProgress && indexProgress.total > 0
+                ? ` — ${indexProgress.completed} / ${indexProgress.total}`
+                : '…'}
+            </span>
+          </div>
+        )}
+        {indexStatus === 'ready' && (
+          <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />
+            <span className="text-[10px] text-slate-400">Lore index ready</span>
+          </div>
+        )}
+        {indexStatus === 'error' && (
+          <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+            <AlertCircle size={10} className="text-amber-400 shrink-0" />
+            <span className="text-[10px] text-slate-400">
+              Lore index unavailable — Maven will answer from context only
             </span>
           </div>
         )}

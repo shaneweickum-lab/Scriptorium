@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { WorldSection, WorldEntry, CustomField } from '../types';
 import { worldRepository } from '../db/worldRepository';
 import { generateId } from '../utils/id';
+import { VectorIndexService } from '../features/ai-engine/services/VectorIndexService';
 
 interface WorldState {
   sections: WorldSection[];
@@ -106,6 +107,9 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   addEntry: async (bookId, sectionId) => {
     const entry = await worldRepository.addEntry(bookId, sectionId);
     set((state) => ({ entries: [...state.entries, entry], activeEntryId: entry.id }));
+    // Best-effort: index the new entry so Maven can retrieve it immediately
+    const { sections } = get();
+    VectorIndexService.getInstance().reindexEntry(entry, sections).catch(() => {});
     return entry;
   },
 
@@ -116,6 +120,12 @@ export const useWorldStore = create<WorldState>((set, get) => ({
         e.id === id ? { ...e, ...updates, updatedAt: Date.now() } : e
       ),
     }));
+    // Best-effort: re-embed the updated entry (get() reflects the new state)
+    const { entries, sections } = get();
+    const updated = entries.find((e) => e.id === id);
+    if (updated) {
+      VectorIndexService.getInstance().reindexEntry(updated, sections).catch(() => {});
+    }
   },
 
   deleteEntry: async (id) => {
@@ -124,6 +134,8 @@ export const useWorldStore = create<WorldState>((set, get) => ({
       entries: state.entries.filter((e) => e.id !== id),
       activeEntryId: state.activeEntryId === id ? null : state.activeEntryId,
     }));
+    // Best-effort: remove stale chunks from the vector index
+    VectorIndexService.getInstance().removeEntry(id).catch(() => {});
   },
 
   addCustomField: async (entryId) => {

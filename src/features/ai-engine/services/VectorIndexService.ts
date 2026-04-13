@@ -198,6 +198,15 @@ export class VectorIndexService {
     await this.indexWorldEntries([entry], sections);
   }
 
+  /**
+   * Remove all indexed chunks for a single entry (e.g. after deletion).
+   * No-op if the index is not initialised.
+   */
+  async removeEntry(entryId: string): Promise<void> {
+    if (!this._initialised) return;
+    await this._store.deleteBySourceId(entryId);
+  }
+
   // -------------------------------------------------------------------------
   // Search
   // -------------------------------------------------------------------------
