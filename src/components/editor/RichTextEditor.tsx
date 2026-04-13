@@ -17,9 +17,11 @@ import type { MentionSuggestionState, MentionPopupHandle } from './MentionPopup'
 import { FindReplacePanel } from './FindReplacePanel';
 import { SearchAndReplace } from './SearchAndReplace';
 import { CommentsPanel } from './CommentsPanel';
+import { WritingBlockCard } from './WritingBlockCard';
 import { CommentMark } from '../../extensions/CommentMark';
 import { useEditorSettings, getEditorFont } from '../../store/editorSettingsStore';
 import { useEditorStore } from '../../store/editorStore';
+import { useWritingBlock } from '../../features/ai-engine/hooks/useWritingBlock';
 import type { WorldEntry, WorldSection } from '../../types';
 
 interface CommentDraft {
@@ -247,6 +249,9 @@ export function RichTextEditor({
     ? pendingSuggestion.text.trim().split(/\s+/).filter(Boolean).length
     : 0;
 
+  // ── Writing block detection ────────────────────────────────────────────────
+  const { blockType, idleMinutes, dismiss } = useWritingBlock(editor, nodeId);
+
   if (!editor) return null;
 
   return (
@@ -331,6 +336,15 @@ export function RichTextEditor({
           />
         )}
       </div>
+
+      {/* Writing block card — shown above the word count bar when a block is detected */}
+      {blockType && (
+        <WritingBlockCard
+          type={blockType}
+          idleMinutes={idleMinutes}
+          onDismiss={dismiss}
+        />
+      )}
 
       <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex items-center gap-4 shrink-0">
         <span>{editor.storage.characterCount.words().toLocaleString()} words</span>
