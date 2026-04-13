@@ -3,6 +3,8 @@ import {
   PenLine, Globe2, Trophy, Timer, BookMarked, Search,
   Maximize2, Image, TrendingUp, Star,
   ChevronRight, Sparkles, Library, Feather, Wand2, ScanSearch,
+  Brain, Fingerprint, Activity, Eye, MessageCircle, Layers,
+  Zap, BookHeart, ShieldCheck, Palette,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -89,6 +91,105 @@ const MAVEN_CAPABILITIES = [
   },
 ];
 
+const ORACLE_LEVELS = [
+  {
+    level: 'Apprentice',
+    threshold: '< 2,000 words',
+    desc: 'First impressions. Maven catches your perspective and the opening rhythm of your voice.',
+    glow: 'rgba(148,163,184,0.3)',
+    color: '#94a3b8',
+    ring: 'rgba(148,163,184,0.25)',
+  },
+  {
+    level: 'Journeyman',
+    threshold: '2,000 – 10,000',
+    desc: 'A clear voice fingerprint emerges. Pacing style, dialogue habits, and signature vocabulary take shape.',
+    glow: 'rgba(45,212,191,0.4)',
+    color: '#2dd4bf',
+    ring: 'rgba(45,212,191,0.2)',
+  },
+  {
+    level: 'Master',
+    threshold: '10,000 – 50,000',
+    desc: 'Full craft portrait. Thematic currents, sentence rhythm, interiority depth — Maven knows this writer.',
+    glow: 'rgba(167,139,250,0.5)',
+    color: '#a78bfa',
+    ring: 'rgba(167,139,250,0.25)',
+  },
+  {
+    level: 'Oracle',
+    threshold: '50,000+ words',
+    desc: 'Complete sight. Maven knows your voice as well as you know yourself — and writes from inside it.',
+    glow: 'rgba(251,191,36,0.5)',
+    color: '#fbbf24',
+    ring: 'rgba(251,191,36,0.2)',
+  },
+];
+
+const ORACLE_DIMENSIONS = [
+  {
+    icon: Eye,
+    title: 'Point of View',
+    desc: 'First, second, or third person — detected from pronoun frequency so Maven always narrates from your chosen vantage.',
+  },
+  {
+    icon: Activity,
+    title: 'Pacing Style',
+    desc: 'Kinetic, measured, or lyrical — inferred from action-verb density and sentence length. Maven matches your tempo.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Dialogue Ratio',
+    desc: 'How much of your prose lives in dialogue versus narration. Maven calibrates how much characters speak in her output.',
+  },
+  {
+    icon: Layers,
+    title: 'Character Interiority',
+    desc: 'Cognitive verb density reveals how deep inside a character\'s head you write. Maven mirrors that depth.',
+  },
+  {
+    icon: Zap,
+    title: 'Sensory Texture',
+    desc: 'Sensory word density per 100 words. Maven weaves matching sight, sound, touch, smell, and taste into her prose.',
+  },
+  {
+    icon: Fingerprint,
+    title: 'Signature Vocabulary',
+    desc: 'Your top 15 non-stop-words — the words you reach for instinctively. Maven\'s lexicon bends toward yours.',
+  },
+  {
+    icon: BookHeart,
+    title: 'Thematic Currents',
+    desc: 'Death & loss, betrayal, power, transformation — the obsessions woven through your corpus, surfaced and reinforced.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Sentence Rhythm',
+    desc: 'Standard deviation of sentence lengths — the proxy for musical variety. Maven modulates to match your natural variance.',
+  },
+];
+
+const ORACLE_UNLOCKS = [
+  {
+    icon: Palette,
+    title: 'Voice-Matched Prose',
+    desc: 'Maven\'s Write mode produces sentences that feel continuous with your hand — not generic AI, but a seamless extension of your own style.',
+    gradient: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Invisible Growth',
+    desc: 'Development areas — like sensory grounding or dialogue variety — are woven organically into every suggestion, never pointed out directly.',
+    gradient: 'linear-gradient(135deg, #0d9488, #2dd4bf)',
+  },
+  {
+    icon: Brain,
+    title: 'Thematic Resonance',
+    desc: 'Your recurring obsessions — the themes that define your work — are threaded through Maven\'s suggestions wherever they naturally fit.',
+    gradient: 'linear-gradient(135deg, #d97706, #fbbf24)',
+  },
+];
+
 const ACHIEVEMENTS_PREVIEW = ['✍️', '🌍', '📚', '🏆', '🔥', '⚡', '🎯', '📖', '🌌', '⭐', '🦉', '🌅'];
 
 interface Props {
@@ -98,6 +199,8 @@ interface Props {
 export function LandingPage({ onEnter }: Props) {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
   const [hoveredMaven, setHoveredMaven] = useState<number | null>(null);
+  const [hoveredOracle, setHoveredOracle] = useState<number | null>(null);
+  const [hoveredDimension, setHoveredDimension] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-white text-slate-800 overflow-y-auto">
@@ -284,6 +387,158 @@ export function LandingPage({ onEnter }: Props) {
               Compatible with llama3.2, mistral, gemma, phi3, and any model Ollama supports
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── ORACLE ML ──────────────────────────────────────────── */}
+      <section className="relative z-10 overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d0d1a 0%, #08101a 60%, #060e14 100%)' }}>
+        {/* Atmospheric glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] rounded-full pointer-events-none opacity-20"
+          style={{ background: 'radial-gradient(ellipse, #7c3aed 0%, transparent 65%)' }} />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full pointer-events-none opacity-15"
+          style={{ background: 'radial-gradient(circle, #fbbf24 0%, transparent 65%)' }} />
+
+        <div className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
+
+          {/* Badge */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] uppercase tracking-[0.18em] font-semibold"
+              style={{ borderColor: 'rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.08)', color: '#fbbf24' }}>
+              <Brain size={11} />
+              OracleML · Learns as you write
+            </div>
+          </div>
+
+          {/* Headline */}
+          <div className="text-center mb-5">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">
+              The more you write,<br />
+              <span className="bg-clip-text text-transparent"
+                style={{ backgroundImage: 'linear-gradient(135deg, #fbbf24, #a78bfa)' }}>
+                the better she knows you
+              </span>
+            </h2>
+            <p className="text-slate-400 max-w-2xl mx-auto text-base leading-relaxed">
+              OracleML is a local corpus analysis engine built into Maven. With every word you write,
+              it builds a deeper portrait of your craft — so Maven's suggestions feel less like AI and
+              more like your own hand, guided.
+            </p>
+          </div>
+
+          {/* Oracle Levels — progression */}
+          <div className="mb-16 mt-12">
+            <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
+              style={{ color: 'rgba(148,163,184,0.5)' }}>
+              Four oracle levels — unlocked by writing
+            </p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {ORACLE_LEVELS.map((lvl, i) => {
+                const isHov = hoveredOracle === i;
+                return (
+                  <div
+                    key={lvl.level}
+                    onMouseEnter={() => setHoveredOracle(i)}
+                    onMouseLeave={() => setHoveredOracle(null)}
+                    className="relative flex flex-col gap-2 p-5 rounded-2xl transition-all cursor-default"
+                    style={{
+                      border: isHov ? `1px solid ${lvl.color}55` : '1px solid rgba(255,255,255,0.07)',
+                      background: isHov ? `rgba(255,255,255,0.07)` : 'rgba(255,255,255,0.04)',
+                      transform: isHov ? 'translateY(-3px)' : 'none',
+                      boxShadow: isHov ? `0 8px 32px ${lvl.ring}` : 'none',
+                    }}
+                  >
+                    {/* Glowing orb */}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-all"
+                      style={{
+                        background: `radial-gradient(circle, ${lvl.color}33 0%, transparent 70%)`,
+                        border: `1.5px solid ${lvl.color}55`,
+                        boxShadow: isHov ? `0 0 16px ${lvl.glow}` : 'none',
+                      }}>
+                      <div className="w-2.5 h-2.5 rounded-full transition-all"
+                        style={{
+                          background: lvl.color,
+                          boxShadow: isHov ? `0 0 8px ${lvl.color}` : 'none',
+                        }} />
+                    </div>
+                    <div className="font-bold text-sm" style={{ color: lvl.color }}>{lvl.level}</div>
+                    <div className="text-[10px] font-medium" style={{ color: 'rgba(148,163,184,0.5)' }}>{lvl.threshold} words</div>
+                    <p className="text-[11px] leading-relaxed mt-1" style={{ color: 'rgba(203,213,225,0.65)' }}>{lvl.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Connecting line beneath */}
+            <div className="hidden lg:block relative mt-0 -translate-y-[0]">
+              <div className="absolute left-[12.5%] right-[12.5%] top-0 h-px"
+                style={{ background: 'linear-gradient(90deg, rgba(148,163,184,0.15), rgba(167,139,250,0.3), rgba(251,191,36,0.3), rgba(251,191,36,0.1))' }} />
+            </div>
+          </div>
+
+          {/* What Maven learns */}
+          <div className="mb-14">
+            <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
+              style={{ color: 'rgba(148,163,184,0.5)' }}>
+              What Oracle studies in your writing
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {ORACLE_DIMENSIONS.map((dim, i) => {
+                const Icon = dim.icon;
+                const isHov = hoveredDimension === i;
+                return (
+                  <div
+                    key={dim.title}
+                    onMouseEnter={() => setHoveredDimension(i)}
+                    onMouseLeave={() => setHoveredDimension(null)}
+                    className="flex flex-col gap-2 p-4 rounded-xl transition-all cursor-default"
+                    style={{
+                      border: isHov ? '1px solid rgba(167,139,250,0.35)' : '1px solid rgba(255,255,255,0.06)',
+                      background: isHov ? 'rgba(124,58,237,0.1)' : 'rgba(255,255,255,0.03)',
+                      transform: isHov ? 'translateY(-2px)' : 'none',
+                    }}
+                  >
+                    <Icon size={14} style={{ color: isHov ? '#a78bfa' : 'rgba(148,163,184,0.5)' }}
+                      className="transition-colors shrink-0" />
+                    <div className="text-xs font-semibold text-white">{dim.title}</div>
+                    <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(148,163,184,0.6)' }}>{dim.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* What it unlocks */}
+          <div>
+            <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
+              style={{ color: 'rgba(148,163,184,0.5)' }}>
+              What Oracle intelligence unlocks in Maven
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {ORACLE_UNLOCKS.map((unlock) => {
+                const Icon = unlock.icon;
+                return (
+                  <div key={unlock.title}
+                    className="rounded-2xl p-6"
+                    style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 shrink-0"
+                      style={{ background: unlock.gradient }}>
+                      <Icon size={18} className="text-white" />
+                    </div>
+                    <h3 className="text-sm font-bold text-white mb-2">{unlock.title}</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.7)' }}>{unlock.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Private note */}
+          <div className="mt-12 text-center">
+            <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.45)' }}>
+              All analysis runs locally in your browser — no data leaves your device.
+              OracleML uses pure statistical analysis, not cloud ML APIs.
+            </p>
+          </div>
+
         </div>
       </section>
 
