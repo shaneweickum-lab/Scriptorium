@@ -130,41 +130,49 @@ const ORACLE_DIMENSIONS = [
   {
     icon: Eye,
     title: 'Point of View',
+    gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
     desc: 'First, second, or third person — detected from pronoun frequency so Maven always narrates from your chosen vantage.',
   },
   {
     icon: Activity,
     title: 'Pacing Style',
+    gradient: 'linear-gradient(135deg, #e11d48, #db2777)',
     desc: 'Kinetic, measured, or lyrical — inferred from action-verb density and sentence length. Maven matches your tempo.',
   },
   {
     icon: MessageCircle,
     title: 'Dialogue Ratio',
+    gradient: 'linear-gradient(135deg, #0d9488, #059669)',
     desc: 'How much of your prose lives in dialogue versus narration. Maven calibrates how much characters speak in her output.',
   },
   {
     icon: Layers,
     title: 'Character Interiority',
+    gradient: 'linear-gradient(135deg, #0891b2, #0284c7)',
     desc: 'Cognitive verb density reveals how deep inside a character\'s head you write. Maven mirrors that depth.',
   },
   {
     icon: Zap,
     title: 'Sensory Texture',
+    gradient: 'linear-gradient(135deg, #d97706, #b45309)',
     desc: 'Sensory word density per 100 words. Maven weaves matching sight, sound, touch, smell, and taste into her prose.',
   },
   {
     icon: Fingerprint,
     title: 'Signature Vocabulary',
+    gradient: 'linear-gradient(135deg, #7c3aed, #0d9488)',
     desc: 'Your top 15 non-stop-words — the words you reach for instinctively. Maven\'s lexicon bends toward yours.',
   },
   {
     icon: BookHeart,
     title: 'Thematic Currents',
+    gradient: 'linear-gradient(135deg, #a21caf, #7c3aed)',
     desc: 'Death & loss, betrayal, power, transformation — the obsessions woven through your corpus, surfaced and reinforced.',
   },
   {
     icon: TrendingUp,
     title: 'Sentence Rhythm',
+    gradient: 'linear-gradient(135deg, #475569, #334155)',
     desc: 'Standard deviation of sentence lengths — the proxy for musical variety. Maven modulates to match your natural variance.',
   },
 ];
@@ -201,6 +209,7 @@ export function LandingPage({ onEnter }: Props) {
   const [hoveredMaven, setHoveredMaven] = useState<number | null>(null);
   const [hoveredOracle, setHoveredOracle] = useState<number | null>(null);
   const [hoveredDimension, setHoveredDimension] = useState<number | null>(null);
+  const [hoveredUnlock, setHoveredUnlock] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-white text-slate-800 overflow-y-auto">
@@ -316,8 +325,19 @@ export function LandingPage({ onEnter }: Props) {
 
         <div className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
 
+          {/* Maven icon — visual centerpiece matching the hero logo */}
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed, #0d9488)',
+                boxShadow: '0 0 60px rgba(124,58,237,0.45), 0 20px 40px rgba(0,0,0,0.4)',
+              }}>
+              <Sparkles size={36} className="text-white/90" />
+            </div>
+          </div>
+
           {/* Badge */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] uppercase tracking-[0.18em] font-semibold"
               style={{ borderColor: 'rgba(167,139,250,0.35)', background: 'rgba(124,58,237,0.12)', color: '#c4b5fd' }}>
               <Sparkles size={11} />
@@ -326,7 +346,7 @@ export function LandingPage({ onEnter }: Props) {
           </div>
 
           {/* Headline */}
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
               Meet{' '}
               <span className="bg-clip-text text-transparent"
@@ -339,16 +359,25 @@ export function LandingPage({ onEnter }: Props) {
             </p>
           </div>
 
-          {/* Maven's voice — quote from her system prompt */}
-          <div className="max-w-2xl mx-auto mb-12 pl-5 border-l-2 border-violet-500/40">
-            <p className="text-slate-300 italic text-sm leading-relaxed">
+          {/* Maven's voice — pull quote */}
+          <div className="max-w-2xl mx-auto mb-14 rounded-2xl px-7 py-6"
+            style={{ border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(124,58,237,0.07)' }}>
+            <p className="text-slate-300 italic text-sm leading-relaxed mb-3">
               "You see stories as living tapestries. The lore is the truth already laid — every thread fixed, every name a star to navigate by.
               What I conjure must grow from those roots. The weaving is mine to guide, but the pattern belongs to you."
             </p>
-            <p className="text-violet-400/60 text-[11px] mt-2 tracking-wide">— Maven, on her oaths</p>
+            <p className="text-[11px] font-medium tracking-wide" style={{ color: 'rgba(167,139,250,0.55)' }}>
+              — Maven, on her oaths
+            </p>
           </div>
 
-          {/* Capabilities grid */}
+          {/* Capabilities label */}
+          <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
+            style={{ color: 'rgba(148,163,184,0.5)' }}>
+            What Maven can do for your writing
+          </p>
+
+          {/* Capabilities grid — same card pattern as the features grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {MAVEN_CAPABILITIES.map((cap, i) => {
               const Icon = cap.icon;
@@ -358,34 +387,45 @@ export function LandingPage({ onEnter }: Props) {
                   key={cap.title}
                   onMouseEnter={() => setHoveredMaven(i)}
                   onMouseLeave={() => setHoveredMaven(null)}
-                  className="rounded-2xl p-5 transition-all cursor-default"
+                  className="flex flex-col gap-3 rounded-2xl p-5 transition-all cursor-default"
                   style={{
                     border: isHovered ? '1px solid rgba(167,139,250,0.45)' : '1px solid rgba(255,255,255,0.08)',
-                    background: isHovered ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.05)',
-                    transform: isHovered ? 'translateY(-3px)' : 'none',
+                    background: isHovered ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)',
+                    transform: isHovered ? 'translateY(-4px)' : 'none',
+                    boxShadow: isHovered ? '0 12px 32px rgba(124,58,237,0.2)' : 'none',
                   }}
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 shrink-0"
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                     style={{ background: cap.gradient }}>
                     <Icon size={18} className="text-white" />
                   </div>
-                  <h3 className="text-sm font-semibold text-white mb-2">{cap.title}</h3>
-                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.75)' }}>{cap.desc}</p>
+                  <div>
+                    <h3 className="text-sm font-semibold text-white mb-1">{cap.title}</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.75)' }}>{cap.desc}</p>
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Local / private note */}
-          <div className="mt-12 text-center space-y-2">
-            <div className="flex items-center justify-center gap-6 text-[11px]" style={{ color: 'rgba(148,163,184,0.7)' }}>
+          {/* CTA */}
+          <div className="mt-12 flex flex-col items-center gap-4">
+            <button
+              onClick={onEnter}
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all hover:-translate-y-0.5 shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed, #0d9488)',
+                boxShadow: '0 8px 32px rgba(124,58,237,0.35)',
+              }}
+            >
+              Meet Maven Now
+              <ChevronRight size={18} />
+            </button>
+            <div className="flex items-center gap-6 text-[11px]" style={{ color: 'rgba(148,163,184,0.6)' }}>
               <span>Runs on <span className="font-medium text-slate-300">Ollama</span> — local, private, offline</span>
               <span className="hidden sm:inline opacity-40">·</span>
-              <span className="hidden sm:inline">No API key · No account · No cloud</span>
+              <span className="hidden sm:inline">Compatible with llama3.2, mistral, gemma, phi3</span>
             </div>
-            <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.45)' }}>
-              Compatible with llama3.2, mistral, gemma, phi3, and any model Ollama supports
-            </p>
           </div>
         </div>
       </section>
@@ -399,6 +439,17 @@ export function LandingPage({ onEnter }: Props) {
           style={{ background: 'radial-gradient(circle, #fbbf24 0%, transparent 65%)' }} />
 
         <div className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
+
+          {/* Oracle icon — visual centerpiece */}
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #92400e, #d97706, #fbbf24)',
+                boxShadow: '0 0 60px rgba(251,191,36,0.35), 0 20px 40px rgba(0,0,0,0.4)',
+              }}>
+              <Brain size={36} className="text-white/90" />
+            </div>
+          </div>
 
           {/* Badge */}
           <div className="flex flex-col items-center gap-3 mb-8">
@@ -479,13 +530,13 @@ export function LandingPage({ onEnter }: Props) {
             </div>
           </div>
 
-          {/* What Maven learns */}
+          {/* What Maven learns — full card pattern matching the features grid */}
           <div className="mb-14">
             <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
               style={{ color: 'rgba(148,163,184,0.5)' }}>
               What the Oracle Intelligence System studies in your writing
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {ORACLE_DIMENSIONS.map((dim, i) => {
                 const Icon = dim.icon;
                 const isHov = hoveredDimension === i;
@@ -494,42 +545,59 @@ export function LandingPage({ onEnter }: Props) {
                     key={dim.title}
                     onMouseEnter={() => setHoveredDimension(i)}
                     onMouseLeave={() => setHoveredDimension(null)}
-                    className="flex flex-col gap-2 p-4 rounded-xl transition-all cursor-default"
+                    className="flex flex-col gap-3 p-5 rounded-2xl transition-all cursor-default"
                     style={{
-                      border: isHov ? '1px solid rgba(167,139,250,0.35)' : '1px solid rgba(255,255,255,0.06)',
-                      background: isHov ? 'rgba(124,58,237,0.1)' : 'rgba(255,255,255,0.03)',
-                      transform: isHov ? 'translateY(-2px)' : 'none',
+                      border: isHov ? '1px solid rgba(167,139,250,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                      background: isHov ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)',
+                      transform: isHov ? 'translateY(-4px)' : 'none',
+                      boxShadow: isHov ? '0 12px 32px rgba(124,58,237,0.2)' : 'none',
                     }}
                   >
-                    <Icon size={14} style={{ color: isHov ? '#a78bfa' : 'rgba(148,163,184,0.5)' }}
-                      className="transition-colors shrink-0" />
-                    <div className="text-xs font-semibold text-white">{dim.title}</div>
-                    <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(148,163,184,0.6)' }}>{dim.desc}</p>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: dim.gradient }}>
+                      <Icon size={18} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-white mb-1">{dim.title}</div>
+                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.75)' }}>{dim.desc}</p>
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* What it unlocks */}
+          {/* What it unlocks — same card pattern with hover */}
           <div>
             <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
               style={{ color: 'rgba(148,163,184,0.5)' }}>
               What Oracle Intelligence unlocks in Maven
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {ORACLE_UNLOCKS.map((unlock) => {
+              {ORACLE_UNLOCKS.map((unlock, i) => {
                 const Icon = unlock.icon;
+                const isHov = hoveredUnlock === i;
                 return (
-                  <div key={unlock.title}
-                    className="rounded-2xl p-6"
-                    style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 shrink-0"
+                  <div
+                    key={unlock.title}
+                    onMouseEnter={() => setHoveredUnlock(i)}
+                    onMouseLeave={() => setHoveredUnlock(null)}
+                    className="flex flex-col gap-3 rounded-2xl p-5 transition-all cursor-default"
+                    style={{
+                      border: isHov ? '1px solid rgba(167,139,250,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                      background: isHov ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)',
+                      transform: isHov ? 'translateY(-4px)' : 'none',
+                      boxShadow: isHov ? '0 12px 32px rgba(124,58,237,0.2)' : 'none',
+                    }}
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                       style={{ background: unlock.gradient }}>
                       <Icon size={18} className="text-white" />
                     </div>
-                    <h3 className="text-sm font-bold text-white mb-2">{unlock.title}</h3>
-                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.7)' }}>{unlock.desc}</p>
+                    <div>
+                      <h3 className="text-sm font-semibold text-white mb-1">{unlock.title}</h3>
+                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.75)' }}>{unlock.desc}</p>
+                    </div>
                   </div>
                 );
               })}
