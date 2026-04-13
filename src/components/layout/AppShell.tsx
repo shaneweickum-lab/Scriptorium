@@ -34,18 +34,28 @@ export function AppShell() {
         <TopBar />
         <div className="flex flex-1 overflow-hidden min-h-0">
           <main className="flex-1 overflow-hidden">
-            {activeView === 'writing' && <WritingSpace />}
-            {activeView === 'assembly' && <Assembly />}
+            {activeView === 'writing' && (
+              <div key="writing" className="wp-view-enter h-full">
+                <WritingSpace />
+              </div>
+            )}
+            {activeView === 'assembly' && (
+              <div key="assembly" className="wp-view-enter h-full">
+                <Assembly />
+              </div>
+            )}
           </main>
           {showMaven && (
-            <MavenPanel
-              onClose={() => setShowMaven(false)}
-              indexStatus={indexStatus}
-              indexProgress={indexProgress}
-              oracleProfile={oracleProfile}
-              isOracleAnalyzing={isOracleAnalyzing}
-              onRefreshOracle={analyzeNow}
-            />
+            <div className="wp-panel-enter flex h-full">
+              <MavenPanel
+                onClose={() => setShowMaven(false)}
+                indexStatus={indexStatus}
+                indexProgress={indexProgress}
+                oracleProfile={oracleProfile}
+                isOracleAnalyzing={isOracleAnalyzing}
+                onRefreshOracle={analyzeNow}
+              />
+            </div>
           )}
         </div>
       </div>

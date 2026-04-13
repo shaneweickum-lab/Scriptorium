@@ -583,8 +583,16 @@ export function Library() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden bg-white relative">
-        {view === 'maven' ? <LibraryMavenView /> :
-        view === 'training' ? <LibraryTrainingView /> : (
+        {view === 'maven' ? (
+          <div key="maven" className="wp-view-enter flex-1 flex flex-col overflow-hidden">
+            <LibraryMavenView />
+          </div>
+        ) : view === 'training' ? (
+          <div key="training" className="wp-view-enter flex-1 flex flex-col overflow-hidden">
+            <LibraryTrainingView />
+          </div>
+        ) : (
+        <div key={view} className="wp-view-enter flex-1 flex flex-col overflow-hidden">
         <>
         {/* Top bar */}
         <header className="shrink-0 px-6 pt-5 pb-4 border-b border-slate-100">
@@ -723,6 +731,7 @@ export function Library() {
           )}
         </main>
         </>
+        </div>
         )}
       </div>
 

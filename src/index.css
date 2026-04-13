@@ -151,3 +151,83 @@ body,
   text-transform: uppercase;
   color: #7c3aed;
 }
+
+/* ── Neurodivergent-friendly transition system ────────────────────────────────
+   All enter/exit animations are defined here so they can be tuned or
+   disabled globally.  Every animation respects prefers-reduced-motion.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@keyframes wp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes wp-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+@keyframes wp-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes wp-slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+@keyframes wp-toast-in {
+  from { opacity: 0; transform: translateX(28px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0)    scale(1);    }
+}
+
+@keyframes wp-toast-out {
+  from { opacity: 1; transform: translateX(0)    scale(1);    }
+  to   { opacity: 0; transform: translateX(16px) scale(0.97); }
+}
+
+/* View-level fade — used when mounting a new tab/route panel */
+.wp-view-enter {
+  animation: wp-fade-in-up 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* Panel slide-in — used for side panels (Maven, etc.) */
+.wp-panel-enter {
+  animation: wp-slide-in-right 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* Toast enter — springy slide from the right */
+.wp-toast-enter {
+  animation: wp-toast-in 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Toast exit — fade out and drift right */
+.wp-toast-exit {
+  animation: wp-toast-out 320ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+/* Modal backdrop and dialog fade */
+.wp-modal-backdrop-enter {
+  animation: wp-fade-in 200ms ease-out both;
+}
+.wp-modal-dialog-enter {
+  animation: wp-fade-in-up 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ── Respect prefers-reduced-motion ────────────────────────────────────────
+   Users who request reduced motion see all animations and transitions
+   collapsed to near-instant so layout changes remain visible without
+   the vestibular-triggering motion.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  #root *,
+  #root *::before,
+  #root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
