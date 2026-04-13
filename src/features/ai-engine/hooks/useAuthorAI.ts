@@ -168,6 +168,15 @@ export interface UseAuthorAIReturn {
   checkHealth: () => Promise<boolean>;
   /** Raw error string from the last failed health check, or null. */
   connectionError: string | null;
+  /**
+   * Why the health check failed:
+   * - 'cors'    — Ollama is running but CORS is blocking browser access.
+   *               Show the OLLAMA_ORIGINS restart command.
+   * - 'network' — Ollama is not reachable (not running, wrong port, firewall).
+   *               Show the `ollama serve` startup command.
+   * - null      — no failure recorded (connected or not yet checked).
+   */
+  connectionErrorKind: 'cors' | 'network' | null;
 
   // ── Lore Sentinel ──────────────────────────────────────────────────────────
   /**
@@ -465,21 +474,40 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   }, []);
 
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [connectionErrorKind, setConnectionErrorKind] = useState<'cors' | 'network' | null>(null);
 
   const checkHealth = useCallback(async (): Promise<boolean> => {
     const ok = await ollamaRef.current!.checkHealth();
     if (ok) {
       setConnectionError(null);
+      setConnectionErrorKind(null);
       return true;
     }
-    // First attempt failed — try fallback hosts (localhost → 127.0.0.1)
-    const workingUrl = await OllamaService.findWorkingUrl();
+
+    const kind = ollamaRef.current!.lastErrorKind;
+
+    // If CORS is blocking, a different URL won't help — skip the fallback loop
+    if (kind === 'cors') {
+      setConnectionError(ollamaRef.current!.lastError ?? 'CORS policy blocked the request');
+      setConnectionErrorKind('cors');
+      return false;
+    }
+
+    // Network failure — try alternate hosts (localhost → 127.0.0.1, etc.)
+    const { url: workingUrl, hasCorsIssue } = await OllamaService.findWorkingUrl();
     if (workingUrl) {
       ollamaRef.current = new OllamaService(workingUrl);
       setConnectionError(null);
+      setConnectionErrorKind(null);
       return true;
     }
+    if (hasCorsIssue) {
+      setConnectionError('Ollama is running but CORS is blocking browser access');
+      setConnectionErrorKind('cors');
+      return false;
+    }
     setConnectionError(ollamaRef.current!.lastError ?? 'Unknown error');
+    setConnectionErrorKind('network');
     return false;
   }, []);
 
@@ -501,6 +529,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     reset,
     checkHealth,
     connectionError,
+    connectionErrorKind,
     scanForLoreChanges,
     loreScanSummary,
     loreProposals,

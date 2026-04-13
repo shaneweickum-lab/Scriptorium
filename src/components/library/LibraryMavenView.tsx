@@ -167,6 +167,7 @@ export function LibraryMavenView() {
     clearHistory,
     checkHealth,
     connectionError,
+    connectionErrorKind,
   } = useAuthorAI(); // no bookId — bare prompt mode
 
   const [tab, setTab] = useState<LibraryMavenTab>('chat');
@@ -333,17 +334,42 @@ export function LibraryMavenView() {
               <div className="flex-1 space-y-1">
                 <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
                   <AlertCircle size={12} />
-                  Cannot reach Ollama at localhost:11434
+                  {connectionErrorKind === 'cors'
+                    ? 'Ollama is running — CORS is blocking browser access'
+                    : 'Cannot reach Ollama at localhost:11434'}
                 </p>
-                <p className="text-[11px] text-amber-600 leading-relaxed">
-                  Stop Ollama, then restart it with the CORS origin set — setting it on a running instance has no effect:
-                </p>
-                <p className="text-[10px] text-amber-500 mt-1">
-                  Your app's origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
-                </p>
-                <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
-                  OLLAMA_ORIGINS={window.location.origin} ollama serve
-                </code>
+
+                {connectionErrorKind === 'cors' ? (
+                  <>
+                    <p className="text-[11px] text-amber-600 leading-relaxed">
+                      Stop Ollama and restart it with your app's origin allowed:
+                    </p>
+                    <p className="text-[10px] text-amber-500">
+                      Your origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
+                    </p>
+                    <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
+                      OLLAMA_ORIGINS={window.location.origin} ollama serve
+                    </code>
+                    <p className="text-[10px] text-amber-500 mt-1">
+                      The env var must be set <em>before</em> Ollama starts. Installed PWA? Use <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[11px] text-amber-600 leading-relaxed">
+                      Start Ollama, then restart it with your app's origin allowed:
+                    </p>
+                    <p className="text-[10px] text-amber-500">
+                      Your origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
+                    </p>
+                    <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
+                      OLLAMA_ORIGINS={window.location.origin} ollama serve
+                    </code>
+                    <p className="text-[10px] text-amber-500 mt-1">
+                      Installed PWA? Use <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
+                    </p>
+                  </>
+                )}
               </div>
               <button
                 onClick={probeHealth}

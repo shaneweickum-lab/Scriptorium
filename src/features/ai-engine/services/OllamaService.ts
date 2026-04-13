@@ -86,6 +86,15 @@ export class OllamaService {
   /** The raw error message from the last failed checkHealth() call, or null. */
   lastError: string | null = null;
 
+  /**
+   * Distinguishes why checkHealth() returned false:
+   * - 'cors'    — Ollama IS running but the browser's CORS policy blocked the request.
+   *               Fix: restart Ollama with OLLAMA_ORIGINS set to the app's origin.
+   * - 'network' — Ollama is not reachable (not running, wrong port, firewall, etc.)
+   * - null      — no failure recorded yet
+   */
+  lastErrorKind: 'cors' | 'network' | null = null;
+
   constructor(baseUrl: string = OLLAMA_DEFAULT_URL) {
     // Strip trailing slash for consistent URL construction
     this.baseUrl = baseUrl.replace(/\/$/, '');
@@ -97,11 +106,18 @@ export class OllamaService {
 
   /**
    * Ping Ollama to confirm it is running and reachable.
-   * Populates `lastError` on failure.
+   * Populates `lastError` and `lastErrorKind` on failure.
    * Returns false instead of throwing so callers can handle it gracefully.
+   *
+   * Two-phase check:
+   *  1. CORS fetch  — succeeds when Ollama is running and CORS is configured.
+   *  2. no-cors probe — if CORS fetch fails, a second fetch with mode:'no-cors'
+   *     tells us whether the server is actually up (opaque response = it is up,
+   *     throw = truly unreachable).  This lets us show the right fix in the UI.
    */
   async checkHealth(signal?: AbortSignal): Promise<boolean> {
     this.lastError = null;
+    this.lastErrorKind = null;
     try {
       const res = await fetch(`${this.baseUrl}/api/tags`, {
         method: 'GET',
@@ -110,23 +126,47 @@ export class OllamaService {
       });
       if (!res.ok) {
         this.lastError = `Ollama returned HTTP ${res.status}`;
+        this.lastErrorKind = 'network';
       }
       return res.ok;
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') throw err;
       this.lastError = err instanceof Error ? err.message : String(err);
+      // Phase 2: probe without CORS to distinguish "blocked" from "unreachable"
+      const reachable = await OllamaService._probeReachable(this.baseUrl);
+      this.lastErrorKind = reachable ? 'cors' : 'network';
       return false;
     }
   }
 
   /**
-   * Try each URL in OLLAMA_FALLBACK_URLS in order and return the first that
-   * responds to a health check, or null if none respond.
+   * no-cors probe — resolves true if the server answered (even with an opaque
+   * response), false if the request threw (server unreachable).
+   * This ignores CORS headers entirely, so it works even when OLLAMA_ORIGINS
+   * is not set.
+   */
+  private static async _probeReachable(baseUrl: string): Promise<boolean> {
+    try {
+      await fetch(`${baseUrl}/api/tags`, { method: 'GET', mode: 'no-cors' });
+      return true; // Opaque response received — server is up
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Try each URL in OLLAMA_FALLBACK_URLS in order.
+   * Returns:
+   *  - `{ url, hasCorsIssue: false }` when a URL works with full CORS access.
+   *  - `{ url: null, hasCorsIssue: true }` when Ollama is reachable but CORS
+   *    blocks the request (so changing the URL won't help).
+   *  - `{ url: null, hasCorsIssue: false }` when Ollama is not reachable at all.
    *
    * Used to automatically resolve localhost → 127.0.0.1 mismatches (e.g. when
    * the OS routes localhost to IPv6 but Ollama is only bound to IPv4).
    */
-  static async findWorkingUrl(): Promise<string | null> {
+  static async findWorkingUrl(): Promise<{ url: string | null; hasCorsIssue: boolean }> {
+    // Phase 1 — try each URL with full CORS access
     for (const url of OLLAMA_FALLBACK_URLS) {
       try {
         const controller = new AbortController();
@@ -137,12 +177,22 @@ export class OllamaService {
           signal: controller.signal,
         });
         clearTimeout(timer);
-        if (res.ok) return url;
+        if (res.ok) return { url, hasCorsIssue: false };
       } catch {
         // Try the next candidate
       }
     }
-    return null;
+    // Phase 2 — CORS failed everywhere; probe without CORS to check reachability
+    for (const url of OLLAMA_FALLBACK_URLS) {
+      try {
+        await fetch(`${url}/api/tags`, { method: 'GET', mode: 'no-cors' });
+        // Got an opaque response — server is up but CORS is the blocker
+        return { url: null, hasCorsIssue: true };
+      } catch {
+        // Not reachable at this address
+      }
+    }
+    return { url: null, hasCorsIssue: false };
   }
 
   /**
