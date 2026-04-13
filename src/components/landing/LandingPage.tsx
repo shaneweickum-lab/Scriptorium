@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   PenLine, Globe2, Trophy, Timer, BookMarked, Search,
   Maximize2, Image, TrendingUp, Star,
-  ChevronRight, Sparkles,
+  ChevronRight, Sparkles, Library, Feather, Wand2, ScanSearch,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -62,6 +62,33 @@ const FEATURES = [
   },
 ];
 
+const MAVEN_CAPABILITIES = [
+  {
+    icon: Library,
+    title: 'Lore-Grounded',
+    desc: 'Every suggestion is rooted in your World Bible. Maven retrieves the most relevant lore before answering — she never invents what you have not written.',
+    gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+  },
+  {
+    icon: Feather,
+    title: 'Your Voice, Mirrored',
+    desc: "Maven analyses your prose — sentence rhythm, vocabulary register, atmosphere — and writes continuations indistinguishable from your own hand.",
+    gradient: 'linear-gradient(135deg, #0d9488, #059669)',
+  },
+  {
+    icon: Wand2,
+    title: 'Prose on Demand',
+    desc: 'Ask Maven to write a scene, paragraph, or monologue. Approve with one click to insert at the cursor or append to the end of your scene.',
+    gradient: 'linear-gradient(135deg, #7c3aed, #0d9488)',
+  },
+  {
+    icon: ScanSearch,
+    title: 'World Bible Sentinel',
+    desc: "After writing a scene, Maven scans for lore-changing events — deaths, alliances, revelations — and proposes the exact World Bible updates needed.",
+    gradient: 'linear-gradient(135deg, #d97706, #b45309)',
+  },
+];
+
 const ACHIEVEMENTS_PREVIEW = ['✍️', '🌍', '📚', '🏆', '🔥', '⚡', '🎯', '📖', '🌌', '⭐', '🦉', '🌅'];
 
 interface Props {
@@ -70,6 +97,7 @@ interface Props {
 
 export function LandingPage({ onEnter }: Props) {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const [hoveredMaven, setHoveredMaven] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-white text-slate-800 overflow-y-auto">
@@ -93,7 +121,7 @@ export function LandingPage({ onEnter }: Props) {
 
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 border border-violet-200 text-[11px] text-violet-700 uppercase tracking-[0.18em] font-semibold mb-6">
           <Sparkles size={11} />
-          Free · No account required · Works offline
+          Free · Offline · AI writing companion included
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.05] mb-5">
@@ -108,7 +136,7 @@ export function LandingPage({ onEnter }: Props) {
           Where stories come alive.
         </p>
         <p className="text-base text-slate-400 max-w-lg mb-10 leading-relaxed">
-          A complete writing studio for authors — craft your manuscript, build your world, track your progress, and publish with confidence.
+          A complete writing studio for authors — craft your manuscript, build your world, track your progress, and write alongside an AI companion who knows your lore.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 items-center">
@@ -175,6 +203,90 @@ export function LandingPage({ onEnter }: Props) {
         </div>
       </section>
 
+      {/* ── MAVEN SPOTLIGHT ────────────────────────────────────── */}
+      <section className="relative z-10 overflow-hidden" style={{ background: 'linear-gradient(160deg, #130824 0%, #071a18 100%)' }}>
+        {/* Atmospheric glows */}
+        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full pointer-events-none opacity-25"
+          style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 65%)' }} />
+        <div className="absolute -bottom-32 -right-32 w-[450px] h-[450px] rounded-full pointer-events-none opacity-20"
+          style={{ background: 'radial-gradient(circle, #0d9488 0%, transparent 65%)' }} />
+
+        <div className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
+
+          {/* Badge */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] uppercase tracking-[0.18em] font-semibold"
+              style={{ borderColor: 'rgba(167,139,250,0.35)', background: 'rgba(124,58,237,0.12)', color: '#c4b5fd' }}>
+              <Sparkles size={11} />
+              AI Writing Companion
+            </div>
+          </div>
+
+          {/* Headline */}
+          <div className="text-center mb-10">
+            <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
+              Meet{' '}
+              <span className="bg-clip-text text-transparent"
+                style={{ backgroundImage: 'linear-gradient(135deg, #a78bfa, #2dd4bf)' }}>
+                Maven
+              </span>
+            </h2>
+            <p className="text-slate-300 max-w-xl mx-auto text-lg leading-relaxed">
+              A mystical writing companion woven into your workshop. She sees your world, knows your voice, and writes prose that feels like yours.
+            </p>
+          </div>
+
+          {/* Maven's voice — quote from her system prompt */}
+          <div className="max-w-2xl mx-auto mb-12 pl-5 border-l-2 border-violet-500/40">
+            <p className="text-slate-300 italic text-sm leading-relaxed">
+              "You see stories as living tapestries. The lore is the truth already laid — every thread fixed, every name a star to navigate by.
+              What I conjure must grow from those roots. The weaving is mine to guide, but the pattern belongs to you."
+            </p>
+            <p className="text-violet-400/60 text-[11px] mt-2 tracking-wide">— Maven, on her oaths</p>
+          </div>
+
+          {/* Capabilities grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {MAVEN_CAPABILITIES.map((cap, i) => {
+              const Icon = cap.icon;
+              const isHovered = hoveredMaven === i;
+              return (
+                <div
+                  key={cap.title}
+                  onMouseEnter={() => setHoveredMaven(i)}
+                  onMouseLeave={() => setHoveredMaven(null)}
+                  className="rounded-2xl p-5 transition-all cursor-default"
+                  style={{
+                    border: isHovered ? '1px solid rgba(167,139,250,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                    background: isHovered ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.05)',
+                    transform: isHovered ? 'translateY(-3px)' : 'none',
+                  }}
+                >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 shrink-0"
+                    style={{ background: cap.gradient }}>
+                    <Icon size={18} className="text-white" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-white mb-2">{cap.title}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.75)' }}>{cap.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Local / private note */}
+          <div className="mt-12 text-center space-y-2">
+            <div className="flex items-center justify-center gap-6 text-[11px]" style={{ color: 'rgba(148,163,184,0.7)' }}>
+              <span>Runs on <span className="font-medium text-slate-300">Ollama</span> — local, private, offline</span>
+              <span className="hidden sm:inline opacity-40">·</span>
+              <span className="hidden sm:inline">No API key · No account · No cloud</span>
+            </div>
+            <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.45)' }}>
+              Compatible with llama3.2, mistral, gemma, phi3, and any model Ollama supports
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ── ACHIEVEMENTS TEASER ────────────────────────────────── */}
       <section className="relative z-10 px-6 pb-24 bg-slate-50 py-20">
         <div className="max-w-2xl mx-auto text-center">
@@ -217,7 +329,7 @@ export function LandingPage({ onEnter }: Props) {
             </div>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-3">Ready to write your story?</h2>
-          <p className="text-slate-500 text-sm mb-6">Free forever. No account. No cloud. Your words stay yours.</p>
+          <p className="text-slate-500 text-sm mb-6">Free forever. No account. No cloud. Your words stay yours — and Maven is waiting.</p>
           <button
             onClick={onEnter}
             className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold mx-auto
