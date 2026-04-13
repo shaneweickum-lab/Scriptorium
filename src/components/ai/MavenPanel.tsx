@@ -183,6 +183,7 @@ export function MavenPanel({
     cancel,
     reset,
     checkHealth,
+    connectionError,
     scanForLoreChanges,
     loreScanSummary,
     loreProposals,
@@ -430,21 +431,32 @@ export function MavenPanel({
               <WifiOff size={12} className="shrink-0" />
               Cannot reach Ollama at localhost:11434
             </div>
-            <p className="text-amber-600 leading-relaxed">
-              Either Ollama isn't running, or it's blocking this origin.
-            </p>
+
+            {/* Actual error message from the failed fetch */}
+            {connectionError && (
+              <div className="rounded-md bg-red-50 border border-red-200 px-2 py-1.5">
+                <p className="text-[10px] font-semibold text-red-700 mb-0.5">Browser error</p>
+                <code className="text-[10px] text-red-600 break-all font-mono leading-relaxed">
+                  {connectionError}
+                </code>
+              </div>
+            )}
+
             <div className="space-y-1.5">
-              <p className="text-amber-700 font-medium">If Ollama isn't running:</p>
+              <p className="text-amber-700 font-medium">1 · Make sure Ollama is running:</p>
               <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all">
                 ollama serve
               </code>
-              <p className="text-amber-700 font-medium mt-1.5">If CORS is blocking the PWA:</p>
+              <p className="text-amber-700 font-medium mt-1.5">2 · Allow this app's origin (required for browser access):</p>
               <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all leading-relaxed">
                 OLLAMA_ORIGINS=http://localhost:5173 ollama serve
               </code>
+              <p className="text-[10px] text-amber-600 leading-relaxed mt-1">
+                <strong>Important:</strong> stop any running Ollama instance first, then restart it with the
+                env var set — setting it after the fact has no effect.
+              </p>
               <p className="text-[10px] text-amber-500 leading-relaxed">
-                For an installed (standalone) PWA, use{' '}
-                <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
+                For an installed PWA use <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
               </p>
             </div>
             <button

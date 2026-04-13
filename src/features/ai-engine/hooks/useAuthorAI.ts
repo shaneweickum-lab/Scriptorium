@@ -162,9 +162,12 @@ export interface UseAuthorAIReturn {
   reset: () => void;
   /**
    * Ping the Ollama server to confirm it is reachable.
-   * Returns false (never throws) — safe to call speculatively for health checks.
+   * Automatically tries 127.0.0.1 if localhost fails.
+   * Returns false (never throws) — safe to call speculatively.
    */
   checkHealth: () => Promise<boolean>;
+  /** Raw error string from the last failed health check, or null. */
+  connectionError: string | null;
 
   // ── Lore Sentinel ──────────────────────────────────────────────────────────
   /**
@@ -461,10 +464,24 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     setStatus('idle');
   }, []);
 
-  const checkHealth = useCallback(
-    (): Promise<boolean> => ollamaRef.current!.checkHealth(),
-    [],
-  );
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  const checkHealth = useCallback(async (): Promise<boolean> => {
+    const ok = await ollamaRef.current!.checkHealth();
+    if (ok) {
+      setConnectionError(null);
+      return true;
+    }
+    // First attempt failed — try fallback hosts (localhost → 127.0.0.1)
+    const workingUrl = await OllamaService.findWorkingUrl();
+    if (workingUrl) {
+      ollamaRef.current = new OllamaService(workingUrl);
+      setConnectionError(null);
+      return true;
+    }
+    setConnectionError(ollamaRef.current!.lastError ?? 'Unknown error');
+    return false;
+  }, []);
 
   return {
     status,
@@ -483,6 +500,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     cancel,
     reset,
     checkHealth,
+    connectionError,
     scanForLoreChanges,
     loreScanSummary,
     loreProposals,

@@ -74,8 +74,17 @@ interface OllamaTagsResponse {
 export const OLLAMA_DEFAULT_URL = 'http://localhost:11434';
 export const OLLAMA_DEFAULT_MODEL = 'llama3.2';
 
+/** Candidate base URLs tried in order when auto-detecting a working host. */
+const OLLAMA_FALLBACK_URLS = [
+  'http://localhost:11434',
+  'http://127.0.0.1:11434',
+];
+
 export class OllamaService {
   private readonly baseUrl: string;
+
+  /** The raw error message from the last failed checkHealth() call, or null. */
+  lastError: string | null = null;
 
   constructor(baseUrl: string = OLLAMA_DEFAULT_URL) {
     // Strip trailing slash for consistent URL construction
@@ -88,19 +97,52 @@ export class OllamaService {
 
   /**
    * Ping Ollama to confirm it is running and reachable.
+   * Populates `lastError` on failure.
    * Returns false instead of throwing so callers can handle it gracefully.
    */
   async checkHealth(signal?: AbortSignal): Promise<boolean> {
+    this.lastError = null;
     try {
       const res = await fetch(`${this.baseUrl}/api/tags`, {
         method: 'GET',
         mode: 'cors',
         signal,
       });
+      if (!res.ok) {
+        this.lastError = `Ollama returned HTTP ${res.status}`;
+      }
       return res.ok;
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') throw err;
+      this.lastError = err instanceof Error ? err.message : String(err);
       return false;
     }
+  }
+
+  /**
+   * Try each URL in OLLAMA_FALLBACK_URLS in order and return the first that
+   * responds to a health check, or null if none respond.
+   *
+   * Used to automatically resolve localhost → 127.0.0.1 mismatches (e.g. when
+   * the OS routes localhost to IPv6 but Ollama is only bound to IPv4).
+   */
+  static async findWorkingUrl(): Promise<string | null> {
+    for (const url of OLLAMA_FALLBACK_URLS) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3_000);
+        const res = await fetch(`${url}/api/tags`, {
+          method: 'GET',
+          mode: 'cors',
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (res.ok) return url;
+      } catch {
+        // Try the next candidate
+      }
+    }
+    return null;
   }
 
   /**

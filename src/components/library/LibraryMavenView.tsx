@@ -166,6 +166,7 @@ export function LibraryMavenView() {
     reset,
     clearHistory,
     checkHealth,
+    connectionError,
   } = useAuthorAI(); // no bookId — bare prompt mode
 
   const [tab, setTab] = useState<LibraryMavenTab>('chat');
@@ -327,28 +328,37 @@ export function LibraryMavenView() {
       {/* ── Ollama connection warning ───────────────────────────────────── */}
       {ollamaStatus === 'unreachable' && (
         <div className="shrink-0 px-6 py-3 border-b border-amber-100 bg-amber-50">
-          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-start gap-3">
-            <div className="flex-1 space-y-1">
-              <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
-                <AlertCircle size={12} />
-                Cannot reach Ollama at localhost:11434
-              </p>
-              <p className="text-[11px] text-amber-600">
-                Start Ollama, then set{' '}
-                <code className="bg-amber-100 px-1 rounded font-mono">
-                  OLLAMA_ORIGINS=http://localhost:5173
-                </code>{' '}
-                if CORS is blocking the PWA.
-              </p>
+          <div className="max-w-3xl mx-auto flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 space-y-1">
+                <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
+                  <AlertCircle size={12} />
+                  Cannot reach Ollama at localhost:11434
+                </p>
+                <p className="text-[11px] text-amber-600 leading-relaxed">
+                  Stop Ollama, then restart it with the CORS origin set — setting it on a running instance has no effect:
+                </p>
+                <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
+                  OLLAMA_ORIGINS=http://localhost:5173 ollama serve
+                </code>
+              </div>
+              <button
+                onClick={probeHealth}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300
+                  text-xs text-amber-700 hover:bg-amber-100 transition-all font-medium shrink-0"
+              >
+                <RefreshCw size={11} />
+                Retry
+              </button>
             </div>
-            <button
-              onClick={probeHealth}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300
-                text-xs text-amber-700 hover:bg-amber-100 transition-all font-medium shrink-0"
-            >
-              <RefreshCw size={11} />
-              Retry
-            </button>
+            {connectionError && (
+              <div className="rounded-md bg-red-50 border border-red-200 px-2 py-1.5">
+                <p className="text-[10px] font-semibold text-red-700 mb-0.5">Browser error</p>
+                <code className="text-[10px] text-red-600 break-all font-mono leading-relaxed">
+                  {connectionError}
+                </code>
+              </div>
+            )}
           </div>
         </div>
       )}
