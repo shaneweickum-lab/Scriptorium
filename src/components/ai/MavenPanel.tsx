@@ -448,8 +448,11 @@ export function MavenPanel({
                 ollama serve
               </code>
               <p className="text-amber-700 font-medium mt-1.5">2 · Allow this app's origin (required for browser access):</p>
+              <p className="text-[10px] text-amber-500">
+                Your app's origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
+              </p>
               <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all leading-relaxed">
-                OLLAMA_ORIGINS=http://localhost:5173 ollama serve
+                OLLAMA_ORIGINS={window.location.origin} ollama serve
               </code>
               <p className="text-[10px] text-amber-600 leading-relaxed mt-1">
                 <strong>Important:</strong> stop any running Ollama instance first, then restart it with the
