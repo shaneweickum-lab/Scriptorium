@@ -89,6 +89,12 @@ const MAVEN_CAPABILITIES = [
     desc: "After writing a scene, Maven scans for lore-changing events — deaths, alliances, revelations — and proposes the exact World Bible updates needed.",
     gradient: 'linear-gradient(135deg, #d97706, #b45309)',
   },
+  {
+    icon: Activity,
+    title: 'Writer\'s Block Sensor',
+    desc: "Maven watches your editor in real time. If you go quiet for too long or fall into a write-delete loop, she appears — gently — and offers a way through.",
+    gradient: 'linear-gradient(135deg, #e11d48, #7c3aed)',
+  },
 ];
 
 const ORACLE_LEVELS = [
