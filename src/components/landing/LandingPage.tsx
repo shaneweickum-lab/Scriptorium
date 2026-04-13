@@ -390,7 +390,7 @@ export function LandingPage({ onEnter }: Props) {
         </div>
       </section>
 
-      {/* ── ORACLE ML ──────────────────────────────────────────── */}
+      {/* ── ORACLE INTELLIGENCE SYSTEM ─────────────────────────── */}
       <section className="relative z-10 overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d0d1a 0%, #08101a 60%, #060e14 100%)' }}>
         {/* Atmospheric glows */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] rounded-full pointer-events-none opacity-20"
@@ -401,12 +401,16 @@ export function LandingPage({ onEnter }: Props) {
         <div className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
 
           {/* Badge */}
-          <div className="flex justify-center mb-8">
+          <div className="flex flex-col items-center gap-3 mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] uppercase tracking-[0.18em] font-semibold"
               style={{ borderColor: 'rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.08)', color: '#fbbf24' }}>
               <Brain size={11} />
-              OracleML · Learns as you write
+              Oracle Intelligence System
             </div>
+            <p className="text-[10px] uppercase tracking-[0.15em]"
+              style={{ color: 'rgba(251,191,36,0.45)' }}>
+              Powered by OracleML · Learns as you write
+            </p>
           </div>
 
           {/* Headline */}
@@ -419,9 +423,10 @@ export function LandingPage({ onEnter }: Props) {
               </span>
             </h2>
             <p className="text-slate-400 max-w-2xl mx-auto text-base leading-relaxed">
-              OracleML is a local corpus analysis engine built into Maven. With every word you write,
-              it builds a deeper portrait of your craft — so Maven's suggestions feel less like AI and
-              more like your own hand, guided.
+              The <span className="text-white font-medium">Oracle Intelligence System</span> is Maven's
+              built-in learning engine. Powered by OracleML — a local corpus analysis algorithm — it
+              studies everything you write and builds a growing portrait of your craft, so her suggestions
+              feel less like AI and more like your own hand, guided.
             </p>
           </div>
 
@@ -429,7 +434,7 @@ export function LandingPage({ onEnter }: Props) {
           <div className="mb-16 mt-12">
             <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
               style={{ color: 'rgba(148,163,184,0.5)' }}>
-              Four oracle levels — unlocked by writing
+              Oracle Intelligence levels — unlocked by writing
             </p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {ORACLE_LEVELS.map((lvl, i) => {
@@ -478,7 +483,7 @@ export function LandingPage({ onEnter }: Props) {
           <div className="mb-14">
             <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
               style={{ color: 'rgba(148,163,184,0.5)' }}>
-              What Oracle studies in your writing
+              What the Oracle Intelligence System studies in your writing
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {ORACLE_DIMENSIONS.map((dim, i) => {
@@ -510,7 +515,7 @@ export function LandingPage({ onEnter }: Props) {
           <div>
             <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
               style={{ color: 'rgba(148,163,184,0.5)' }}>
-              What Oracle intelligence unlocks in Maven
+              What Oracle Intelligence unlocks in Maven
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {ORACLE_UNLOCKS.map((unlock) => {
@@ -532,10 +537,13 @@ export function LandingPage({ onEnter }: Props) {
           </div>
 
           {/* Private note */}
-          <div className="mt-12 text-center">
+          <div className="mt-12 text-center space-y-1.5">
+            <p className="text-[11px] font-medium" style={{ color: 'rgba(251,191,36,0.5)' }}>
+              Oracle Intelligence System · Powered by OracleML
+            </p>
             <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.45)' }}>
               All analysis runs locally in your browser — no data leaves your device.
-              OracleML uses pure statistical analysis, not cloud ML APIs.
+              Pure statistical analysis, no cloud ML APIs, no training on your writing.
             </p>
           </div>
 
