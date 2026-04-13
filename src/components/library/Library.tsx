@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   Plus, Globe2, BookOpen, Pencil, Trash2, MoreHorizontal,
-  Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload,
+  Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload, Sparkles,
 } from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -15,6 +15,7 @@ import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { NewBookModal } from './NewBookModal';
 import { EditBookModal } from './EditBookModal';
 import { NewWorldModal } from './NewWorldModal';
+import { LibraryMavenView } from './LibraryMavenView';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { AchievementsModal } from '../achievements/AchievementsModal';
 import { ToastContainer } from '../common/Toast';
@@ -291,7 +292,7 @@ function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safar
 }
 
 /* ── Sidebar ──────────────────────────────────────────────── */
-type LibraryView = 'books' | 'worlds';
+type LibraryView = 'books' | 'worlds' | 'maven';
 
 interface SidebarProps {
   view: LibraryView;
@@ -314,9 +315,10 @@ function LibrarySidebar({
   unlockCount, onAchievements, canInstall, onInstall, onAbout,
   mobileOpen, onMobileClose,
 }: SidebarProps) {
-  const navItems: { id: LibraryView; icon: typeof BookOpen; label: string }[] = [
+  const navItems: { id: LibraryView; icon: typeof BookOpen; label: string; accent?: boolean }[] = [
     { id: 'books', icon: BookOpen, label: 'Books Library' },
     { id: 'worlds', icon: Globe2, label: 'World Atlas' },
+    { id: 'maven', icon: Sparkles, label: 'Ask Maven', accent: true },
   ];
 
   const content = (
@@ -339,15 +341,31 @@ function LibrarySidebar({
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {navItems.map(({ id, icon: Icon, label }) => (
+        {navItems.map(({ id, icon: Icon, label, accent }) => (
           <button key={id} onClick={() => { setView(id); onMobileClose(); }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
               ${view === id
-                ? 'text-violet-700 bg-violet-50 border-l-2 border-violet-500 pl-[10px]'
-                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                ? accent
+                  ? 'text-violet-700 bg-violet-50 border-l-2 border-violet-500 pl-[10px]'
+                  : 'text-violet-700 bg-violet-50 border-l-2 border-violet-500 pl-[10px]'
+                : accent
+                  ? 'text-slate-500 hover:text-violet-600 hover:bg-violet-50/60'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}>
-            <Icon size={16} className={view === id ? 'text-violet-600' : 'text-slate-400'} />
+            <Icon
+              size={16}
+              className={
+                view === id
+                  ? 'text-violet-600'
+                  : accent
+                  ? 'text-violet-400'
+                  : 'text-slate-400'
+              }
+            />
             {label}
+            {accent && view !== id && (
+              <span className="ml-auto text-[9px] font-semibold uppercase tracking-widest text-violet-400 opacity-70">AI</span>
+            )}
           </button>
         ))}
       </nav>
@@ -553,7 +571,8 @@ export function Library() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden bg-white">
-
+        {view === 'maven' ? <LibraryMavenView /> : (
+        <>
         {/* Top bar */}
         <header className="shrink-0 px-6 pt-5 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -690,6 +709,8 @@ export function Library() {
             <p className="text-center text-xs text-slate-400 mt-6">{emptyHint}</p>
           )}
         </main>
+        </>
+        )}
       </div>
 
       {/* Modals */}
