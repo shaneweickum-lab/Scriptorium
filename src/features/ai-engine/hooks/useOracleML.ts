@@ -19,6 +19,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useWritingStore } from '../../../store/writingStore';
+import { useTrainingStore } from '../../../store/trainingStore';
 import { OracleMLService, type OracleProfile } from '../services/OracleMLService';
 import { OracleProfileStore } from '../services/OracleProfileStore';
 
@@ -41,6 +42,11 @@ export interface UseOracleMLReturn {
 
 export function useOracleML(bookId: string | undefined): UseOracleMLReturn {
   const nodes = useWritingStore((s) => s.nodes);
+  const trainingEntries = useTrainingStore((s) => s.entries);
+  const loadTraining = useTrainingStore((s) => s.loadAll);
+
+  // Ensure training entries are loaded (no-op if already loaded)
+  useEffect(() => { loadTraining(); }, [loadTraining]);
   const [oracleProfile, setOracleProfile] = useState<OracleProfile | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -65,13 +71,15 @@ export function useOracleML(bookId: string | undefined): UseOracleMLReturn {
   const runAnalysis = useCallback(
     (currentBookId: string) => {
       const proseNodes = nodes.filter((n) => n.content && n.type !== 'part');
-      if (proseNodes.length < MIN_NODES) return;
+      // Require at least MIN_NODES writing nodes OR some training entries
+      if (proseNodes.length < MIN_NODES && trainingEntries.length === 0) return;
 
       setIsAnalyzing(true);
+      const trainingTexts = trainingEntries.map((e) => e.content).filter(Boolean);
       // Run synchronously but yield first so the UI can update
       setTimeout(() => {
         try {
-          const profile = OracleMLService.analyze(nodes, currentBookId);
+          const profile = OracleMLService.analyze(nodes, currentBookId, trainingTexts);
           setOracleProfile(profile);
           OracleProfileStore.save(currentBookId, profile);
         } catch {
@@ -81,7 +89,7 @@ export function useOracleML(bookId: string | undefined): UseOracleMLReturn {
         }
       }, 0);
     },
-    [nodes],
+    [nodes, trainingEntries],
   );
 
   // ── Debounced re-analysis whenever nodes change ────────────────────────────
@@ -97,7 +105,7 @@ export function useOracleML(bookId: string | undefined): UseOracleMLReturn {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookId, nodes.length]); // re-arm on node count change (add/delete)
+  }, [bookId, nodes.length, trainingEntries.length]); // re-arm on node/training entry count change
 
   // ── Immediate analysis (skip debounce) ────────────────────────────────────
   const analyzeNow = useCallback(() => {

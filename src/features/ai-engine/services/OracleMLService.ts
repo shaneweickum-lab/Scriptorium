@@ -478,20 +478,34 @@ export class OracleMLService {
   /**
    * Analyse the full writing corpus for a book and return an OracleProfile.
    *
-   * @param nodes   All WritingNodes for the book (from writingStore).
-   * @param bookId  Used to key the profile.
+   * @param nodes          All WritingNodes for the book (from writingStore).
+   * @param bookId         Used to key the profile.
+   * @param trainingTexts  Optional plain-text strings from the Training Portal.
+   *                       These are appended to the corpus so Maven learns from
+   *                       writing the author has done outside Scriptorium.
    */
-  static analyze(nodes: WritingNode[], bookId: string): OracleProfile {
+  static analyze(
+    nodes: WritingNode[],
+    bookId: string,
+    trainingTexts?: string[],
+  ): OracleProfile {
     // Only analyse prose nodes that have content
     const proseNodes = nodes.filter(
       (n) => n.content && n.type !== 'part',
     );
 
-    // Concatenate all plain text
-    const fullText = proseNodes
+    // Concatenate writing nodes as plain text
+    const nodeText = proseNodes
       .map((n) => tiptapJsonToText(n.content ?? ''))
       .filter(Boolean)
       .join('\n\n');
+
+    // Append training corpus (plain text, already extracted)
+    const trainingBlock = trainingTexts
+      ? trainingTexts.filter(Boolean).join('\n\n')
+      : '';
+
+    const fullText = [nodeText, trainingBlock].filter(Boolean).join('\n\n');
 
     const totalWords = wordCount(fullText);
     const words = tokenize(fullText);

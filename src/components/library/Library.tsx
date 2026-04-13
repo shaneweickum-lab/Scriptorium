@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   Plus, Globe2, BookOpen, Pencil, Trash2, MoreHorizontal,
-  Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload, Sparkles,
+  Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload, Sparkles, Brain,
 } from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -16,6 +16,7 @@ import { NewBookModal } from './NewBookModal';
 import { EditBookModal } from './EditBookModal';
 import { NewWorldModal } from './NewWorldModal';
 import { LibraryMavenView } from './LibraryMavenView';
+import { LibraryTrainingView } from './LibraryTrainingView';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { AchievementsModal } from '../achievements/AchievementsModal';
 import { ToastContainer } from '../common/Toast';
@@ -292,7 +293,7 @@ function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safar
 }
 
 /* ── Sidebar ──────────────────────────────────────────────── */
-type LibraryView = 'books' | 'worlds' | 'maven';
+type LibraryView = 'books' | 'worlds' | 'maven' | 'training';
 
 interface SidebarProps {
   view: LibraryView;
@@ -315,10 +316,11 @@ function LibrarySidebar({
   unlockCount, onAchievements, canInstall, onInstall, onAbout,
   mobileOpen, onMobileClose,
 }: SidebarProps) {
-  const navItems: { id: LibraryView; icon: typeof BookOpen; label: string; accent?: boolean }[] = [
+  const navItems: { id: LibraryView; icon: typeof BookOpen; label: string; accent?: boolean; oracle?: boolean }[] = [
     { id: 'books', icon: BookOpen, label: 'Books Library' },
     { id: 'worlds', icon: Globe2, label: 'World Atlas' },
     { id: 'maven', icon: Sparkles, label: 'Ask Maven', accent: true },
+    { id: 'training', icon: Brain, label: 'Training Portal', oracle: true },
   ];
 
   const content = (
@@ -341,14 +343,16 @@ function LibrarySidebar({
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {navItems.map(({ id, icon: Icon, label, accent }) => (
+        {navItems.map(({ id, icon: Icon, label, accent, oracle }) => (
           <button key={id} onClick={() => { setView(id); onMobileClose(); }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
               ${view === id
-                ? accent
-                  ? 'text-violet-700 bg-violet-50 border-l-2 border-violet-500 pl-[10px]'
+                ? oracle
+                  ? 'text-amber-700 bg-amber-50 border-l-2 border-amber-400 pl-[10px]'
                   : 'text-violet-700 bg-violet-50 border-l-2 border-violet-500 pl-[10px]'
-                : accent
+                : oracle
+                  ? 'text-slate-500 hover:text-amber-700 hover:bg-amber-50/60'
+                  : accent
                   ? 'text-slate-500 hover:text-violet-600 hover:bg-violet-50/60'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}>
@@ -356,14 +360,15 @@ function LibrarySidebar({
               size={16}
               className={
                 view === id
-                  ? 'text-violet-600'
-                  : accent
-                  ? 'text-violet-400'
-                  : 'text-slate-400'
+                  ? oracle ? 'text-amber-500' : 'text-violet-600'
+                  : oracle ? 'text-amber-400' : accent ? 'text-violet-400' : 'text-slate-400'
               }
             />
             {label}
-            {accent && view !== id && (
+            {oracle && view !== id && (
+              <span className="ml-auto text-[9px] font-semibold uppercase tracking-widest text-amber-400 opacity-80">OIS</span>
+            )}
+            {accent && !oracle && view !== id && (
               <span className="ml-auto text-[9px] font-semibold uppercase tracking-widest text-violet-400 opacity-70">AI</span>
             )}
           </button>
@@ -570,8 +575,9 @@ export function Library() {
       />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-white">
-        {view === 'maven' ? <LibraryMavenView /> : (
+      <div className="flex-1 flex flex-col overflow-hidden bg-white relative">
+        {view === 'maven' ? <LibraryMavenView /> :
+        view === 'training' ? <LibraryTrainingView /> : (
         <>
         {/* Top bar */}
         <header className="shrink-0 px-6 pt-5 pb-4 border-b border-slate-100">

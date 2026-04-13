@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
-import type { WorldSection, WorldEntry, WritingNode, Assembly, Book, WorldBible } from '../types';
+import type { WorldSection, WorldEntry, WritingNode, Assembly, Book, WorldBible, TrainingEntry } from '../types';
 import type { AchievementUnlock } from '../types/achievements';
 import { generateId } from '../utils/id';
 import { DEFAULT_HIERARCHY_LABELS } from '../types';
@@ -14,6 +14,7 @@ export class ScriptoriumDB extends Dexie {
   writingNodes!: Table<WritingNode, string>;
   assemblies!: Table<Assembly, string>;
   achievementUnlocks!: Table<AchievementUnlock, string>;
+  trainingEntries!: Table<TrainingEntry, string>;
 
   constructor() {
     super('ScriptoriumDB');
@@ -73,6 +74,11 @@ export class ScriptoriumDB extends Dexie {
     // v4 schema - add achievement unlock tracking
     this.version(4).stores({
       achievementUnlocks: 'id, achievementId, scopeId, [achievementId+scopeId]',
+    });
+
+    // v5 schema - add training corpus for OracleML / Oracle Intelligence System
+    this.version(5).stores({
+      trainingEntries: 'id, category, updatedAt',
     });
   }
 }
