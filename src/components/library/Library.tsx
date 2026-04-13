@@ -460,7 +460,14 @@ export function Library() {
   const { pct } = getLevelProgress(totalXP);
   const { current: streakDays } = useStreak();
 
-  const [view, setView] = useState<LibraryView>('books');
+  const [view, setView] = useState<LibraryView>(() => {
+    const initial = localStorage.getItem('wp_initial_view') as LibraryView | null;
+    if (initial && ['books', 'worlds', 'maven', 'training'].includes(initial)) {
+      localStorage.removeItem('wp_initial_view');
+      return initial;
+    }
+    return 'books';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewBookModal, setShowNewBookModal] = useState(false);
   const [editBookTarget, setEditBookTarget] = useState<Book | null>(null);

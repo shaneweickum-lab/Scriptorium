@@ -70,11 +70,17 @@ function App() {
   }
 
   if (showLanding) {
+    const enterApp = (initialView?: string) => {
+      if (initialView) localStorage.setItem('wp_initial_view', initialView);
+      localStorage.setItem(LS_LANDING, '1');
+      setShowLanding(false);
+    };
     return (
-      <LandingPage onEnter={() => {
-        localStorage.setItem(LS_LANDING, '1');
-        setShowLanding(false);
-      }} />
+      <LandingPage
+        onEnter={() => enterApp()}
+        onEnterMaven={() => enterApp('maven')}
+        onEnterTraining={() => enterApp('training')}
+      />
     );
   }
 

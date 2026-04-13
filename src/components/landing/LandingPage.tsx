@@ -4,7 +4,7 @@ import {
   Maximize2, Image, TrendingUp, Star,
   ChevronRight, Sparkles, Library, Feather, Wand2, ScanSearch,
   Brain, Fingerprint, Activity, Eye, MessageCircle, Layers,
-  Zap, BookHeart, ShieldCheck, Palette,
+  Zap, BookHeart, ShieldCheck, Palette, Mail,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -198,18 +198,52 @@ const ORACLE_UNLOCKS = [
   },
 ];
 
+const TRAINING_CATEGORIES = [
+  {
+    id: 'journal',
+    icon: PenLine,
+    label: 'Journal Entries',
+    gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+    description: 'Personal reflections, diary entries, or daily writing practice. Your most unguarded voice.',
+  },
+  {
+    id: 'email',
+    icon: Mail,
+    label: 'Emails',
+    gradient: 'linear-gradient(135deg, #0891b2, #0284c7)',
+    description: 'Emails you have written — casual or professional. Natural rhythm and word choices emerge here.',
+  },
+  {
+    id: 'short-story',
+    icon: BookHeart,
+    label: 'Short Stories',
+    gradient: 'linear-gradient(135deg, #0d9488, #059669)',
+    description: 'Completed or draft short fiction — any genre. Your purest narrative instincts, on display.',
+  },
+  {
+    id: 'misc',
+    icon: Layers,
+    label: 'Miscellaneous',
+    gradient: 'linear-gradient(135deg, #475569, #334155)',
+    description: 'Essays, blog posts, scripts, or anything you have written. Every word teaches Maven.',
+  },
+];
+
 const ACHIEVEMENTS_PREVIEW = ['✍️', '🌍', '📚', '🏆', '🔥', '⚡', '🎯', '📖', '🌌', '⭐', '🦉', '🌅'];
 
 interface Props {
   onEnter: () => void;
+  onEnterMaven?: () => void;
+  onEnterTraining?: () => void;
 }
 
-export function LandingPage({ onEnter }: Props) {
+export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
   const [hoveredMaven, setHoveredMaven] = useState<number | null>(null);
   const [hoveredOracle, setHoveredOracle] = useState<number | null>(null);
   const [hoveredDimension, setHoveredDimension] = useState<number | null>(null);
   const [hoveredUnlock, setHoveredUnlock] = useState<number | null>(null);
+  const [hoveredTraining, setHoveredTraining] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-white text-slate-800 overflow-y-auto">
@@ -411,7 +445,7 @@ export function LandingPage({ onEnter }: Props) {
           {/* CTA */}
           <div className="mt-12 flex flex-col items-center gap-4">
             <button
-              onClick={onEnter}
+              onClick={onEnterMaven ?? onEnter}
               className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all hover:-translate-y-0.5 shadow-xl"
               style={{
                 background: 'linear-gradient(135deg, #7c3aed, #0d9488)',
@@ -615,6 +649,106 @@ export function LandingPage({ onEnter }: Props) {
             </p>
           </div>
 
+        </div>
+      </section>
+
+      {/* ── TRAINING PORTAL ────────────────────────────────────── */}
+      <section className="relative z-10 px-6 py-24 bg-white overflow-hidden">
+        {/* Subtle background decoration */}
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full pointer-events-none opacity-[0.04]"
+          style={{ background: 'radial-gradient(circle, #d97706 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full pointer-events-none opacity-[0.03]"
+          style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }} />
+
+        <div className="relative z-10 max-w-5xl mx-auto">
+
+          {/* Centerpiece icon */}
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl shadow-amber-200"
+              style={{ background: 'linear-gradient(135deg, #92400e, #d97706, #fbbf24)' }}>
+              <Brain size={36} className="text-white/90" />
+            </div>
+          </div>
+
+          {/* Badge */}
+          <div className="flex flex-col items-center gap-2 mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-[11px] text-amber-700 uppercase tracking-[0.18em] font-semibold">
+              <Brain size={11} />
+              Training Portal
+            </div>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-amber-500/60">
+              Accelerates Oracle Intelligence · Feeds OracleML
+            </p>
+          </div>
+
+          {/* Headline */}
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
+              Train Maven before you<br />
+              <span className="bg-clip-text text-transparent"
+                style={{ backgroundImage: 'linear-gradient(135deg, #d97706, #7c3aed)' }}>
+                write a single word
+              </span>
+            </h2>
+            <p className="text-slate-500 max-w-xl mx-auto text-base leading-relaxed">
+              Paste your existing writings — journal entries, emails, short stories, anything. Maven studies them immediately, and every word counts toward your Oracle Intelligence level.
+            </p>
+          </div>
+
+          {/* Category cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {TRAINING_CATEGORIES.map((cat, i) => {
+              const Icon = cat.icon;
+              const isHov = hoveredTraining === i;
+              return (
+                <div
+                  key={cat.id}
+                  onMouseEnter={() => setHoveredTraining(i)}
+                  onMouseLeave={() => setHoveredTraining(null)}
+                  className={`flex flex-col gap-3 p-5 rounded-2xl border bg-white transition-all cursor-default ${
+                    isHov
+                      ? 'border-amber-200 shadow-lg shadow-amber-100 -translate-y-1'
+                      : 'border-slate-100 shadow-sm'
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: cat.gradient }}>
+                    <Icon size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800 mb-1">{cat.label}</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">{cat.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* OIS connection callout */}
+          <div className="max-w-2xl mx-auto mb-10 flex items-start gap-4 p-5 rounded-2xl border border-amber-100 bg-amber-50/50">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'linear-gradient(135deg, #d97706, #fbbf24)' }}>
+              <Brain size={16} className="text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-amber-900 mb-1">Every word counts toward your Oracle level</p>
+              <p className="text-xs text-amber-700/70 leading-relaxed">
+                Training Portal entries are analysed by OracleML alongside your manuscript. A journal full of your writing can push Maven from Apprentice to Journeyman before chapter one is written.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="flex justify-center">
+            <button
+              onClick={onEnterTraining ?? onEnter}
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all hover:-translate-y-0.5 shadow-xl shadow-amber-200"
+              style={{ background: 'linear-gradient(135deg, #92400e, #d97706, #fbbf24)' }}
+            >
+              Open Training Portal
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
       </section>
 
