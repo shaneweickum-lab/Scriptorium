@@ -16,6 +16,7 @@ import {
   WifiOff, RefreshCw, SendHorizonal, X as XIcon,
 } from 'lucide-react';
 import { useAuthorAI } from '../../features/ai-engine/hooks/useAuthorAI';
+import { IS_TAURI } from '../../features/ai-engine/services/OllamaService';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 
 // ---------------------------------------------------------------------------
@@ -334,12 +335,26 @@ export function LibraryMavenView() {
               <div className="flex-1 space-y-1">
                 <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
                   <AlertCircle size={12} />
-                  {connectionErrorKind === 'cors'
+                  {!IS_TAURI && connectionErrorKind === 'cors'
                     ? 'Ollama is running — CORS is blocking browser access'
                     : 'Cannot reach Ollama at localhost:11434'}
                 </p>
 
-                {connectionErrorKind === 'cors' ? (
+                {IS_TAURI ? (
+                  /* Tauri: pure network issue, no CORS ever */
+                  <>
+                    <p className="text-[11px] text-amber-600 leading-relaxed">
+                      Make sure Ollama is running:
+                    </p>
+                    <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
+                      ollama serve
+                    </code>
+                    <p className="text-[10px] text-amber-500 mt-1">
+                      No CORS setup needed — the desktop app connects to Ollama directly.
+                    </p>
+                  </>
+                ) : connectionErrorKind === 'cors' ? (
+                  /* Browser: CORS fix */
                   <>
                     <p className="text-[11px] text-amber-600 leading-relaxed">
                       Stop Ollama and restart it with your app's origin allowed:
@@ -355,6 +370,7 @@ export function LibraryMavenView() {
                     </p>
                   </>
                 ) : (
+                  /* Browser: network fix */
                   <>
                     <p className="text-[11px] text-amber-600 leading-relaxed">
                       Start Ollama, then restart it with your app's origin allowed:
@@ -380,7 +396,7 @@ export function LibraryMavenView() {
                 Retry
               </button>
             </div>
-            {connectionError && (
+            {!IS_TAURI && connectionError && (
               <div className="rounded-md bg-red-50 border border-red-200 px-2 py-1.5">
                 <p className="text-[10px] font-semibold text-red-700 mb-0.5">Browser error</p>
                 <code className="text-[10px] text-red-600 break-all font-mono leading-relaxed">

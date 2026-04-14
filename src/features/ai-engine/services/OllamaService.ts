@@ -12,7 +12,42 @@
  * Cancellation: pass an AbortSignal (from AbortController) to stop streaming
  * mid-flight.  An aborted request resolves normally (onDone is NOT called),
  * so callers can distinguish cancellation from completion.
+ *
+ * Tauri desktop mode:
+ *   When running inside a Tauri desktop app (__TAURI_INTERNALS__ is present),
+ *   all HTTP requests are routed through @tauri-apps/plugin-http, which uses
+ *   Rust's reqwest under the hood.  This completely bypasses browser CORS — no
+ *   OLLAMA_ORIGINS configuration is required.  In browser/PWA mode the service
+ *   falls back to standard window.fetch with a two-phase CORS/network probe.
  */
+
+// ---------------------------------------------------------------------------
+// Tauri fetch adapter
+// ---------------------------------------------------------------------------
+
+/** True when running inside a Tauri desktop app. */
+export const IS_TAURI =
+  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+/**
+ * Lazy singleton — resolves to the right `fetch` implementation:
+ * - Tauri context  → @tauri-apps/plugin-http fetch (CORS-free, Rust reqwest)
+ * - Browser/PWA    → window.fetch
+ */
+let _fetchPromise: Promise<typeof fetch> | null = null;
+
+function getHttpFetch(): Promise<typeof fetch> {
+  if (_fetchPromise) return _fetchPromise;
+  if (IS_TAURI) {
+    _fetchPromise = import('@tauri-apps/plugin-http').then(
+      m => m.fetch as unknown as typeof fetch,
+      () => window.fetch.bind(window), // graceful fallback if plugin missing
+    );
+  } else {
+    _fetchPromise = Promise.resolve(window.fetch.bind(window));
+  }
+  return _fetchPromise;
+}
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -88,10 +123,11 @@ export class OllamaService {
 
   /**
    * Distinguishes why checkHealth() returned false:
-   * - 'cors'    — Ollama IS running but the browser's CORS policy blocked the request.
-   *               Fix: restart Ollama with OLLAMA_ORIGINS set to the app's origin.
-   * - 'network' — Ollama is not reachable (not running, wrong port, firewall, etc.)
-   * - null      — no failure recorded yet
+   * - 'cors'    — Ollama IS running but the browser's CORS policy blocked it.
+   *               Fix: restart Ollama with OLLAMA_ORIGINS set to the app origin.
+   *               (Never set in Tauri — Tauri fetch is always CORS-free.)
+   * - 'network' — Ollama is not reachable (not running, wrong port, firewall).
+   * - null      — no failure recorded yet.
    */
   lastErrorKind: 'cors' | 'network' | null = null;
 
@@ -109,21 +145,23 @@ export class OllamaService {
    * Populates `lastError` and `lastErrorKind` on failure.
    * Returns false instead of throwing so callers can handle it gracefully.
    *
-   * Two-phase check:
-   *  1. CORS fetch  — succeeds when Ollama is running and CORS is configured.
-   *  2. no-cors probe — if CORS fetch fails, a second fetch with mode:'no-cors'
-   *     tells us whether the server is actually up (opaque response = it is up,
-   *     throw = truly unreachable).  This lets us show the right fix in the UI.
+   * Browser mode — two-phase check:
+   *   1. CORS fetch  — succeeds when Ollama is up and CORS is configured.
+   *   2. no-cors probe — if (1) fails, determines whether Ollama is up but
+   *      CORS-blocked ('cors') or truly unreachable ('network').
+   *
+   * Tauri mode — single-phase check (no CORS enforcement):
+   *   All failures are network failures; lastErrorKind is always 'network'.
    */
   async checkHealth(signal?: AbortSignal): Promise<boolean> {
     this.lastError = null;
     this.lastErrorKind = null;
+    const fetchFn = await getHttpFetch();
+
     try {
-      const res = await fetch(`${this.baseUrl}/api/tags`, {
-        method: 'GET',
-        mode: 'cors',
-        signal,
-      });
+      const init: RequestInit = { method: 'GET', signal };
+      if (!IS_TAURI) init.mode = 'cors';
+      const res = await fetchFn(`${this.baseUrl}/api/tags`, init);
       if (!res.ok) {
         this.lastError = `Ollama returned HTTP ${res.status}`;
         this.lastErrorKind = 'network';
@@ -132,23 +170,26 @@ export class OllamaService {
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') throw err;
       this.lastError = err instanceof Error ? err.message : String(err);
-      // Phase 2: probe without CORS to distinguish "blocked" from "unreachable"
-      const reachable = await OllamaService._probeReachable(this.baseUrl);
-      this.lastErrorKind = reachable ? 'cors' : 'network';
+      if (IS_TAURI) {
+        // Tauri fetch is CORS-free — any failure is a pure network error
+        this.lastErrorKind = 'network';
+      } else {
+        // Browser: probe without CORS to distinguish blocked vs unreachable
+        const reachable = await OllamaService._probeReachable(this.baseUrl);
+        this.lastErrorKind = reachable ? 'cors' : 'network';
+      }
       return false;
     }
   }
 
   /**
-   * no-cors probe — resolves true if the server answered (even with an opaque
-   * response), false if the request threw (server unreachable).
-   * This ignores CORS headers entirely, so it works even when OLLAMA_ORIGINS
-   * is not set.
+   * Browser-only no-cors probe.
+   * Resolves true if the server answered (opaque response), false if unreachable.
    */
   private static async _probeReachable(baseUrl: string): Promise<boolean> {
     try {
       await fetch(`${baseUrl}/api/tags`, { method: 'GET', mode: 'no-cors' });
-      return true; // Opaque response received — server is up
+      return true;
     } catch {
       return false;
     }
@@ -157,41 +198,41 @@ export class OllamaService {
   /**
    * Try each URL in OLLAMA_FALLBACK_URLS in order.
    * Returns:
-   *  - `{ url, hasCorsIssue: false }` when a URL works with full CORS access.
-   *  - `{ url: null, hasCorsIssue: true }` when Ollama is reachable but CORS
-   *    blocks the request (so changing the URL won't help).
-   *  - `{ url: null, hasCorsIssue: false }` when Ollama is not reachable at all.
-   *
-   * Used to automatically resolve localhost → 127.0.0.1 mismatches (e.g. when
-   * the OS routes localhost to IPv6 but Ollama is only bound to IPv4).
+   *  - `{ url, hasCorsIssue: false }` — a URL works with full access.
+   *  - `{ url: null, hasCorsIssue: true }` — Ollama running but CORS blocks.
+   *    (Never returned in Tauri — CORS is not applicable.)
+   *  - `{ url: null, hasCorsIssue: false }` — Ollama not reachable at all.
    */
   static async findWorkingUrl(): Promise<{ url: string | null; hasCorsIssue: boolean }> {
-    // Phase 1 — try each URL with full CORS access
+    const fetchFn = await getHttpFetch();
+
+    // Phase 1 — try each URL
     for (const url of OLLAMA_FALLBACK_URLS) {
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 3_000);
-        const res = await fetch(`${url}/api/tags`, {
-          method: 'GET',
-          mode: 'cors',
-          signal: controller.signal,
-        });
+        const init: RequestInit = { method: 'GET', signal: controller.signal };
+        if (!IS_TAURI) init.mode = 'cors';
+        const res = await fetchFn(`${url}/api/tags`, init);
         clearTimeout(timer);
         if (res.ok) return { url, hasCorsIssue: false };
       } catch {
         // Try the next candidate
       }
     }
-    // Phase 2 — CORS failed everywhere; probe without CORS to check reachability
-    for (const url of OLLAMA_FALLBACK_URLS) {
-      try {
-        await fetch(`${url}/api/tags`, { method: 'GET', mode: 'no-cors' });
-        // Got an opaque response — server is up but CORS is the blocker
-        return { url: null, hasCorsIssue: true };
-      } catch {
-        // Not reachable at this address
+
+    // Phase 2 (browser only) — no-cors probe to distinguish CORS from network
+    if (!IS_TAURI) {
+      for (const url of OLLAMA_FALLBACK_URLS) {
+        try {
+          await fetch(`${url}/api/tags`, { method: 'GET', mode: 'no-cors' });
+          return { url: null, hasCorsIssue: true };
+        } catch {
+          // Not reachable at this address
+        }
       }
     }
+
     return { url: null, hasCorsIssue: false };
   }
 
@@ -303,9 +344,12 @@ export class OllamaService {
   // -------------------------------------------------------------------------
 
   private async fetchOrThrow(url: string, init: RequestInit): Promise<Response> {
+    const fetchFn = await getHttpFetch();
     let res: Response;
     try {
-      res = await fetch(url, { ...init, mode: 'cors' });
+      // In Tauri, mode:'cors' is irrelevant — Rust reqwest has no CORS enforcement
+      const options = IS_TAURI ? { ...init } : { ...init, mode: 'cors' as RequestMode };
+      res = await fetchFn(url, options);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') throw err;
       throw new OllamaError(

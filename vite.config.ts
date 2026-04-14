@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// https://tauri.app/start/frontend/vite/
+const host = process.env.TAURI_DEV_HOST;
+
 export default defineConfig({
   plugins: [
     react(),
@@ -67,4 +70,17 @@ export default defineConfig({
     // WASM file paths and worker thread instantiation.
     exclude: ['@xenova/transformers'],
   },
+
+  // Tauri: prevent Vite from obscuring Rust errors
+  clearScreen: false,
+
+  server: {
+    // Tauri expects a fixed port
+    port: 5173,
+    strictPort: true,
+    host: host || false,
+    hmr: host ? { protocol: 'ws', host, port: 5174 } : undefined,
+  },
+
+  envPrefix: ['VITE_', 'TAURI_ENV_'],
 });

@@ -19,6 +19,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useAuthorAI, type LoreProposal } from '../../features/ai-engine/hooks/useAuthorAI';
+import { IS_TAURI } from '../../features/ai-engine/services/OllamaService';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 import { useWorldStore } from '../../store/worldStore';
@@ -430,13 +431,13 @@ export function MavenPanel({
           <div className="mx-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs shrink-0 space-y-2">
             <div className="flex items-center gap-1.5 text-amber-700 font-medium">
               <WifiOff size={12} className="shrink-0" />
-              {connectionErrorKind === 'cors'
+              {!IS_TAURI && connectionErrorKind === 'cors'
                 ? 'Ollama is running — CORS is blocking browser access'
                 : 'Cannot reach Ollama at localhost:11434'}
             </div>
 
-            {/* Raw browser error */}
-            {connectionError && (
+            {/* Raw error — only show in browser mode where it's meaningful */}
+            {!IS_TAURI && connectionError && (
               <div className="rounded-md bg-red-50 border border-red-200 px-2 py-1.5">
                 <p className="text-[10px] font-semibold text-red-700 mb-0.5">Browser error</p>
                 <code className="text-[10px] text-red-600 break-all font-mono leading-relaxed">
@@ -445,8 +446,19 @@ export function MavenPanel({
               </div>
             )}
 
-            {connectionErrorKind === 'cors' ? (
-              /* ── CORS fix ── */
+            {IS_TAURI ? (
+              /* ── Tauri: pure network fix (no CORS ever) ── */
+              <div className="space-y-1.5">
+                <p className="text-amber-700 font-medium">Make sure Ollama is running:</p>
+                <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all">
+                  ollama serve
+                </code>
+                <p className="text-[10px] text-amber-600 leading-relaxed">
+                  No CORS setup needed — the desktop app connects directly to Ollama.
+                </p>
+              </div>
+            ) : connectionErrorKind === 'cors' ? (
+              /* ── Browser: CORS fix ── */
               <div className="space-y-1.5">
                 <p className="text-amber-700 font-medium">
                   Stop Ollama and restart it with your app's origin allowed:
@@ -465,7 +477,7 @@ export function MavenPanel({
                 </p>
               </div>
             ) : (
-              /* ── Network / not running fix ── */
+              /* ── Browser: network fix ── */
               <div className="space-y-1.5">
                 <p className="text-amber-700 font-medium">1 · Start Ollama:</p>
                 <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all">
