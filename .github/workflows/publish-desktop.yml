@@ -6,6 +6,35 @@ on:
     tags:
       - 'v*'
 
+# ── Required secrets ────────────────────────────────────────────────────────
+#
+# macOS signing + notarization (all required for signed/notarized macOS builds):
+#
+#   APPLE_CERTIFICATE          Base64-encoded .p12 export from Keychain Access
+#                              How to get it:
+#                                1. Keychain Access → My Certificates
+#                                2. Right-click "Developer ID Application: …" → Export
+#                                3. Save as .p12, set a password
+#                                4. base64 -i certificate.p12 | pbcopy
+#
+#   APPLE_CERTIFICATE_PASSWORD Password you set when exporting the .p12
+#
+#   APPLE_SIGNING_IDENTITY     Full name of the cert, e.g.:
+#                              "Developer ID Application: Shane Weickum (XXXXXXXXXX)"
+#                              Copy it from Keychain Access → certificate name
+#
+#   APPLE_ID                   Your Apple ID email (e.g. you@example.com)
+#
+#   APPLE_PASSWORD             App-specific password (NOT your Apple ID password)
+#                              Generate one at: appleid.apple.com → Sign-In and Security
+#                              → App-Specific Passwords
+#
+#   APPLE_TEAM_ID              10-character Team ID from developer.apple.com/account
+#                              (top-right corner when signed in)
+#
+# Add all six at: github.com/shaneweickum-lab/Scriptorium/settings/secrets/actions
+# ────────────────────────────────────────────────────────────────────────────
+
 jobs:
   publish-tauri:
     permissions:
@@ -46,7 +75,6 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Both macOS targets in one job runner
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Install Linux system dependencies
@@ -59,6 +87,34 @@ jobs:
             librsvg2-dev \
             patchelf
 
+      # ── macOS: import signing certificate into a temporary keychain ──────
+      - name: Import Apple certificate
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          # Generate a random password for the temporary keychain
+          KEYCHAIN_PASS=$(openssl rand -base64 32)
+
+          # Persist the keychain path so the cleanup step can find it
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+          # Decode and import the certificate
+          echo -n "$APPLE_CERTIFICATE" | base64 --decode -o "$CERT_PATH"
+
+          # Create a temporary keychain and import the cert
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
       - name: Install frontend dependencies
         run: npm install --legacy-peer-deps
 
@@ -66,6 +122,12 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # ── macOS signing ──────────────────────────────────────────────
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          # ── macOS notarization (submits to Apple after signing) ────────
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Wizards Playground ${{ github.ref_name }}
@@ -80,12 +142,14 @@ jobs:
             | Linux (Debian/Ubuntu) | `wizards-playground_*_amd64.deb` |
             | Linux (AppImage) | `wizards-playground_*_amd64.AppImage` |
 
-            ### What's new
-            See commit history for changes in this release.
-
             ### Requirements
             - [Ollama](https://ollama.com) running locally (`ollama serve`)
             - No CORS configuration needed — the desktop app connects directly.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      # ── macOS: always remove the temporary keychain ──────────────────────
+      - name: Clean up keychain
+        if: matrix.platform == 'macos-latest' && always()
+        run: security delete-keychain "$KEYCHAIN_PATH" || true
