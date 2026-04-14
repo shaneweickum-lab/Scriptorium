@@ -4,7 +4,7 @@ import {
   Maximize2, Image, TrendingUp, Star,
   ChevronRight, Sparkles, Library, Feather, Wand2, ScanSearch,
   Brain, Fingerprint, Activity, Eye, MessageCircle, Layers,
-  Zap, BookHeart, ShieldCheck, Palette, Mail,
+  Zap, BookHeart, ShieldCheck, Palette, Mail, Monitor, Download,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -236,6 +236,37 @@ const TRAINING_CATEGORIES = [
 ];
 
 const ACHIEVEMENTS_PREVIEW = ['✍️', '🌍', '📚', '🏆', '🔥', '⚡', '🎯', '📖', '🌌', '⭐', '🦉', '🌅'];
+
+const RELEASES_URL = 'https://github.com/shaneweickum-lab/Scriptorium/releases/latest';
+
+const DESKTOP_PLATFORMS = [
+  {
+    id: 'mac',
+    label: 'macOS',
+    version: '11+',
+    note: 'Apple Silicon & Intel',
+  },
+  {
+    id: 'windows',
+    label: 'Windows',
+    version: '10 / 11',
+    note: '.msi installer',
+  },
+  {
+    id: 'linux',
+    label: 'Linux',
+    version: 'x64',
+    note: '.deb · .AppImage',
+  },
+] as const;
+
+/** Best-effort OS detection from the user agent. */
+const DETECTED_OS: 'mac' | 'windows' | 'linux' = (() => {
+  const ua = navigator.userAgent;
+  if (/Win/.test(ua)) return 'windows';
+  if (/Mac/.test(ua)) return 'mac';
+  return 'linux';
+})();
 
 interface Props {
   onEnter: () => void;
@@ -787,6 +818,88 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
             <Star size={11} className="text-amber-500" />
             <span>Level up every 100 XP · Track streaks · Set word goals</span>
           </div>
+        </div>
+      </section>
+
+      {/* ── DESKTOP DOWNLOAD ───────────────────────────────────── */}
+      <section className="relative z-10 px-6 py-20 bg-slate-900 text-white overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)' }} />
+
+        <div className="relative max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-[11px] text-white/70 uppercase tracking-[0.18em] font-semibold mb-6">
+            <Monitor size={11} />
+            Desktop App · Free
+          </div>
+
+          <h2 className="text-2xl md:text-4xl font-bold mb-4">
+            Maven. No browser.<br />
+            <span className="bg-clip-text text-transparent"
+              style={{ backgroundImage: 'linear-gradient(135deg, #a78bfa, #2dd4bf)' }}>
+              No configuration. Just works.
+            </span>
+          </h2>
+
+          <p className="text-white/50 mb-12 text-sm leading-relaxed max-w-lg mx-auto">
+            The desktop app connects to your local Ollama directly — no CORS setup, no origin allowlists, no browser sandbox. Install it and Maven is ready the moment Ollama runs.
+          </p>
+
+          {/* Platform cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 max-w-2xl mx-auto">
+            {DESKTOP_PLATFORMS.map(({ id, label, version, note }) => {
+              const isDetected = id === DETECTED_OS;
+              return (
+                <a
+                  key={id}
+                  href={RELEASES_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`flex flex-col gap-3 p-5 rounded-2xl border text-left transition-all group
+                    ${isDetected
+                      ? 'border-violet-400/60 bg-violet-500/10 shadow-lg shadow-violet-900/30'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                    }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <Monitor size={18} className={isDetected ? 'text-violet-300' : 'text-white/40'} />
+                    {isDetected && (
+                      <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300">
+                        Your OS
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-bold ${isDetected ? 'text-white' : 'text-white/70'}`}>{label}</p>
+                    <p className="text-[11px] text-white/40 mt-0.5">{version}</p>
+                    <p className="text-[10px] text-white/30 mt-1">{note}</p>
+                  </div>
+                  <div className={`flex items-center gap-1.5 text-[11px] font-medium mt-auto pt-2 border-t
+                    ${isDetected ? 'border-violet-500/30 text-violet-300' : 'border-white/10 text-white/40 group-hover:text-white/60'}
+                    transition-colors`}>
+                    <Download size={11} />
+                    Download
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+
+          <a
+            href={RELEASES_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-bold text-white
+              transition-all hover:-translate-y-0.5 shadow-xl shadow-violet-900/40"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
+          >
+            <Download size={16} />
+            View all downloads on GitHub
+          </a>
+
+          <p className="text-white/30 text-xs mt-4">
+            Requires <a href="https://ollama.com" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white/50 transition-colors">Ollama</a> running locally · All data stays on your device
+          </p>
         </div>
       </section>
 

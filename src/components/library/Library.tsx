@@ -17,6 +17,7 @@ import { EditBookModal } from './EditBookModal';
 import { NewWorldModal } from './NewWorldModal';
 import { LibraryMavenView } from './LibraryMavenView';
 import { LibraryTrainingView } from './LibraryTrainingView';
+import { IS_TAURI } from '../../features/ai-engine/services/OllamaService';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { AchievementsModal } from '../achievements/AchievementsModal';
 import { ToastContainer } from '../common/Toast';
@@ -410,6 +411,19 @@ function LibrarySidebar({
             <Download size={16} />
             Install App
           </button>
+        )}
+
+        {!IS_TAURI && (
+          <a
+            href="https://github.com/shaneweickum-lab/Scriptorium/releases/latest"
+            target="_blank"
+            rel="noreferrer"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+              text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all"
+          >
+            <Download size={16} className="text-violet-400" />
+            Get Desktop App
+          </a>
         )}
 
         <button onClick={onAbout}
