@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/logo.svg" width="80" height="80" alt="Wizards Playground logo" />
+<img src="public/IMG_4710.png" height="80" alt="Wizards Playground logo" />
 
 # Wizards Playground
 

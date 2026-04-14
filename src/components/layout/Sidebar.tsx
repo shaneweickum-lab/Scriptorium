@@ -23,11 +23,7 @@ export function Sidebar() {
     ">
       {/* Logo — desktop only */}
       <div className="hidden md:flex items-center gap-3 px-4 py-4 border-b border-slate-100 w-full shrink-0">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
-          <img src="/logo.svg" alt="" className="w-4 h-4 opacity-90"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        </div>
+        <img src="/IMG_4709.jpeg" alt="" className="w-8 h-8 rounded-xl object-cover shrink-0" />
         <div className="min-w-0">
           <p className="text-[11px] font-bold text-slate-800 leading-none truncate">Wizards Playground</p>
           <p className="text-[9px] text-teal-600/70 mt-0.5 tracking-wider uppercase truncate">Toolkit</p>

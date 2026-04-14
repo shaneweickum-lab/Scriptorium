@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'icons/*.svg', 'logo.svg'],
+      includeAssets: ['icons/*.png', 'IMG_4709.jpeg', 'IMG_4710.png', 'favicon.png'],
       manifest: {
         name: 'Wizards Playground',
         short_name: 'Wizards Playground',
@@ -20,7 +20,6 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
-          { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {

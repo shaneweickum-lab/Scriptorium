@@ -61,9 +61,9 @@ function App() {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <img
-          src="/logo.svg"
+          src="/IMG_4709.jpeg"
           alt="Loading…"
-          className="w-16 h-16 animate-pulse drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]"
+          className="w-16 h-16 rounded-2xl object-cover animate-pulse drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]"
         />
       </div>
     );

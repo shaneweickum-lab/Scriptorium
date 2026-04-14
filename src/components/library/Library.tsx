@@ -329,12 +329,7 @@ function LibrarySidebar({
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
-            <img src="/logo.svg" alt="" className="w-5 h-5 opacity-90" onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }} />
-          </div>
+          <img src="/IMG_4709.jpeg" alt="" className="w-9 h-9 rounded-xl object-cover shrink-0" />
           <div>
             <p className="text-[11px] font-bold text-slate-800 leading-none tracking-wide">Wizards Playground</p>
             <p className="text-[9px] text-teal-600/70 mt-0.5 tracking-[0.18em] uppercase">World Builder's Toolkit</p>

@@ -295,12 +295,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
       {/* ── HERO ──────────────────────────────────────────────── */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-6 pt-16 pb-24">
         {/* Logo */}
-        <div className="flex items-center justify-center w-20 h-20 rounded-3xl mb-8 shadow-xl shadow-violet-200"
-          style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
-          <img src="/logo.svg" alt="" className="w-10 h-10 opacity-90" onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }} />
-        </div>
+        <img src="/IMG_4710.png" alt="Wizards Playground" className="h-24 mb-8 object-contain drop-shadow-xl" />
 
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 border border-violet-200 text-[11px] text-violet-700 uppercase tracking-[0.18em] font-semibold mb-6">
           <Sparkles size={11} />

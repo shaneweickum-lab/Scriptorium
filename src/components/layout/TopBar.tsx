@@ -65,7 +65,7 @@ export function TopBar() {
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
       >
         <ArrowLeft size={14} />
-        <img src="/logo.svg" alt="" className="w-4 h-4 opacity-60" />
+        <img src="/IMG_4709.jpeg" alt="" className="w-4 h-4 rounded opacity-80 object-cover" />
         <span className="hidden sm:inline font-medium">Library</span>
       </button>
 
