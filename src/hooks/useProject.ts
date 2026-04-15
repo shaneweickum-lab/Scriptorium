@@ -13,6 +13,7 @@ export function useProject() {
   const loadWriting = useWritingStore((s) => s.loadFromDB);
   const loadAssembly = useAssemblyStore((s) => s.loadFromDB);
   const activeBook = useLibraryStore((s) => s.activeBook);
+  const loadLibrary = useLibraryStore((s) => s.loadLibrary);
 
   const saveProject = async () => {
     if (!activeBook) {
@@ -68,13 +69,13 @@ export function useProject() {
       }
 
       if (data.version >= 2 && data.book) {
-        // Multi-book format: import as a new/replace book
+        // Multi-book format: upsert so re-importing an existing book works
         const bookId = data.book.id;
         await db.worldSections.where('bookId').equals(bookId).delete();
         await db.worldEntries.where('bookId').equals(bookId).delete();
         await db.writingNodes.where('bookId').equals(bookId).delete();
         await db.assemblies.where('bookId').equals(bookId).delete();
-        await libraryRepository.addBook(data.book);
+        await libraryRepository.putBook(data.book);
 
         if (data.worldSections?.length) await db.worldSections.bulkPut(data.worldSections);
         if (data.worldEntries?.length) await db.worldEntries.bulkPut(data.worldEntries);
@@ -92,6 +93,8 @@ export function useProject() {
           if (wbEntries?.length) await db.worldEntries.bulkPut(wbEntries);
         }
 
+        // Refresh library so the book appears in the grid immediately
+        await loadLibrary();
         await Promise.all([loadWorld(bookId), loadWriting(bookId), loadAssembly(bookId)]);
       } else if (activeBook) {
         // Legacy v1 format: load into current active book

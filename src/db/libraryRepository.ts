@@ -15,6 +15,10 @@ export const libraryRepository = {
     await db.books.add(book);
   },
 
+  async putBook(book: Book): Promise<void> {
+    await db.books.put(book);
+  },
+
   async updateBook(id: string, updates: Partial<Book>): Promise<void> {
     await db.books.update(id, { ...updates, updatedAt: Date.now() });
   },
