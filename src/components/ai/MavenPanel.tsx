@@ -19,7 +19,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useAuthorAI, type LoreProposal } from '../../features/ai-engine/hooks/useAuthorAI';
-import { IS_TAURI } from '../../features/ai-engine/services/OllamaService';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 import { useWorldStore } from '../../store/worldStore';
@@ -184,8 +183,6 @@ export function MavenPanel({
     cancel,
     reset,
     checkHealth,
-    connectionError,
-    connectionErrorKind,
     scanForLoreChanges,
     loreScanSummary,
     loreProposals,
@@ -341,7 +338,7 @@ export function MavenPanel({
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className="flex-1 min-w-0 text-xs text-slate-400 bg-transparent outline-none border-b border-transparent hover:border-slate-200 focus:border-violet-300 focus:text-slate-600 transition-all px-0.5"
-            title="Ollama model tag"
+            title="MavenAI model"
           />
           <button
             onClick={onClose}
@@ -432,75 +429,16 @@ export function MavenPanel({
           </div>
         )}
 
-        {/* Ollama connection banner */}
+        {/* MavenAI connection banner */}
         {ollamaStatus === 'unreachable' && (
           <div className="mx-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs shrink-0 space-y-2">
             <div className="flex items-center gap-1.5 text-amber-700 font-medium">
               <WifiOff size={12} className="shrink-0" />
-              {!IS_TAURI && connectionErrorKind === 'cors'
-                ? 'Ollama is running — CORS is blocking browser access'
-                : 'Cannot reach Ollama at localhost:11434'}
+              MavenAI engine is not yet available
             </div>
-
-            {/* Raw error — only show in browser mode where it's meaningful */}
-            {!IS_TAURI && connectionError && (
-              <div className="rounded-md bg-red-50 border border-red-200 px-2 py-1.5">
-                <p className="text-[10px] font-semibold text-red-700 mb-0.5">Browser error</p>
-                <code className="text-[10px] text-red-600 break-all font-mono leading-relaxed">
-                  {connectionError}
-                </code>
-              </div>
-            )}
-
-            {IS_TAURI ? (
-              /* ── Tauri: pure network fix (no CORS ever) ── */
-              <div className="space-y-1.5">
-                <p className="text-amber-700 font-medium">Make sure Ollama is running:</p>
-                <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all">
-                  ollama serve
-                </code>
-                <p className="text-[10px] text-amber-600 leading-relaxed">
-                  No CORS setup needed — the desktop app connects directly to Ollama.
-                </p>
-              </div>
-            ) : connectionErrorKind === 'cors' ? (
-              /* ── Browser: CORS fix ── */
-              <div className="space-y-1.5">
-                <p className="text-amber-700 font-medium">
-                  Stop Ollama and restart it with your app's origin allowed:
-                </p>
-                <p className="text-[10px] text-amber-500">
-                  Your origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
-                </p>
-                <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all leading-relaxed">
-                  OLLAMA_ORIGINS={window.location.origin} ollama serve
-                </code>
-                <p className="text-[10px] text-amber-600 leading-relaxed">
-                  <strong>Note:</strong> the env var must be set <em>before</em> Ollama starts — setting it on a running instance has no effect.
-                </p>
-                <p className="text-[10px] text-amber-500">
-                  Installed PWA? Use <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
-                </p>
-              </div>
-            ) : (
-              /* ── Browser: network fix ── */
-              <div className="space-y-1.5">
-                <p className="text-amber-700 font-medium">1 · Start Ollama:</p>
-                <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all">
-                  ollama serve
-                </code>
-                <p className="text-amber-700 font-medium mt-1.5">2 · Allow this app's origin:</p>
-                <p className="text-[10px] text-amber-500">
-                  Your origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
-                </p>
-                <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all leading-relaxed">
-                  OLLAMA_ORIGINS={window.location.origin} ollama serve
-                </code>
-                <p className="text-[10px] text-amber-500 leading-relaxed">
-                  Installed PWA? Use <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
-                </p>
-              </div>
-            )}
+            <p className="text-[10px] text-amber-600 leading-relaxed">
+              MavenAI is being built from the ground up for Wizards Playground. She will be available in an upcoming release — no third-party setup required.
+            </p>
             <button
               onClick={probeHealth}
               className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-md border border-amber-300 text-amber-700 hover:bg-amber-100 transition-all font-medium"
@@ -514,7 +452,7 @@ export function MavenPanel({
         {ollamaStatus === 'checking' && (
           <div className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-slate-400 shrink-0">
             <Loader2 size={10} className="animate-spin shrink-0" />
-            Checking Ollama connection…
+            Connecting to MavenAI…
           </div>
         )}
 

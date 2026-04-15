@@ -493,9 +493,9 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
             </button>
             <p className="text-[11px] text-amber-400/70 italic">Maven is coming in a future release — not yet functional</p>
             <div className="flex items-center gap-6 text-[11px]" style={{ color: 'rgba(148,163,184,0.6)' }}>
-              <span>Runs on <span className="font-medium text-slate-300">Ollama</span> — local, private, offline</span>
+              <span>Powered by <span className="font-medium text-slate-300">MavenAI</span> — built from the ground up for writers</span>
               <span className="hidden sm:inline opacity-40">·</span>
-              <span className="hidden sm:inline">Compatible with llama3.2, mistral, gemma, phi3</span>
+              <span className="hidden sm:inline">Purpose-built · Runs entirely on your device</span>
             </div>
           </div>
         </div>
@@ -851,7 +851,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </h2>
 
           <p className="text-white/50 mb-12 text-sm leading-relaxed max-w-lg mx-auto">
-            The desktop app connects to your local Ollama directly — no CORS setup, no origin allowlists, no browser sandbox. Install it and Maven is ready the moment Ollama runs.
+            The desktop app runs MavenAI natively — no setup, no configuration, no browser sandbox. Install it and Maven is ready the moment you open the app.
           </p>
 
           {/* Platform cards */}
@@ -907,7 +907,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </a>
 
           <p className="text-white/30 text-xs mt-4">
-            Requires <a href="https://ollama.com" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white/50 transition-colors">Ollama</a> running locally · All data stays on your device
+            Powered by <span className="text-white/50 font-medium">MavenAI</span> · Built exclusively for writers · All data stays on your device
           </p>
         </div>
       </section>

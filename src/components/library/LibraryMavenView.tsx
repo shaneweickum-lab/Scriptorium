@@ -16,7 +16,6 @@ import {
   WifiOff, RefreshCw, SendHorizonal, X as XIcon,
 } from 'lucide-react';
 import { useAuthorAI } from '../../features/ai-engine/hooks/useAuthorAI';
-import { IS_TAURI } from '../../features/ai-engine/services/OllamaService';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 
 // ---------------------------------------------------------------------------
@@ -167,8 +166,6 @@ export function LibraryMavenView() {
     reset,
     clearHistory,
     checkHealth,
-    connectionError,
-    connectionErrorKind,
   } = useAuthorAI(); // no bookId — bare prompt mode
 
   const [tab, setTab] = useState<LibraryMavenTab>('chat');
@@ -276,7 +273,7 @@ export function LibraryMavenView() {
             onChange={(e) => setModel(e.target.value)}
             className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1
               outline-none focus:border-violet-300 focus:text-slate-600 transition-all w-32"
-            title="Ollama model tag"
+            title="MavenAI model"
           />
 
           {/* Tab toggle */}
@@ -309,13 +306,13 @@ export function LibraryMavenView() {
           {ollamaStatus === 'ok' && (
             <div className="flex items-center gap-1.5 text-[10px] text-teal-600">
               <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-              Ollama connected
+              MavenAI connected
             </div>
           )}
           {ollamaStatus === 'unreachable' && (
             <div className="flex items-center gap-1 text-[10px] text-amber-600">
               <WifiOff size={10} />
-              Ollama unreachable
+              MavenAI unreachable
             </div>
           )}
 
@@ -333,7 +330,7 @@ export function LibraryMavenView() {
         </div>
       </div>
 
-      {/* ── Ollama connection warning ───────────────────────────────────── */}
+      {/* ── MavenAI connection warning ───────────────────────────────────── */}
       {ollamaStatus === 'unreachable' && (
         <div className="shrink-0 px-6 py-3 border-b border-amber-100 bg-amber-50">
           <div className="max-w-3xl mx-auto flex flex-col gap-2">
@@ -341,57 +338,11 @@ export function LibraryMavenView() {
               <div className="flex-1 space-y-1">
                 <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
                   <AlertCircle size={12} />
-                  {!IS_TAURI && connectionErrorKind === 'cors'
-                    ? 'Ollama is running — CORS is blocking browser access'
-                    : 'Cannot reach Ollama at localhost:11434'}
+                  MavenAI engine is not yet available
                 </p>
-
-                {IS_TAURI ? (
-                  /* Tauri: pure network issue, no CORS ever */
-                  <>
-                    <p className="text-[11px] text-amber-600 leading-relaxed">
-                      Make sure Ollama is running:
-                    </p>
-                    <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
-                      ollama serve
-                    </code>
-                    <p className="text-[10px] text-amber-500 mt-1">
-                      No CORS setup needed — the desktop app connects to Ollama directly.
-                    </p>
-                  </>
-                ) : connectionErrorKind === 'cors' ? (
-                  /* Browser: CORS fix */
-                  <>
-                    <p className="text-[11px] text-amber-600 leading-relaxed">
-                      Stop Ollama and restart it with your app's origin allowed:
-                    </p>
-                    <p className="text-[10px] text-amber-500">
-                      Your origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
-                    </p>
-                    <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
-                      OLLAMA_ORIGINS={window.location.origin} ollama serve
-                    </code>
-                    <p className="text-[10px] text-amber-500 mt-1">
-                      The env var must be set <em>before</em> Ollama starts. Installed PWA? Use <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
-                    </p>
-                  </>
-                ) : (
-                  /* Browser: network fix */
-                  <>
-                    <p className="text-[11px] text-amber-600 leading-relaxed">
-                      Start Ollama, then restart it with your app's origin allowed:
-                    </p>
-                    <p className="text-[10px] text-amber-500">
-                      Your origin: <span className="font-mono font-semibold text-amber-700">{window.location.origin}</span>
-                    </p>
-                    <code className="block bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono text-[10px] select-all mt-1">
-                      OLLAMA_ORIGINS={window.location.origin} ollama serve
-                    </code>
-                    <p className="text-[10px] text-amber-500 mt-1">
-                      Installed PWA? Use <span className="font-mono">OLLAMA_ORIGINS='*'</span> instead.
-                    </p>
-                  </>
-                )}
+                <p className="text-[11px] text-amber-600 leading-relaxed">
+                  MavenAI is a purpose-built AI being developed from the ground up for Wizards Playground. She will be available in an upcoming release — no third-party setup required.
+                </p>
               </div>
               <button
                 onClick={probeHealth}
@@ -402,14 +353,6 @@ export function LibraryMavenView() {
                 Retry
               </button>
             </div>
-            {!IS_TAURI && connectionError && (
-              <div className="rounded-md bg-red-50 border border-red-200 px-2 py-1.5">
-                <p className="text-[10px] font-semibold text-red-700 mb-0.5">Browser error</p>
-                <code className="text-[10px] text-red-600 break-all font-mono leading-relaxed">
-                  {connectionError}
-                </code>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -540,7 +483,7 @@ export function LibraryMavenView() {
           </div>
 
           <p className="text-[10px] text-slate-300 mt-2 text-center">
-            Maven is running on your device via Ollama · No data leaves your machine
+            Powered by MavenAI · Purpose-built for writers · No data leaves your device
           </p>
         </div>
       </div>

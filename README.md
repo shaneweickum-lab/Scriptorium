@@ -57,7 +57,11 @@ It combines a distraction-free manuscript editor, a structured world bible, an a
 
 ## Maven — Your AI Writing Companion
 
-Maven is an on-device AI assistant powered by [Ollama](https://ollama.com). She runs entirely on your machine — no API keys, no data leaves your device.
+> **Coming Soon** — Maven is actively being developed and is not yet functional in the current release.
+
+Maven is a purpose-built AI writing companion powered by **MavenAI** — a small language model being trained from the ground up, exclusively for the craft of storytelling. She runs entirely on your device, needs no API keys, and no data ever leaves your machine.
+
+Unlike general-purpose AI assistants, MavenAI is designed with a single purpose: to understand fiction, honour your lore, and write in your voice.
 
 | Capability | What it does |
 |---|---|
@@ -68,19 +72,9 @@ Maven is an on-device AI assistant powered by [Ollama](https://ollama.com). She 
 | **Writer's Block Sensor** | Watches the editor for idle periods and write-delete loops, surfaces a gentle nudge when you're stuck |
 | **Lore Sentinel** | Scans the scene you just wrote for lore-changing events and proposes World Bible updates |
 
-### Setting up Maven
+### No setup required
 
-1. Install [Ollama](https://ollama.com)
-2. Pull a model: `ollama pull llama3.2`
-3. Start Ollama: `ollama serve`
-4. Open Maven in the app — she connects automatically
-
-> **Desktop app users:** no CORS configuration needed. Maven connects directly.
->
-> **Browser users:** restart Ollama with your app's origin allowed:
-> ```bash
-> OLLAMA_ORIGINS=http://localhost:5173 ollama serve
-> ```
+MavenAI ships as part of the app — no third-party installs, no model downloads, no configuration. Open the app, open Maven, start writing.
 
 ---
 
@@ -103,7 +97,7 @@ Every word analysed pushes Maven from Apprentice toward Journeyman, making her s
 
 ## Desktop App
 
-The desktop app (built with [Tauri](https://tauri.app)) connects to Ollama through a native HTTP client, completely bypassing browser CORS restrictions. Maven just works — no configuration needed.
+The desktop app (built with [Tauri](https://tauri.app)) runs MavenAI natively — no setup, no configuration, no browser sandbox. Install it and Maven is ready the moment you open the app.
 
 **[Download the latest release →](https://github.com/shaneweickum-lab/Scriptorium/releases/latest)**
 
@@ -127,7 +121,7 @@ Or use it as a **PWA** — open the app in Chrome or Safari and install it from 
 | State | Zustand 5 |
 | Rich text | TipTap 3 (ProseMirror) |
 | Storage | Dexie 4 (IndexedDB) |
-| AI | Ollama via local HTTP · `@xenova/transformers` for embeddings |
+| AI | MavenAI (purpose-built SLM) · `@xenova/transformers` for embeddings |
 | Export | `docx` (Word) · `jszip` (EPUB) |
 | PWA | Vite + `vite-plugin-pwa` (Workbox) |
 | Desktop | Tauri 2 + `tauri-plugin-http` |
