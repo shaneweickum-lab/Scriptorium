@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe2, Pencil, Menu, X, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Globe2, Pencil, Menu, X, Download, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
 import { useState, useEffect, useRef } from 'react';
 import { useWorldBibleStore } from '../../store/worldBibleStore';
@@ -62,7 +62,8 @@ export function WorldBibleEditorShell() {
   const addAchievementToast = useUIStore((s) => s.addAchievementToast);
   const addToast = useUIStore((s) => s.addToast);
   const [showEdit, setShowEdit] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false); // mobile drawer
+  const [showDesktopSidebar, setShowDesktopSidebar] = useState(true);
   const loadFileRef = useRef<HTMLInputElement>(null);
 
   const handleSaveWorldBible = async () => {
@@ -141,7 +142,7 @@ export function WorldBibleEditorShell() {
         <div className="fixed inset-0 z-20 bg-black/50 md:hidden" onClick={() => setShowSidebar(false)} />
       )}
 
-      {/* Sidebar: drawer on mobile, static on desktop */}
+      {/* Sidebar: drawer on mobile, collapsible on desktop */}
       <div className={`
         absolute inset-y-0 left-0 z-30 flex flex-col
         bg-white border-r border-slate-200
@@ -149,6 +150,7 @@ export function WorldBibleEditorShell() {
         ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
         md:relative md:translate-x-0 md:transform-none md:transition-none md:shrink-0
         w-72 md:w-[280px]
+        ${!showDesktopSidebar ? 'md:hidden' : ''}
       `}>
         {/* Close button for mobile */}
         <button className="md:hidden absolute top-2 right-2 p-1 text-slate-400 hover:text-slate-600 z-10" onClick={() => setShowSidebar(false)}>
@@ -166,7 +168,17 @@ export function WorldBibleEditorShell() {
               <ArrowLeft size={13} />
               Library
             </button>
-            <FocusTimer compact />
+            <div className="flex items-center gap-1">
+              <FocusTimer compact />
+              {/* Desktop collapse button */}
+              <button
+                onClick={() => setShowDesktopSidebar(false)}
+                className="hidden md:flex p-1 rounded text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                title="Collapse sidebar"
+              >
+                <ChevronLeft size={13} />
+              </button>
+            </div>
           </div>
 
           {/* World name row */}
@@ -239,6 +251,20 @@ export function WorldBibleEditorShell() {
           <ArrowLeft size={13} /> Library
         </button>
       </div>
+
+      {/* Desktop expand strip — shown only when sidebar is collapsed */}
+      {!showDesktopSidebar && (
+        <button
+          onClick={() => setShowDesktopSidebar(true)}
+          className="hidden md:flex flex-col items-center justify-start pt-3 w-7 shrink-0
+            bg-white border-r border-slate-200
+            text-slate-300 hover:text-violet-500 hover:bg-violet-50
+            transition-all"
+          title="Expand sidebar"
+        >
+          <ChevronRight size={14} />
+        </button>
+      )}
 
       {/* Entry editor: full width, with top padding on mobile for the header bar */}
       <div className="flex-1 overflow-hidden pt-12 md:pt-0 bg-white">

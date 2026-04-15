@@ -21,6 +21,8 @@ interface UIState {
   showDistractFree: boolean;
   showGlobalSearch: boolean;
   showMaven: boolean;
+  showOutlinePanel: boolean;
+  showNavSidebar: boolean;
   toasts: Toast[];
 
   setActiveView: (view: ActiveView) => void;
@@ -33,6 +35,8 @@ interface UIState {
   setShowDistractFree: (show: boolean) => void;
   setShowGlobalSearch: (show: boolean) => void;
   setShowMaven: (show: boolean) => void;
+  setShowOutlinePanel: (show: boolean) => void;
+  setShowNavSidebar: (show: boolean) => void;
   addToast: (message: string, type?: Toast['type']) => void;
   addAchievementToast: (name: string, xp: number, emoji: string) => void;
   removeToast: (id: string) => void;
@@ -49,6 +53,8 @@ export const useUIStore = create<UIState>((set) => ({
   showDistractFree: false,
   showGlobalSearch: false,
   showMaven: false,
+  showOutlinePanel: true,
+  showNavSidebar: true,
   toasts: [],
 
   setActiveView: (view) => set({ activeView: view }),
@@ -61,6 +67,8 @@ export const useUIStore = create<UIState>((set) => ({
   setShowDistractFree: (show) => set({ showDistractFree: show }),
   setShowGlobalSearch: (show) => set({ showGlobalSearch: show }),
   setShowMaven: (show) => set({ showMaven: show }),
+  setShowOutlinePanel: (show) => set({ showOutlinePanel: show }),
+  setShowNavSidebar: (show) => set({ showNavSidebar: show }),
 
   addToast: (message, type = 'success') => {
     const id = crypto.randomUUID();

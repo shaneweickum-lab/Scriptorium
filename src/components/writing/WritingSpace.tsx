@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { OutlineTree } from './OutlineTree';
 import { NodeEditor } from './NodeEditor';
@@ -17,6 +17,8 @@ export function WritingSpace() {
   const setShowDistractFree = useUIStore((s) => s.setShowDistractFree);
   const showGlobalSearch = useUIStore((s) => s.showGlobalSearch);
   const setShowGlobalSearch = useUIStore((s) => s.setShowGlobalSearch);
+  const showOutlinePanel = useUIStore((s) => s.showOutlinePanel);
+  const setShowOutlinePanel = useUIStore((s) => s.setShowOutlinePanel);
 
   // Escape exits distract-free mode
   useEffect(() => {
@@ -31,19 +33,47 @@ export function WritingSpace() {
   return (
     <>
       <div className="relative flex h-full overflow-hidden">
-        {/* Outline tree / Global search: drawer on mobile, static on desktop */}
+
+        {/* ── Outline / Search panel ──────────────────────────────────────── */}
+        {/* Mobile: always rendered as an absolute drawer (slide in/out)      */}
+        {/* Desktop: hidden via md:hidden when showOutlinePanel is false       */}
         <div className={`
           absolute inset-y-0 left-0 z-30 w-64 shrink-0
           bg-white border-r border-slate-200
           transform transition-transform duration-200
           ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'}
           md:relative md:w-56 md:translate-x-0 md:transform-none md:transition-none
+          ${!showOutlinePanel ? 'md:hidden' : ''}
         `}>
+          {/* Desktop collapse button — floats top-right of panel */}
+          <button
+            onClick={() => setShowOutlinePanel(false)}
+            className="hidden md:flex absolute top-2 right-2 z-10 p-1 rounded
+              text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
+            title="Collapse outline"
+          >
+            <ChevronLeft size={14} />
+          </button>
+
           {showGlobalSearch
             ? <GlobalSearch onClose={() => setShowGlobalSearch(false)} />
             : <OutlineTree onGlobalSearch={() => setShowGlobalSearch(true)} />
           }
         </div>
+
+        {/* Desktop expand strip — shown only when outline is collapsed */}
+        {!showOutlinePanel && (
+          <button
+            onClick={() => setShowOutlinePanel(true)}
+            className="hidden md:flex flex-col items-center justify-start pt-3 w-7 shrink-0
+              bg-white border-r border-slate-200
+              text-slate-300 hover:text-violet-500 hover:bg-violet-50
+              transition-all"
+            title="Expand outline"
+          >
+            <ChevronRight size={14} />
+          </button>
+        )}
 
         {/* Mobile backdrop */}
         {showMobileSidebar && (
