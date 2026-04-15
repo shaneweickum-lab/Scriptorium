@@ -351,6 +351,12 @@ export function MavenPanel({
           </button>
         </div>
 
+        {/* Coming Soon banner */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border-b border-amber-200 shrink-0">
+          <Sparkles size={11} className="text-amber-500 shrink-0" />
+          <span className="text-[11px] font-medium text-amber-700">Coming Soon — Maven is not yet functional.</span>
+        </div>
+
         {/* Tab toggle */}
         <div className="flex gap-0.5 bg-slate-100 rounded-lg mx-3 mt-2 mb-1 p-0.5 shrink-0">
           {([

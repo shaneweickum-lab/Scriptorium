@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Brain, Plus, Trash2, BookOpen, Mail, Feather, Layers,
-  ChevronRight, FileText, Save, AlertCircle,
+  ChevronRight, FileText, Save, AlertCircle, Sparkles,
 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import type { TrainingCategory, TrainingEntry } from '../../types';
@@ -195,7 +195,15 @@ export function LibraryTrainingView() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-1 overflow-hidden h-full">
+    <div className="flex flex-col flex-1 overflow-hidden h-full">
+
+      {/* ── Coming Soon banner ─────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0">
+        <Sparkles size={12} className="text-amber-500 shrink-0" />
+        <span className="text-xs font-medium text-amber-700">Coming Soon — the Training Portal is not yet functional in this version.</span>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
 
       {/* ── Left panel: categories + entry list ── */}
       <div className="w-64 shrink-0 border-r border-slate-200 flex flex-col bg-white">
@@ -481,6 +489,7 @@ export function LibraryTrainingView() {
           <AlertCircle size={10} className="text-amber-400 ml-0.5" />
         </div>
       )}
+    </div>
     </div>
   );
 }

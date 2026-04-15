@@ -361,11 +361,8 @@ function LibrarySidebar({
               }
             />
             {label}
-            {oracle && view !== id && (
-              <span className="ml-auto text-[9px] font-semibold uppercase tracking-widest text-amber-400 opacity-80">OIS</span>
-            )}
-            {accent && !oracle && view !== id && (
-              <span className="ml-auto text-[9px] font-semibold uppercase tracking-widest text-violet-400 opacity-70">AI</span>
+            {(oracle || accent) && (
+              <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">Soon</span>
             )}
           </button>
         ))}

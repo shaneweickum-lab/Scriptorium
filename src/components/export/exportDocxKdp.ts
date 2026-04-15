@@ -216,6 +216,14 @@ export async function exportDocxKdp(
       })
     );
 
+    // When chapter title is on its own page, add a page break after it
+    // so the title stands alone and the prose begins on the next page
+    if (options.chapterTitlesOnOwnPage) {
+      mainChildren.push(
+        new Paragraph({ children: [new PageBreak()] })
+      );
+    }
+
     if (node.content) {
       mainChildren.push(...tiptapJsonToDocxParagraphs(node.content));
     }
