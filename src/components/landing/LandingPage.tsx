@@ -403,11 +403,15 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </div>
 
           {/* Badge */}
-          <div className="flex justify-center mb-6">
+          <div className="flex flex-col items-center gap-3 mb-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] uppercase tracking-[0.18em] font-semibold"
               style={{ borderColor: 'rgba(167,139,250,0.35)', background: 'rgba(124,58,237,0.12)', color: '#c4b5fd' }}>
               <Sparkles size={11} />
               AI Writing Companion
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-[11px] font-semibold text-amber-300 uppercase tracking-[0.15em]">
+              <Sparkles size={10} />
+              Coming Soon
             </div>
           </div>
 
@@ -487,6 +491,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
               Meet Maven Now
               <ChevronRight size={18} />
             </button>
+            <p className="text-[11px] text-amber-400/70 italic">Maven is coming in a future release — not yet functional</p>
             <div className="flex items-center gap-6 text-[11px]" style={{ color: 'rgba(148,163,184,0.6)' }}>
               <span>Runs on <span className="font-medium text-slate-300">Ollama</span> — local, private, offline</span>
               <span className="hidden sm:inline opacity-40">·</span>
@@ -523,6 +528,10 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
               style={{ borderColor: 'rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.08)', color: '#fbbf24' }}>
               <Brain size={11} />
               Oracle Intelligence System
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-[11px] font-semibold text-amber-300 uppercase tracking-[0.15em]">
+              <Sparkles size={10} />
+              Coming Soon
             </div>
             <p className="text-[10px] uppercase tracking-[0.15em]"
               style={{ color: 'rgba(251,191,36,0.45)' }}>
@@ -708,6 +717,10 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
               <Brain size={11} />
               Training Portal
             </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-[11px] font-semibold text-amber-600 uppercase tracking-[0.15em]">
+              <Sparkles size={10} />
+              Coming Soon
+            </div>
             <p className="text-[10px] uppercase tracking-[0.15em] text-amber-500/60">
               Accelerates Oracle Intelligence · Feeds OracleML
             </p>
@@ -771,7 +784,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </div>
 
           {/* CTA */}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-3">
             <button
               onClick={onEnterTraining ?? onEnter}
               className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all hover:-translate-y-0.5 shadow-xl shadow-amber-200"
@@ -780,6 +793,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
               Open Training Portal
               <ChevronRight size={18} />
             </button>
+            <p className="text-[11px] text-amber-500/70 italic">Training Portal is coming in a future release — not yet functional</p>
           </div>
         </div>
       </section>
