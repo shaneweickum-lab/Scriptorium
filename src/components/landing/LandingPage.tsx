@@ -5,6 +5,7 @@ import {
   ChevronRight, Sparkles, Library, Feather, Wand2, ScanSearch,
   Brain, Fingerprint, Activity, Eye, MessageCircle, Layers,
   Zap, BookHeart, ShieldCheck, Palette, Mail, Monitor, Download,
+  CheckCircle2, AlignLeft, Quote, Mic, EyeOff, BarChart2, MessageSquare, Scissors,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -94,6 +95,57 @@ const MAVEN_CAPABILITIES = [
     title: 'Writer\'s Block Sensor',
     desc: "Maven watches your editor in real time. If you go quiet for too long or fall into a write-delete loop, she appears — gently — and offers a way through.",
     gradient: 'linear-gradient(135deg, #e11d48, #7c3aed)',
+  },
+];
+
+const WRITING_COACH_FEATURES = [
+  {
+    icon: CheckCircle2,
+    title: 'Grammar & Mechanics',
+    desc: "Catches grammatical errors, run-ons, fragments, and misplaced modifiers. Maven explains what's wrong so you learn the rule — not just accept the correction.",
+    gradient: 'linear-gradient(135deg, #0d9488, #059669)',
+  },
+  {
+    icon: AlignLeft,
+    title: 'Sentence Structure',
+    desc: 'Spots passive voice, over-stacked clauses, and awkward constructions. Suggests cleaner alternatives that tighten the sentence while keeping your voice intact.',
+    gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+  },
+  {
+    icon: Quote,
+    title: 'Punctuation Precision',
+    desc: "Comma splices, em-dash usage, semicolons versus periods, serial commas, hyphenation — Maven knows the conventions and the creative cases where you can break them.",
+    gradient: 'linear-gradient(135deg, #0891b2, #0284c7)',
+  },
+  {
+    icon: Mic,
+    title: 'Tone & Register',
+    desc: "Detects tonal drift mid-scene — an unexpected shift from intimate to clinical, or from tense to flat. Keeps each scene's emotional key consistent from first line to last.",
+    gradient: 'linear-gradient(135deg, #a21caf, #7c3aed)',
+  },
+  {
+    icon: EyeOff,
+    title: 'Show, Don\'t Tell',
+    desc: 'Flags telling sentences — "she was furious," "he seemed nervous" — and suggests sensory, action-based rewrites that pull readers into the moment instead of narrating at them.',
+    gradient: 'linear-gradient(135deg, #d97706, #b45309)',
+  },
+  {
+    icon: BarChart2,
+    title: 'Pacing & Rhythm',
+    desc: "Analyses sentence length variation, paragraph density, and scene beats. Pinpoints exactly where tension drags or where an emotional climax rushes past too quickly.",
+    gradient: 'linear-gradient(135deg, #e11d48, #be123c)',
+  },
+  {
+    icon: MessageSquare,
+    title: 'Dialogue Coach',
+    desc: "Catches unnatural speech, over-tagged dialogue, on-the-nose exposition hidden in conversation, and repetitive beats. Helps every character find their own distinct verbal fingerprint.",
+    gradient: 'linear-gradient(135deg, #7c3aed, #0d9488)',
+  },
+  {
+    icon: Scissors,
+    title: 'Clarity & Concision',
+    desc: "Flags purple prose, redundant adjectives, adverb stacking, and worn-out clichés. Trims without flattening — the goal is precision, not minimalism.",
+    gradient: 'linear-gradient(135deg, #0d9488, #7c3aed)',
   },
 ];
 
@@ -472,6 +524,47 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
                   <div>
                     <h3 className="text-sm font-semibold text-white mb-1">{cap.title}</h3>
                     <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.75)' }}>{cap.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Writing Coach sub-section ──────────────────────────── */}
+          <div className="flex items-center gap-4 mt-16 mb-10">
+            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-[11px] uppercase tracking-[0.18em] font-semibold"
+              style={{ borderColor: 'rgba(45,212,191,0.3)', background: 'rgba(13,148,136,0.10)', color: '#5eead4' }}>
+              <CheckCircle2 size={11} />
+              Integrated Writing Coach
+            </div>
+            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+          </div>
+
+          <p className="text-center text-slate-400 text-sm mb-10 max-w-2xl mx-auto leading-relaxed">
+            Maven isn't just a prose generator — she's an always-on writing coach woven into your editor.
+            Every sentence you write is quietly read. Every weakness is noticed. Every suggestion comes with a reason.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {WRITING_COACH_FEATURES.map((feat) => {
+              const Icon = feat.icon;
+              return (
+                <div
+                  key={feat.title}
+                  className="flex flex-col gap-3 rounded-2xl p-4"
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    background: 'rgba(255,255,255,0.04)',
+                  }}
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: feat.gradient }}>
+                    <Icon size={15} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-white mb-1">{feat.title}</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(203,213,225,0.65)' }}>{feat.desc}</p>
                   </div>
                 </div>
               );
