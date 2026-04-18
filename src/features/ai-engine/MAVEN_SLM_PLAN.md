@@ -249,13 +249,80 @@ Week 12–13 Phase 6: Scriptorium integration
 |---|---|---|
 | Tokenizer training | CPU | CPU |
 | Data preprocessing | 16 GB RAM | 32 GB RAM |
-| Pre-training | RTX 3090 (24 GB) | 2× A100 (80 GB) |
-| Fine-tuning | RTX 3090 | RTX 4090 |
+| Pre-training | MacBook Pro M2/M3 Pro 24 GB | 2× A100 (80 GB) |
+| Fine-tuning | MacBook Pro M2/M3 Pro 24 GB | RTX 4090 |
 | ONNX export | CPU | CPU |
 | Browser inference | WebAssembly | WebGPU (RTX/M-series) |
 
 **Cloud option:** ~$50–150 on RunPod / Lambda Labs for the full pre-training run
 at $0.75–1.50/hr on A100 × 40 hrs.
+
+---
+
+## Apple Silicon Training Guide (MacBook Pro 24 GB Unified RAM)
+
+### Memory — Not a concern at all
+The 50M param model is tiny relative to 24 GB unified RAM:
+
+| Component | Memory |
+|---|---|
+| Model weights (bfloat16) | ~100 MB |
+| AdamW optimizer states (fp32) | ~400 MB |
+| Gradients (bfloat16) | ~100 MB |
+| Activations + grad checkpoint | ~200 MB |
+| PyTorch + framework overhead | ~1.5 GB |
+| **Total peak** | **~2.5 GB** |
+
+You have ~21 GB headroom. Memory is not the bottleneck.
+
+### Training Speed — Slow but fully feasible with corpus adjustment
+
+Apple Silicon uses PyTorch's **MPS (Metal Performance Shaders)** backend.
+It works well for this model size but is significantly slower than CUDA.
+
+| Chip | GPU Cores | Est. tokens/sec | 5B tokens | 1B tokens (adjusted) |
+|---|---|---|---|---|
+| M2 Pro | 19 | ~30–50k | 28–46 days | 6–9 days |
+| M3 Pro | 18 | ~40–60k | 23–35 days | 5–7 days |
+| M2 Max | 38 | ~80–120k | 12–17 days | 2.5–3.5 days |
+| M3 Max | 40 | ~100–150k | 9–14 days | 2–3 days |
+| A100 80GB | — | ~500k+ | ~2.8 hours | ~33 min |
+
+**Recommendation: reduce pre-train corpus from 5B → 1B tokens.**  
+Chinchilla scaling says optimal for 50M params is ~1B tokens. 5B was a
+quality buffer — 1B still produces a competent model and is fully trainable
+on your Mac in under a week.
+
+### Required code changes for MPS
+
+1. **Device target:** `device = torch.device("mps")` instead of `"cuda"`
+2. **No Flash Attention 2** — CUDA-only kernel. Use standard scaled dot-product
+   attention (`F.scaled_dot_product_attention`) which has an MPS implementation.
+3. **bfloat16 support:** Available on M2+ chips. M1 requires float16 instead.
+4. **DataLoader:** Set `num_workers=0` — MPS does not support forked workers.
+5. **Batch size:** Start at micro-batch=2 with gradient accumulation to 256.
+   Tune upward if memory headroom allows.
+6. **Thermal management:** Plug in to power. Run overnight for long pre-train
+   phases. macOS may throttle the GPU after sustained heavy load — monitor with
+   `sudo powermetrics --samplers gpu_power -i 1000`.
+
+### Practical training schedule on Mac
+
+```
+Phase 3 pre-train  (1B tokens, micro-batch 2, grad-accum 128):
+  M3 Pro:  ~5–7 days  (run overnight × 3–4 nights, check each morning)
+  M3 Max:  ~2–3 days
+
+Phase 4 fine-tune  (50k instruction pairs × 3 epochs ≈ ~15M tokens):
+  M3 Pro:  ~3–5 hours
+  M3 Max:  ~1–2 hours
+```
+
+### Keeping the Mac healthy during training
+- Plug into power (never train on battery — thermal throttling kicks in)
+- Keep ambient temperature cool; prop laptop on a stand for airflow
+- Disable sleep: `sudo pmset -a sleep 0` before the run, restore after
+- Use `caffeinate -s python train.py` to prevent idle sleep mid-run
 
 ---
 
