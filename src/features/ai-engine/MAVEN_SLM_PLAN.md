@@ -275,23 +275,32 @@ The 50M param model is tiny relative to 24 GB unified RAM:
 
 You have ~21 GB headroom. Memory is not the bottleneck.
 
-### Training Speed — Slow but fully feasible with corpus adjustment
+### Training Speed — M5 is excellent for this task
 
 Apple Silicon uses PyTorch's **MPS (Metal Performance Shaders)** backend.
-It works well for this model size but is significantly slower than CUDA.
+The M5 generation is meaningfully faster than M3/M4 for ML workloads.
 
-| Chip | GPU Cores | Est. tokens/sec | 5B tokens | 1B tokens (adjusted) |
+> **Note:** Confirmed M5 benchmarks for PyTorch ML training are still
+> emerging. The numbers below are extrapolated from the M4 generation
+> using Apple's typical ~30–40% GPU throughput improvement per generation.
+> Run a quick `python train_benchmark.py` (small 100-step warmup) on your
+> actual machine to calibrate before committing to a full run.
+
+| Chip | GPU Cores (est.) | Mem BW (est.) | Est. tokens/sec | 1B tokens |
 |---|---|---|---|---|
-| M2 Pro | 19 | ~30–50k | 28–46 days | 6–9 days |
-| M3 Pro | 18 | ~40–60k | 23–35 days | 5–7 days |
-| M2 Max | 38 | ~80–120k | 12–17 days | 2.5–3.5 days |
-| M3 Max | 40 | ~100–150k | 9–14 days | 2–3 days |
-| A100 80GB | — | ~500k+ | ~2.8 hours | ~33 min |
+| M4 Pro (ref) | 20 | 273 GB/s | ~60–90k | 3–5 hrs |
+| **M5 Pro** | **~24–28** | **~350–400 GB/s** | **~90–130k** | **~2–3 hrs** |
+| **M5 Max** | **~40–48** | **~600–700 GB/s** | **~180–250k** | **~1–1.5 hrs** |
+| A100 80GB (cloud ref) | — | 2,000 GB/s | ~500k+ | ~33 min |
 
-**Recommendation: reduce pre-train corpus from 5B → 1B tokens.**  
+**With 24 GB of unified RAM you almost certainly have an M5 Pro.**
+At ~90–130k tokens/sec, the full 1B token pre-training run completes in
+**roughly 2–3 hours** — fast enough to iterate and re-run if needed.
+
+**Recommendation: keep pre-train corpus at 1B tokens.**  
 Chinchilla scaling says optimal for 50M params is ~1B tokens. 5B was a
-quality buffer — 1B still produces a competent model and is fully trainable
-on your Mac in under a week.
+quality buffer — 1B still produces a competent model and your M5 handles
+it in a single afternoon rather than days.
 
 ### Required code changes for MPS
 
