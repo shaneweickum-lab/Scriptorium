@@ -9,8 +9,12 @@ checkpoints/
 # Tokenizer output (generated — not committed)
 tokenizer/maven-tokenizer/
 
-# Training data
-data/
+# Training data directories (large, not committed)
+# The data/ Python package (scripts) IS committed; only ignore the actual data
+data/raw/
+data/clean/
+data/tokenized/
+data/instruction_pairs/
 
 # Python artefacts
 __pycache__/

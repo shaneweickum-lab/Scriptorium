@@ -67,12 +67,24 @@ def test_forward_with_targets(tiny_model: MavenSLM, tiny_config: MavenSLMConfig)
 
 
 def test_ignore_index_in_loss(tiny_model: MavenSLM, tiny_config: MavenSLMConfig) -> None:
+    """Masked positions (target=-1) must not contribute to loss.
+
+    All-masked → PyTorch returns nan (mean of 0 items = 0/0).
+    Mixed masked/valid → finite positive loss from valid positions only.
+    """
     B, T = 1, 8
     input_ids = torch.randint(0, tiny_config.vocab_size, (B, T))
-    # Mask all targets → loss should be 0 (or very near 0 numerically)
-    targets = torch.full((B, T), -1, dtype=torch.long)
-    _, loss = tiny_model(input_ids, targets)
-    assert loss.item() == pytest.approx(0.0, abs=1e-5)
+
+    # All masked: NaN is the correct/expected behaviour (no valid targets)
+    all_masked = torch.full((B, T), -1, dtype=torch.long)
+    _, loss_all_masked = tiny_model(input_ids, all_masked)
+    assert torch.isnan(loss_all_masked), "All-masked targets should produce NaN loss"
+
+    # Half masked: loss should be finite and positive
+    half_masked = torch.randint(0, tiny_config.vocab_size, (B, T))
+    half_masked[:, ::2] = -1  # mask even positions
+    _, loss_half = tiny_model(input_ids, half_masked)
+    assert not torch.isnan(loss_half) and loss_half.item() > 0
 
 
 def test_max_seq_len_respected(tiny_model: MavenSLM, tiny_config: MavenSLMConfig) -> None:

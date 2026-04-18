@@ -221,14 +221,16 @@ class MavenSLM(nn.Module):
     # ------------------------------------------------------------------
 
     def param_count(self) -> dict:
-        """Return parameter counts, accounting for weight tying."""
-        seen: set = set()
-        unique = 0
-        for p in self.parameters():
-            if id(p) not in seen:
-                seen.add(id(p))
-                unique += p.numel()
-        total_with_ties = sum(p.numel() for p in self.parameters())
+        """Return parameter counts, accounting for weight tying.
+
+        model.parameters() deduplicates tied tensors, giving unique count.
+        named_parameters(remove_duplicate=False) counts every reference,
+        so the difference is exactly the tied (shared) embedding weight.
+        """
+        unique = sum(p.numel() for p in self.parameters())
+        total_with_ties = sum(
+            p.numel() for _, p in self.named_parameters(remove_duplicate=False)
+        )
         return {
             "unique_params":     unique,
             "total_with_ties":   total_with_ties,
