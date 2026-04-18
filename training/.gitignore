@@ -1,0 +1,21 @@
+# Model checkpoints and weights
+checkpoints/
+*.pt
+*.pth
+*.gguf
+*.onnx
+*.bin
+
+# Tokenizer output (generated — not committed)
+tokenizer/maven-tokenizer/
+
+# Training data
+data/
+
+# Python artefacts
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+.venv/
+venv/
