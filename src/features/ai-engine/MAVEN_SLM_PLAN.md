@@ -17,7 +17,7 @@ integration, and outline expansion — running fully offline inside Scriptorium.
 | `d_model` | 512 | Balanced capacity vs. memory |
 | `n_heads` | 8 | 64-dim per head, standard for d_model=512 |
 | `n_layers` | 10 | Hits ~49M with the other dims |
-| `ffn_dim` | 2048 | 4× d_model (standard multiplier) |
+| `ffn_dim` | 1536 | 3× d_model — SwiGLU uses 3 weight matrices (gate/up/down), so 1536 keeps total params near 50 M |
 | `vocab_size` | 32,768 | BPE, writing-optimised |
 | `max_seq_len` | 2,048 | Full scene + lore context window |
 | `dropout` | 0.1 | Regularisation during pre-train |
@@ -30,16 +30,17 @@ integration, and outline expansion — running fully offline inside Scriptorium.
 | Component | Params |
 |---|---|
 | Token embeddings (32768 × 512) | 16,777,216 |
-| Rotary position (no learned params) | 0 |
-| 10× attention (Q,K,V,O each 512²) | 10,485,760 |
-| 10× FFN SwiGLU (gate + up + down) | 20,971,520 |
-| 10× RMSNorm pairs (pre-attn + pre-ffn) | 10,240 |
+| Rotary position — RoPE (no learned params) | 0 |
+| 10× attention Q,K,V,O (each 512²) | 10,485,760 |
+| 10× SwiGLU FFN — gate+up (512×1536×2) + down (1536×512) | 23,592,960 |
+| 10× RMSNorm pairs pre-attn + pre-ffn (2 × 512 each) | 10,240 |
 | Final RMSNorm | 512 |
-| LM head (weight-tied to embedding) | 0 |
-| **Total** | **~48,245,248 ≈ 48.2 M** |
+| LM head (weight-tied to embedding — no extra params) | 0 |
+| **Total unique** | **~50,866,688 ≈ 50.9 M** |
 
-Adjust `n_layers` to 11 (+3M) or bump `ffn_dim` to 2176 (+600k/layer) to hit
-exactly 50M if needed during arch finalization.
+Note: SwiGLU uses three weight matrices per FFN block (gate, up, down) rather
+than two. Setting `ffn_dim = 3 × d_model = 1536` compensates and keeps the
+total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048`.
 
 ---
 
