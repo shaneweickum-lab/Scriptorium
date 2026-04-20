@@ -20,7 +20,7 @@ Write your manuscript. Build your world. Train an AI that sounds like you.
 
 Wizards Playground is a **free, offline-first PWA and desktop app** for fiction authors. Everything lives on your device — no account, no cloud, no subscription. Your words stay yours.
 
-It combines a distraction-free manuscript editor, a structured world bible, an achievement system, and an on-device AI writing companion (Maven) into one cohesive studio.
+It combines a distraction-free manuscript editor, a structured world bible, an achievement system, and an on-device AI writing companion (Meyvn) into one cohesive studio.
 
 ---
 
