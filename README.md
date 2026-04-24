@@ -20,7 +20,7 @@ Write your manuscript. Build your world. Train an AI that sounds like you.
 
 Wizards Playground is a **free, offline-first PWA and desktop app** for fiction authors. Everything lives on your device — no account, no cloud, no subscription. Your words stay yours.
 
-It combines a distraction-free manuscript editor, a structured world bible, an achievement system, and an on-device AI writing companion (Maven) into one cohesive studio.
+It combines a distraction-free manuscript editor, a structured world bible, an achievement system, and an on-device AI writing companion (Meyvn) into one cohesive studio.
 
 ---
 
@@ -55,32 +55,32 @@ It combines a distraction-free manuscript editor, a structured world bible, an a
 
 ---
 
-## Maven — Your AI Writing Companion
+## Meyvn — Your AI Writing Companion
 
-> **Coming Soon** — Maven is actively being developed and is not yet functional in the current release.
+> **Coming Soon** — Meyvn is actively being developed and is not yet functional in the current release.
 
-Maven is a purpose-built AI writing companion powered by **MavenAI** — a small language model being trained from the ground up, exclusively for the craft of storytelling. She runs entirely on your device, needs no API keys, and no data ever leaves your machine.
+Meyvn is a purpose-built AI writing companion powered by **MeyvnAI** — a small language model being trained from the ground up, exclusively for the craft of storytelling. She runs entirely on your device, needs no API keys, and no data ever leaves your machine.
 
-Unlike general-purpose AI assistants, MavenAI is designed with a single purpose: to understand fiction, honour your lore, and write in your voice.
+Unlike general-purpose AI assistants, MeyvnAI is designed with a single purpose: to understand fiction, honour your lore, and write in your voice.
 
 | Capability | What it does |
 |---|---|
-| **Chat** | Ask Maven anything about craft, plot, character, or structure |
-| **Write mode** | Give a direction and Maven produces prose in your voice |
-| **Lore-aware** | Maven reads your World Bible and grounds every answer in your lore |
+| **Chat** | Ask Meyvn anything about craft, plot, character, or structure |
+| **Write mode** | Give a direction and Meyvn produces prose in your voice |
+| **Lore-aware** | Meyvn reads your World Bible and grounds every answer in your lore |
 | **Style matching** | Analyses your recent writing and mirrors your sentence rhythm, vocabulary, and tone |
 | **Writer's Block Sensor** | Watches the editor for idle periods and write-delete loops, surfaces a gentle nudge when you're stuck |
 | **Lore Sentinel** | Scans the scene you just wrote for lore-changing events and proposes World Bible updates |
 
 ### No setup required
 
-MavenAI ships as part of the app — no third-party installs, no model downloads, no configuration. Open the app, open Maven, start writing.
+MeyvnAI ships as part of the app — no third-party installs, no model downloads, no configuration. Open the app, open Meyvn, start writing.
 
 ---
 
 ## Training Portal — OracleML
 
-The Training Portal lets you feed Maven your existing writing — journals, emails, short stories, anything — so she learns your voice before you write a single scene.
+The Training Portal lets you feed Meyvn your existing writing — journals, emails, short stories, anything — so she learns your voice before you write a single scene.
 
 Paste your writing into one of four categories:
 
@@ -91,13 +91,13 @@ Paste your writing into one of four categories:
 | Short Stories | Your narrative style and pacing |
 | Other Writing | Anything else in your voice |
 
-Every word analysed pushes Maven from Apprentice toward Journeyman, making her suggestions feel increasingly native to your style.
+Every word analysed pushes Meyvn from Apprentice toward Journeyman, making her suggestions feel increasingly native to your style.
 
 ---
 
 ## Desktop App
 
-The desktop app (built with [Tauri](https://tauri.app)) runs MavenAI natively — no setup, no configuration, no browser sandbox. Install it and Maven is ready the moment you open the app.
+The desktop app (built with [Tauri](https://tauri.app)) runs MeyvnAI natively — no setup, no configuration, no browser sandbox. Install it and Maven is ready the moment you open the app.
 
 **[Download the latest release →](https://github.com/shaneweickum-lab/Scriptorium/releases/latest)**
 
@@ -121,7 +121,7 @@ Or use it as a **PWA** — open the app in Chrome or Safari and install it from 
 | State | Zustand 5 |
 | Rich text | TipTap 3 (ProseMirror) |
 | Storage | Dexie 4 (IndexedDB) |
-| AI | MavenAI (purpose-built SLM) · `@xenova/transformers` for embeddings |
+| AI | MeyvnAI (purpose-built SLM) · `@xenova/transformers` for embeddings |
 | Export | `docx` (Word) · `jszip` (EPUB) |
 | PWA | Vite + `vite-plugin-pwa` (Workbox) |
 | Desktop | Tauri 2 + `tauri-plugin-http` |
@@ -182,7 +182,7 @@ src/
 ├── components/        # UI components (editor, library, world, Maven, etc.)
 ├── db/                # Dexie database schema and repositories
 ├── features/
-│   └── ai-engine/     # Maven: Ollama client, RAG, style analysis, vector index
+│   └── ai-engine/     # MMeyvn:  RAG, style analysis, vector index
 ├── hooks/             # Shared React hooks
 ├── store/             # Zustand stores
 ├── types/             # Shared TypeScript interfaces
@@ -198,6 +198,6 @@ public/                # Static assets, PWA icons
 
 **Wizards Playground · Built for writers, by writers**
 
-Free forever · No account · No cloud · Your words stay yours
+Free  · No account · No cloud · Your words stay yours
 
 </div>
