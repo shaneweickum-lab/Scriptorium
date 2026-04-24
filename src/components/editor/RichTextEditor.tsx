@@ -221,14 +221,14 @@ export function RichTextEditor({
     setShowComments(true);
   }, [editor, nodeId]);
 
-  // ── Maven suggestion approval ──────────────────────────────────────────────
+  // ── Meyvn suggestion approval ──────────────────────────────────────────────
   const pendingSuggestion = useEditorStore((s) => s.pendingSuggestion);
   const clearPendingSuggestion = useEditorStore((s) => s.clearPendingSuggestion);
 
   const handleApplySuggestion = useCallback(() => {
     if (!editor || !pendingSuggestion) return;
 
-    // Convert Maven's plain-text prose (with \n\n paragraph breaks) to HTML
+    // Convert Meyvn's plain-text prose (with \n\n paragraph breaks) to HTML
     const html = pendingSuggestion.text
       .split(/\n\n+/)
       .filter((p) => p.trim())
@@ -280,12 +280,12 @@ export function RichTextEditor({
         />
       )}
 
-      {/* Maven suggestion approval banner */}
+      {/* Meyvn suggestion approval banner */}
       {pendingSuggestion && (
         <div className="flex items-center gap-2 px-4 py-2 bg-violet-50 border-b border-violet-200 shrink-0">
           <Sparkles size={13} className="text-violet-500 shrink-0" />
           <span className="text-xs text-violet-700 flex-1 truncate">
-            Maven wrote{' '}
+            Meyvn wrote{' '}
             <span className="font-semibold">{suggestionWordCount} words</span>
             {pendingSuggestion.action === 'append' ? ' — appending to scene' : ' — inserting at cursor'}
           </span>
@@ -300,7 +300,7 @@ export function RichTextEditor({
           <button
             onClick={clearPendingSuggestion}
             className="flex items-center justify-center w-6 h-6 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all shrink-0"
-            title="Discard Maven's suggestion"
+            title="Discard Meyvn's suggestion"
           >
             <XIcon size={13} />
           </button>

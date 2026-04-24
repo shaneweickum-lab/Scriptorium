@@ -1,14 +1,14 @@
-# MavenSLM — Custom 50M Parameter Writing Assistant Model
+# MeyvnSLM — Custom 50M Parameter Writing Assistant Model
 
 **Goal:** Build, train, and ship a custom small language model (SLM) purpose-built
-for MavenAI's writing-assistant tasks — story continuation, style matching, lore
+for MeyvnAi's writing-assistant tasks — story continuation, style matching, lore
 integration, and outline expansion — running fully offline inside Scriptorium.
 
 ---
 
 ## Architecture Specification
 
-**Name:** MavenSLM-50M  
+**Name:** MeyvnSLM-50M  
 **Type:** Decoder-only causal transformer (GPT-style)  
 **Parameter target:** ~49–52 M  
 
@@ -49,14 +49,14 @@ total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048
 
 ### 1.1 Python Model Implementation
 - [ ] Create `maven_slm/` Python package (separate from Scriptorium frontend)
-- [ ] Implement `MavenSLMConfig` dataclass (all hyperparams above)
-- [ ] Implement `MavenSLM` in PyTorch:
+- [ ] Implement `MeyvnSLMConfig` dataclass (all hyperparams above)
+- [ ] Implement `MeyvnSLM` in PyTorch:
   - `RMSNorm` layer
   - `RotaryEmbedding` (RoPE, precomputed freqs)
   - `SwiGLU` FFN block
   - `CausalSelfAttention` (grouped-query optional for v2)
   - `TransformerBlock` = attn + ffn + norms
-  - `MavenSLM` = embedding + n blocks + final norm + tied LM head
+  - `MeyvnSLM` = embedding + n blocks + final norm + tied LM head
 - [ ] `param_count()` utility to verify 50M budget
 - [ ] Unit tests for forward pass shapes and causal mask correctness
 
@@ -82,7 +82,7 @@ total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048
 | WikiText-103 (narrative sections) | ~0.1 B | CC | Background knowledge |
 | WritingPrompts Reddit dataset | ~0.2 B | Varies | Diverse short fiction |
 | Lore document pairs (synthetic) | ~50 M | Generated | World-building context injection |
-| Instruction pairs for fine-tuning | ~10 M | Generated | Maven task format |
+| Instruction pairs for fine-tuning | ~10 M | Generated | Meyvn task format |
 
 **Target pre-train tokens: ~5 B** (standard minimum for quality at 50M params per
 Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom)
@@ -103,7 +103,7 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 - [ ] Store as memory-mapped `.bin` files (uint16 token ids) for fast DataLoader
 
 ### 2.3 Instruction Fine-Tuning Data
-- [ ] Generate ~50k instruction pairs covering Maven tasks:
+- [ ] Generate ~50k instruction pairs covering Meyvn tasks:
   - **Continue scene:** `Given scene so far + lore context → next 200 words`
   - **Style match:** `Sample prose + instruction → continuation in same voice`
   - **Lore-grounded:** `World entry facts + partial scene → lore-consistent text`
@@ -179,7 +179,7 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 - [ ] Convert via `llama.cpp` `convert_hf_to_gguf.py`
 - [ ] Quantize to Q4_K_M (best quality/size ratio) → target ~30 MB
 - [ ] Test `ollama run maven-slm` end-to-end
-- [ ] Create `Modelfile` for Ollama with Maven system prompt baked in
+- [ ] Create `Modelfile` for Ollama with Meyvn system prompt baked in
 
 ### 5.3 Size Budget
 
@@ -195,7 +195,7 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 ## Phase 6 — Scriptorium Integration  
 *Estimated effort: 1–2 weeks*
 
-### 6.1 New Service: `MavenModelService.ts`
+### 6.1 New Service: `MeyvnModelService.ts`
 - [ ] Wraps `@huggingface/transformers` `TextGenerationPipeline` for ONNX model
 - [ ] Model download + caching via browser Cache API (same pattern as VectorService)
 - [ ] Download progress callbacks for UI
@@ -205,25 +205,25 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 - [ ] Auto-detect WebGPU (`navigator.gpu`) for hardware acceleration; fallback to WASM
 
 ### 6.2 Update `RagService.ts`
-- [ ] Abstract provider interface: `LLMProvider = OllamaProvider | MavenModelProvider`
-- [ ] `MavenModelProvider` wraps `MavenModelService`
+- [ ] Abstract provider interface: `LLMProvider = OllamaProvider | MeyvnModelProvider`
+- [ ] `MeyvnModelProvider` wraps `MeyvnModelService`
 - [ ] `OllamaProvider` wraps existing `OllamaService`
 - [ ] `RagService.buildMessages()` stays format-agnostic; provider handles chat template
 
 ### 6.3 Update `useAuthorAI.ts`
 - [ ] Add `provider: 'ollama' | 'maven-slm'` state
-- [ ] If Ollama unreachable, auto-suggest switching to MavenSLM
+- [ ] If Ollama unreachable, auto-suggest switching to MeyvnSLM
 - [ ] Surface download progress during first-use model fetch
 - [ ] Return `mavenModelStatus: 'not-downloaded' | 'downloading' | 'ready'`
 
-### 6.4 UI Updates (MavenPanel)
-- [ ] Model selector: `Ollama (external)` vs `MavenSLM (built-in, ~48 MB)`
+### 6.4 UI Updates (MeyvnPanel)
+- [ ] Model selector: `Ollama (external)` vs `MeyvnSLM (built-in, ~48 MB)`
 - [ ] First-time download flow: progress bar, estimated size warning
 - [ ] WebGPU badge if hardware acceleration active
 - [ ] Offline indicator: "Running locally — no internet required"
 
 ### 6.5 Structured Output for Lore Sentinel
-- [ ] MavenSLM fine-tuned on sentinel format:
+- [ ] MeyvnSLM fine-tuned on sentinel format:
   ```json
   {"proposals": [{"field": "status", "entry": "...", "newValue": "..."}]}
   ```

@@ -78,7 +78,7 @@ function App() {
     return (
       <LandingPage
         onEnter={() => enterApp()}
-        onEnterMaven={() => enterApp('maven')}
+        onEnterMeyvn={() => enterApp('maven')}
         onEnterTraining={() => enterApp('training')}
       />
     );

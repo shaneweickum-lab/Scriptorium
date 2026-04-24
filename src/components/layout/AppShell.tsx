@@ -8,7 +8,7 @@ import { ExportModal } from '../export/ExportModal';
 import { ProjectSettings } from './ProjectSettings';
 import { ToastContainer } from '../common/Toast';
 import { AchievementsModal } from '../achievements/AchievementsModal';
-import { MavenPanel } from '../ai/MavenPanel';
+import { MeyvnPanel } from '../ai/MeyvnPanel';
 import { useVectorIndex } from '../../features/ai-engine/hooks/useVectorIndex';
 import { useOracleML } from '../../features/ai-engine/hooks/useOracleML';
 
@@ -20,8 +20,8 @@ export function AppShell() {
   const setShowProjectSettings = useUIStore((s) => s.setShowProjectSettings);
   const showAchievementsModal = useUIStore((s) => s.showAchievementsModal);
   const setShowAchievementsModal = useUIStore((s) => s.setShowAchievementsModal);
-  const showMaven = useUIStore((s) => s.showMaven);
-  const setShowMaven = useUIStore((s) => s.setShowMaven);
+  const showMeyvn = useUIStore((s) => s.showMeyvn);
+  const setShowMeyvn = useUIStore((s) => s.setShowMeyvn);
 
   const activeBook = useLibraryStore((s) => s.activeBook);
   const { indexStatus, indexProgress } = useVectorIndex(activeBook?.id);
@@ -45,10 +45,10 @@ export function AppShell() {
               </div>
             )}
           </main>
-          {showMaven && (
+          {showMeyvn && (
             <div className="wp-panel-enter flex h-full">
-              <MavenPanel
-                onClose={() => setShowMaven(false)}
+              <MeyvnPanel
+                onClose={() => setShowMeyvn(false)}
                 indexStatus={indexStatus}
                 indexProgress={indexProgress}
                 oracleProfile={oracleProfile}

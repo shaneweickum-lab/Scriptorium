@@ -15,7 +15,7 @@ import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { NewBookModal } from './NewBookModal';
 import { EditBookModal } from './EditBookModal';
 import { NewWorldModal } from './NewWorldModal';
-import { LibraryMavenView } from './LibraryMavenView';
+import { LibraryMeyvnView } from './LibraryMeyvnView';
 import { LibraryTrainingView } from './LibraryTrainingView';
 import { IS_TAURI } from '../../features/ai-engine/services/OllamaService';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -320,7 +320,7 @@ function LibrarySidebar({
   const navItems: { id: LibraryView; icon: typeof BookOpen; label: string; accent?: boolean; oracle?: boolean }[] = [
     { id: 'books', icon: BookOpen, label: 'Books Library' },
     { id: 'worlds', icon: Globe2, label: 'World Atlas' },
-    { id: 'maven', icon: Sparkles, label: 'Ask Maven', accent: true },
+    { id: 'maven', icon: Sparkles, label: 'Ask Meyvn', accent: true },
     { id: 'training', icon: Brain, label: 'Training Portal', oracle: true },
   ];
 
@@ -591,7 +591,7 @@ export function Library() {
       <div className="flex-1 flex flex-col overflow-hidden bg-white relative">
         {view === 'maven' ? (
           <div key="maven" className="wp-view-enter flex-1 flex flex-col overflow-hidden">
-            <LibraryMavenView />
+            <LibraryMeyvnView />
           </div>
         ) : view === 'training' ? (
           <div key="training" className="wp-view-enter flex-1 flex flex-col overflow-hidden">

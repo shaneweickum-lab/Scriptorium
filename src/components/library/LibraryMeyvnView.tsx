@@ -1,9 +1,9 @@
 /**
- * LibraryMavenView — full-screen Maven chat panel for the Library page.
+ * LibraryMeyvnView — full-screen Meyvn chat panel for the Library page.
  *
- * Intentionally simpler than MavenPanel: no Lore Watch tab (no open scene),
+ * Intentionally simpler than MeyvnPanel: no Lore Watch tab (no open scene),
  * no vector index (no active book), no scene awareness indicator.
- * Maven answers general writing questions using her bare-prompt persona.
+ * Meyvn answers general writing questions using her bare-prompt persona.
  *
  * When the author uses Write mode, the generated prose is stored in
  * editorStore.pendingSuggestion so it appears as an approval banner the
@@ -22,7 +22,7 @@ import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 // Types
 // ---------------------------------------------------------------------------
 
-type LibraryMavenTab = 'chat' | 'write';
+type LibraryMeyvnTab = 'chat' | 'write';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -70,7 +70,7 @@ function MessageBubble({
 
   return (
     <div className="flex items-start gap-3">
-      {/* Maven avatar */}
+      {/* Meyvn avatar */}
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
@@ -79,7 +79,7 @@ function MessageBubble({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold text-violet-600 mb-1.5 tracking-wide">Maven</p>
+        <p className="text-[11px] font-semibold text-violet-600 mb-1.5 tracking-wide">Meyvn</p>
         <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap shadow-sm">
           {content}
           {streaming && (
@@ -92,7 +92,7 @@ function MessageBubble({
 }
 
 /** Empty-state card with suggested prompts. */
-function EmptyState({ tab, onPrompt }: { tab: LibraryMavenTab; onPrompt: (p: string) => void }) {
+function EmptyState({ tab, onPrompt }: { tab: LibraryMeyvnTab; onPrompt: (p: string) => void }) {
   const suggestions =
     tab === 'write'
       ? [
@@ -118,13 +118,13 @@ function EmptyState({ tab, onPrompt }: { tab: LibraryMavenTab; onPrompt: (p: str
       </div>
 
       <h2 className="text-xl font-bold text-slate-800 mb-2">
-        {tab === 'write' ? 'What shall I write for you?' : 'Ask Maven anything'}
+        {tab === 'write' ? 'What shall I write for you?' : 'Ask Meyvn anything'}
       </h2>
 
       <p className="text-sm text-slate-400 max-w-sm mb-2 leading-relaxed">
         {tab === 'write'
-          ? 'Describe what you need and Maven will produce finished prose you can drop straight into your scene.'
-          : "Maven knows craft. Ask about plot, character, pacing, voice — she'll answer from the traditions of storytelling itself."}
+          ? 'Describe what you need and Meyvn will produce finished prose you can drop straight into your scene.'
+          : "Meyvn knows craft. Ask about plot, character, pacing, voice — she'll answer from the traditions of storytelling itself."}
       </p>
       <p className="text-xs text-slate-300 mb-8">
         Open a book to unlock lore-grounded suggestions and World Bible Sentinel
@@ -150,7 +150,7 @@ function EmptyState({ tab, onPrompt }: { tab: LibraryMavenTab; onPrompt: (p: str
 // Main component
 // ---------------------------------------------------------------------------
 
-export function LibraryMavenView() {
+export function LibraryMeyvnView() {
   const setPendingSuggestion = useEditorStore((s) => s.setPendingSuggestion);
 
   const {
@@ -168,7 +168,7 @@ export function LibraryMavenView() {
     checkHealth,
   } = useAuthorAI(); // no bookId — bare prompt mode
 
-  const [tab, setTab] = useState<LibraryMavenTab>('chat');
+  const [tab, setTab] = useState<LibraryMeyvnTab>('chat');
   const [prompt, setPrompt] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -227,7 +227,7 @@ export function LibraryMavenView() {
     textareaRef.current?.focus();
   };
 
-  const handleTabSwitch = (next: LibraryMavenTab) => {
+  const handleTabSwitch = (next: LibraryMeyvnTab) => {
     if (next !== tab) {
       reset();
       setTab(next);
@@ -250,13 +250,13 @@ export function LibraryMavenView() {
       {/* ── Coming Soon banner ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0">
         <Sparkles size={12} className="text-amber-500 shrink-0" />
-        <span className="text-xs font-medium text-amber-700">Coming Soon — Maven is not yet functional in this version.</span>
+        <span className="text-xs font-medium text-amber-700">Coming Soon — Meyvn is not yet functional in this version.</span>
       </div>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-6 py-4 border-b border-slate-100">
         <div className="max-w-3xl mx-auto flex items-center gap-3 flex-wrap">
-          {/* Maven identity */}
+          {/* Meyvn identity */}
           <div className="flex items-center gap-2 mr-1">
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
@@ -264,7 +264,7 @@ export function LibraryMavenView() {
             >
               <Sparkles size={13} className="text-white" />
             </div>
-            <span className="font-bold text-slate-800 text-sm">Maven</span>
+            <span className="font-bold text-slate-800 text-sm">Meyvn</span>
           </div>
 
           {/* Model selector */}
@@ -273,7 +273,7 @@ export function LibraryMavenView() {
             onChange={(e) => setModel(e.target.value)}
             className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1
               outline-none focus:border-violet-300 focus:text-slate-600 transition-all w-32"
-            title="MavenAI model"
+            title="MeyvnAi model"
           />
 
           {/* Tab toggle */}
@@ -306,13 +306,13 @@ export function LibraryMavenView() {
           {ollamaStatus === 'ok' && (
             <div className="flex items-center gap-1.5 text-[10px] text-teal-600">
               <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-              MavenAI connected
+              MeyvnAi connected
             </div>
           )}
           {ollamaStatus === 'unreachable' && (
             <div className="flex items-center gap-1 text-[10px] text-amber-600">
               <WifiOff size={10} />
-              MavenAI unreachable
+              MeyvnAi unreachable
             </div>
           )}
 
@@ -330,7 +330,7 @@ export function LibraryMavenView() {
         </div>
       </div>
 
-      {/* ── MavenAI connection warning ───────────────────────────────────── */}
+      {/* ── MeyvnAi connection warning ───────────────────────────────────── */}
       {ollamaStatus === 'unreachable' && (
         <div className="shrink-0 px-6 py-3 border-b border-amber-100 bg-amber-50">
           <div className="max-w-3xl mx-auto flex flex-col gap-2">
@@ -338,10 +338,10 @@ export function LibraryMavenView() {
               <div className="flex-1 space-y-1">
                 <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
                   <AlertCircle size={12} />
-                  MavenAI engine is not yet available
+                  MeyvnAi engine is not yet available
                 </p>
                 <p className="text-[11px] text-amber-600 leading-relaxed">
-                  MavenAI is a purpose-built AI being developed from the ground up for Wizards Playground. She will be available in an upcoming release — no third-party setup required.
+                  MeyvnAi is a purpose-built AI being developed from the ground up for Wizards Playground. She will be available in an upcoming release — no third-party setup required.
                 </p>
               </div>
               <button
@@ -449,8 +449,8 @@ export function LibraryMavenView() {
               disabled={isStreaming}
               placeholder={
                 tab === 'write'
-                  ? 'What should Maven write? (Enter to generate, Shift+Enter for newline)'
-                  : 'Ask Maven anything… (Enter to send, Shift+Enter for newline)'
+                  ? 'What should Meyvn write? (Enter to generate, Shift+Enter for newline)'
+                  : 'Ask Meyvn anything… (Enter to send, Shift+Enter for newline)'
               }
               rows={1}
               style={{ resize: 'none', minHeight: '44px', maxHeight: '200px' }}
@@ -483,7 +483,7 @@ export function LibraryMavenView() {
           </div>
 
           <p className="text-[10px] text-slate-300 mt-2 text-center">
-            Powered by MavenAI · Purpose-built for writers · No data leaves your device
+            Powered by MeyvnAi · Purpose-built for writers · No data leaves your device
           </p>
         </div>
       </div>

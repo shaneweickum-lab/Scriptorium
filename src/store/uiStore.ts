@@ -20,7 +20,7 @@ interface UIState {
   showWorldRef: boolean;
   showDistractFree: boolean;
   showGlobalSearch: boolean;
-  showMaven: boolean;
+  showMeyvn: boolean;
   showOutlinePanel: boolean;
   showNavSidebar: boolean;
   toasts: Toast[];
@@ -34,7 +34,7 @@ interface UIState {
   setShowWorldRef: (show: boolean) => void;
   setShowDistractFree: (show: boolean) => void;
   setShowGlobalSearch: (show: boolean) => void;
-  setShowMaven: (show: boolean) => void;
+  setShowMeyvn: (show: boolean) => void;
   setShowOutlinePanel: (show: boolean) => void;
   setShowNavSidebar: (show: boolean) => void;
   addToast: (message: string, type?: Toast['type']) => void;
@@ -52,7 +52,7 @@ export const useUIStore = create<UIState>((set) => ({
   showWorldRef: false,
   showDistractFree: false,
   showGlobalSearch: false,
-  showMaven: false,
+  showMeyvn: false,
   showOutlinePanel: true,
   showNavSidebar: true,
   toasts: [],
@@ -66,7 +66,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowWorldRef: (show) => set({ showWorldRef: show }),
   setShowDistractFree: (show) => set({ showDistractFree: show }),
   setShowGlobalSearch: (show) => set({ showGlobalSearch: show }),
-  setShowMaven: (show) => set({ showMaven: show }),
+  setShowMeyvn: (show) => set({ showMeyvn: show }),
   setShowOutlinePanel: (show) => set({ showOutlinePanel: show }),
   setShowNavSidebar: (show) => set({ showNavSidebar: show }),
 

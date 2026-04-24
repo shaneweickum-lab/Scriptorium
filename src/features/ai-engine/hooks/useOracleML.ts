@@ -5,7 +5,7 @@
  * The resulting OracleProfile is:
  *   • Stored in React state (for UI display)
  *   • Persisted to localStorage via OracleProfileStore (across reloads)
- *   • Returned for injection into the Maven system prompt via RagService
+ *   • Returned for injection into the Meyvn system prompt via RagService
  *
  * Usage
  * ─────

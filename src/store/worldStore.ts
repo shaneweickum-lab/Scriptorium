@@ -107,7 +107,7 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   addEntry: async (bookId, sectionId) => {
     const entry = await worldRepository.addEntry(bookId, sectionId);
     set((state) => ({ entries: [...state.entries, entry], activeEntryId: entry.id }));
-    // Best-effort: index the new entry so Maven can retrieve it immediately
+    // Best-effort: index the new entry so Meyvn can retrieve it immediately
     const { sections } = get();
     VectorIndexService.getInstance().reindexEntry(entry, sections).catch(() => {});
     return entry;

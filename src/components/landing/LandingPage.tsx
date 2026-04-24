@@ -69,31 +69,31 @@ const MAVEN_CAPABILITIES = [
   {
     icon: Library,
     title: 'Lore-Grounded',
-    desc: 'Every suggestion is rooted in your World Bible. Maven retrieves the most relevant lore before answering — she never invents what you have not written.',
+    desc: 'Every suggestion is rooted in your World Bible. Meyvn retrieves the most relevant lore before answering — she never invents what you have not written.',
     gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
   },
   {
     icon: Feather,
     title: 'Your Voice, Mirrored',
-    desc: "Maven analyses your prose — sentence rhythm, vocabulary register, atmosphere — and writes continuations indistinguishable from your own hand.",
+    desc: "Meyvn analyses your prose — sentence rhythm, vocabulary register, atmosphere — and writes continuations indistinguishable from your own hand.",
     gradient: 'linear-gradient(135deg, #0d9488, #059669)',
   },
   {
     icon: Wand2,
     title: 'Prose on Demand',
-    desc: 'Ask Maven to write a scene, paragraph, or monologue. Approve with one click to insert at the cursor or append to the end of your scene.',
+    desc: 'Ask Meyvn to write a scene, paragraph, or monologue. Approve with one click to insert at the cursor or append to the end of your scene.',
     gradient: 'linear-gradient(135deg, #7c3aed, #0d9488)',
   },
   {
     icon: ScanSearch,
     title: 'World Bible Sentinel',
-    desc: "After writing a scene, Maven scans for lore-changing events — deaths, alliances, revelations — and proposes the exact World Bible updates needed.",
+    desc: "After writing a scene, Meyvn scans for lore-changing events — deaths, alliances, revelations — and proposes the exact World Bible updates needed.",
     gradient: 'linear-gradient(135deg, #d97706, #b45309)',
   },
   {
     icon: Activity,
     title: 'Writer\'s Block Sensor',
-    desc: "Maven watches your editor in real time. If you go quiet for too long or fall into a write-delete loop, she appears — gently — and offers a way through.",
+    desc: "Meyvn watches your editor in real time. If you go quiet for too long or fall into a write-delete loop, she appears — gently — and offers a way through.",
     gradient: 'linear-gradient(135deg, #e11d48, #7c3aed)',
   },
 ];
@@ -102,7 +102,7 @@ const WRITING_COACH_FEATURES = [
   {
     icon: CheckCircle2,
     title: 'Grammar & Mechanics',
-    desc: "Catches grammatical errors, run-ons, fragments, and misplaced modifiers. Maven explains what's wrong so you learn the rule — not just accept the correction.",
+    desc: "Catches grammatical errors, run-ons, fragments, and misplaced modifiers. Meyvn explains what's wrong so you learn the rule — not just accept the correction.",
     gradient: 'linear-gradient(135deg, #0d9488, #059669)',
   },
   {
@@ -114,7 +114,7 @@ const WRITING_COACH_FEATURES = [
   {
     icon: Quote,
     title: 'Punctuation Precision',
-    desc: "Comma splices, em-dash usage, semicolons versus periods, serial commas, hyphenation — Maven knows the conventions and the creative cases where you can break them.",
+    desc: "Comma splices, em-dash usage, semicolons versus periods, serial commas, hyphenation — Meyvn knows the conventions and the creative cases where you can break them.",
     gradient: 'linear-gradient(135deg, #0891b2, #0284c7)',
   },
   {
@@ -153,7 +153,7 @@ const ORACLE_LEVELS = [
   {
     level: 'Apprentice',
     threshold: '< 2,000 words',
-    desc: 'First impressions. Maven catches your perspective and the opening rhythm of your voice.',
+    desc: 'First impressions. Meyvn catches your perspective and the opening rhythm of your voice.',
     glow: 'rgba(148,163,184,0.3)',
     color: '#94a3b8',
     ring: 'rgba(148,163,184,0.25)',
@@ -169,7 +169,7 @@ const ORACLE_LEVELS = [
   {
     level: 'Master',
     threshold: '10,000 – 50,000',
-    desc: 'Full craft portrait. Thematic currents, sentence rhythm, interiority depth — Maven knows this writer.',
+    desc: 'Full craft portrait. Thematic currents, sentence rhythm, interiority depth — Meyvn knows this writer.',
     glow: 'rgba(167,139,250,0.5)',
     color: '#a78bfa',
     ring: 'rgba(167,139,250,0.25)',
@@ -177,7 +177,7 @@ const ORACLE_LEVELS = [
   {
     level: 'Oracle',
     threshold: '50,000+ words',
-    desc: 'Complete sight. Maven knows your voice as well as you know yourself — and writes from inside it.',
+    desc: 'Complete sight. Meyvn knows your voice as well as you know yourself — and writes from inside it.',
     glow: 'rgba(251,191,36,0.5)',
     color: '#fbbf24',
     ring: 'rgba(251,191,36,0.2)',
@@ -189,37 +189,37 @@ const ORACLE_DIMENSIONS = [
     icon: Eye,
     title: 'Point of View',
     gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-    desc: 'First, second, or third person — detected from pronoun frequency so Maven always narrates from your chosen vantage.',
+    desc: 'First, second, or third person — detected from pronoun frequency so Meyvn always narrates from your chosen vantage.',
   },
   {
     icon: Activity,
     title: 'Pacing Style',
     gradient: 'linear-gradient(135deg, #e11d48, #db2777)',
-    desc: 'Kinetic, measured, or lyrical — inferred from action-verb density and sentence length. Maven matches your tempo.',
+    desc: 'Kinetic, measured, or lyrical — inferred from action-verb density and sentence length. Meyvn matches your tempo.',
   },
   {
     icon: MessageCircle,
     title: 'Dialogue Ratio',
     gradient: 'linear-gradient(135deg, #0d9488, #059669)',
-    desc: 'How much of your prose lives in dialogue versus narration. Maven calibrates how much characters speak in her output.',
+    desc: 'How much of your prose lives in dialogue versus narration. Meyvn calibrates how much characters speak in her output.',
   },
   {
     icon: Layers,
     title: 'Character Interiority',
     gradient: 'linear-gradient(135deg, #0891b2, #0284c7)',
-    desc: 'Cognitive verb density reveals how deep inside a character\'s head you write. Maven mirrors that depth.',
+    desc: 'Cognitive verb density reveals how deep inside a character\'s head you write. Meyvn mirrors that depth.',
   },
   {
     icon: Zap,
     title: 'Sensory Texture',
     gradient: 'linear-gradient(135deg, #d97706, #b45309)',
-    desc: 'Sensory word density per 100 words. Maven weaves matching sight, sound, touch, smell, and taste into her prose.',
+    desc: 'Sensory word density per 100 words. Meyvn weaves matching sight, sound, touch, smell, and taste into her prose.',
   },
   {
     icon: Fingerprint,
     title: 'Signature Vocabulary',
     gradient: 'linear-gradient(135deg, #7c3aed, #0d9488)',
-    desc: 'Your top 15 non-stop-words — the words you reach for instinctively. Maven\'s lexicon bends toward yours.',
+    desc: 'Your top 15 non-stop-words — the words you reach for instinctively. Meyvn\'s lexicon bends toward yours.',
   },
   {
     icon: BookHeart,
@@ -231,7 +231,7 @@ const ORACLE_DIMENSIONS = [
     icon: TrendingUp,
     title: 'Sentence Rhythm',
     gradient: 'linear-gradient(135deg, #475569, #334155)',
-    desc: 'Standard deviation of sentence lengths — the proxy for musical variety. Maven modulates to match your natural variance.',
+    desc: 'Standard deviation of sentence lengths — the proxy for musical variety. Meyvn modulates to match your natural variance.',
   },
 ];
 
@@ -239,7 +239,7 @@ const ORACLE_UNLOCKS = [
   {
     icon: Palette,
     title: 'Voice-Matched Prose',
-    desc: 'Maven\'s Write mode produces sentences that feel continuous with your hand — not generic AI, but a seamless extension of your own style.',
+    desc: 'Meyvn\'s Write mode produces sentences that feel continuous with your hand — not generic AI, but a seamless extension of your own style.',
     gradient: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
   },
   {
@@ -251,7 +251,7 @@ const ORACLE_UNLOCKS = [
   {
     icon: Brain,
     title: 'Thematic Resonance',
-    desc: 'Your recurring obsessions — the themes that define your work — are threaded through Maven\'s suggestions wherever they naturally fit.',
+    desc: 'Your recurring obsessions — the themes that define your work — are threaded through Meyvn\'s suggestions wherever they naturally fit.',
     gradient: 'linear-gradient(135deg, #d97706, #fbbf24)',
   },
 ];
@@ -283,7 +283,7 @@ const TRAINING_CATEGORIES = [
     icon: Layers,
     label: 'Miscellaneous',
     gradient: 'linear-gradient(135deg, #475569, #334155)',
-    description: 'Essays, blog posts, scripts, or anything you have written. Every word teaches Maven.',
+    description: 'Essays, blog posts, scripts, or anything you have written. Every word teaches Meyvn.',
   },
 ];
 
@@ -322,13 +322,13 @@ const DETECTED_OS: 'mac' | 'windows' | 'linux' = (() => {
 
 interface Props {
   onEnter: () => void;
-  onEnterMaven?: () => void;
+  onEnterMeyvn?: () => void;
   onEnterTraining?: () => void;
 }
 
-export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
+export function LandingPage({ onEnter, onEnterMeyvn, onEnterTraining }: Props) {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
-  const [hoveredMaven, setHoveredMaven] = useState<number | null>(null);
+  const [hoveredMeyvn, setHoveredMeyvn] = useState<number | null>(null);
   const [hoveredOracle, setHoveredOracle] = useState<number | null>(null);
   const [hoveredDimension, setHoveredDimension] = useState<number | null>(null);
   const [hoveredUnlock, setHoveredUnlock] = useState<number | null>(null);
@@ -443,7 +443,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
 
         <div className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
 
-          {/* Maven icon — visual centerpiece matching the hero logo */}
+          {/* Meyvn icon — visual centerpiece matching the hero logo */}
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl"
               style={{
@@ -473,7 +473,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
               Meet{' '}
               <span className="bg-clip-text text-transparent"
                 style={{ backgroundImage: 'linear-gradient(135deg, #a78bfa, #2dd4bf)' }}>
-                Maven
+                Meyvn
               </span>
             </h2>
             <p className="text-slate-300 max-w-xl mx-auto text-lg leading-relaxed">
@@ -481,7 +481,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
             </p>
           </div>
 
-          {/* Maven's voice — pull quote */}
+          {/* Meyvn's voice — pull quote */}
           <div className="max-w-2xl mx-auto mb-14 rounded-2xl px-7 py-6"
             style={{ border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(124,58,237,0.07)' }}>
             <p className="text-slate-300 italic text-sm leading-relaxed mb-3">
@@ -489,26 +489,26 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
               What I conjure must grow from those roots. The weaving is mine to guide, but the pattern belongs to you."
             </p>
             <p className="text-[11px] font-medium tracking-wide" style={{ color: 'rgba(167,139,250,0.55)' }}>
-              — Maven, on her oaths
+              — Meyvn, on her oaths
             </p>
           </div>
 
           {/* Capabilities label */}
           <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
             style={{ color: 'rgba(148,163,184,0.5)' }}>
-            What Maven can do for your writing
+            What Meyvn can do for your writing
           </p>
 
           {/* Capabilities grid — same card pattern as the features grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {MAVEN_CAPABILITIES.map((cap, i) => {
               const Icon = cap.icon;
-              const isHovered = hoveredMaven === i;
+              const isHovered = hoveredMeyvn === i;
               return (
                 <div
                   key={cap.title}
-                  onMouseEnter={() => setHoveredMaven(i)}
-                  onMouseLeave={() => setHoveredMaven(null)}
+                  onMouseEnter={() => setHoveredMeyvn(i)}
+                  onMouseLeave={() => setHoveredMeyvn(null)}
                   className="flex flex-col gap-3 rounded-2xl p-5 transition-all cursor-default"
                   style={{
                     border: isHovered ? '1px solid rgba(167,139,250,0.45)' : '1px solid rgba(255,255,255,0.08)',
@@ -542,7 +542,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </div>
 
           <p className="text-center text-slate-400 text-sm mb-10 max-w-2xl mx-auto leading-relaxed">
-            Maven isn't just a prose generator — she's an always-on writing coach woven into your editor.
+            Meyvn isn't just a prose generator — she's an always-on writing coach woven into your editor.
             Every sentence you write is quietly read. Every weakness is noticed. Every suggestion comes with a reason.
           </p>
 
@@ -574,19 +574,19 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           {/* CTA */}
           <div className="mt-12 flex flex-col items-center gap-4">
             <button
-              onClick={onEnterMaven ?? onEnter}
+              onClick={onEnterMeyvn ?? onEnter}
               className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all hover:-translate-y-0.5 shadow-xl"
               style={{
                 background: 'linear-gradient(135deg, #7c3aed, #0d9488)',
                 boxShadow: '0 8px 32px rgba(124,58,237,0.35)',
               }}
             >
-              Meet Maven Now
+              Meet Meyvn Now
               <ChevronRight size={18} />
             </button>
-            <p className="text-[11px] text-amber-400/70 italic">Maven is coming in a future release — not yet functional</p>
+            <p className="text-[11px] text-amber-400/70 italic">Meyvn is coming in a future release — not yet functional</p>
             <div className="flex items-center gap-6 text-[11px]" style={{ color: 'rgba(148,163,184,0.6)' }}>
-              <span>Powered by <span className="font-medium text-slate-300">MavenAI</span> — built from the ground up for writers</span>
+              <span>Powered by <span className="font-medium text-slate-300">MeyvnAi</span> — built from the ground up for writers</span>
               <span className="hidden sm:inline opacity-40">·</span>
               <span className="hidden sm:inline">Purpose-built · Runs entirely on your device</span>
             </div>
@@ -642,7 +642,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
               </span>
             </h2>
             <p className="text-slate-400 max-w-2xl mx-auto text-base leading-relaxed">
-              The <span className="text-white font-medium">Oracle Intelligence System</span> is Maven's
+              The <span className="text-white font-medium">Oracle Intelligence System</span> is Meyvn's
               built-in learning engine. Powered by OracleML — a local corpus analysis algorithm — it
               studies everything you write and builds a growing portrait of your craft, so her suggestions
               feel less like AI and more like your own hand, guided.
@@ -698,7 +698,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
             </div>
           </div>
 
-          {/* What Maven learns — full card pattern matching the features grid */}
+          {/* What Meyvn learns — full card pattern matching the features grid */}
           <div className="mb-14">
             <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
               style={{ color: 'rgba(148,163,184,0.5)' }}>
@@ -739,7 +739,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           <div>
             <p className="text-center text-[11px] uppercase tracking-[0.2em] font-semibold mb-6"
               style={{ color: 'rgba(148,163,184,0.5)' }}>
-              What Oracle Intelligence unlocks in Maven
+              What Oracle Intelligence unlocks in Meyvn
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {ORACLE_UNLOCKS.map((unlock, i) => {
@@ -822,14 +822,14 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           {/* Headline */}
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
-              Train Maven before you<br />
+              Train Meyvn before you<br />
               <span className="bg-clip-text text-transparent"
                 style={{ backgroundImage: 'linear-gradient(135deg, #d97706, #7c3aed)' }}>
                 write a single word
               </span>
             </h2>
             <p className="text-slate-500 max-w-xl mx-auto text-base leading-relaxed">
-              Paste your existing writings — journal entries, emails, short stories, anything. Maven studies them immediately, and every word counts toward your Oracle Intelligence level.
+              Paste your existing writings — journal entries, emails, short stories, anything. Meyvn studies them immediately, and every word counts toward your Oracle Intelligence level.
             </p>
           </div>
 
@@ -871,7 +871,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
             <div>
               <p className="text-sm font-semibold text-amber-900 mb-1">Every word counts toward your Oracle level</p>
               <p className="text-xs text-amber-700/70 leading-relaxed">
-                Training Portal entries are analysed by OracleML alongside your manuscript. A journal full of your writing can push Maven from Apprentice to Journeyman before chapter one is written.
+                Training Portal entries are analysed by OracleML alongside your manuscript. A journal full of your writing can push Meyvn from Apprentice to Journeyman before chapter one is written.
               </p>
             </div>
           </div>
@@ -936,7 +936,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </div>
 
           <h2 className="text-2xl md:text-4xl font-bold mb-4">
-            Maven. No browser.<br />
+            Meyvn. No browser.<br />
             <span className="bg-clip-text text-transparent"
               style={{ backgroundImage: 'linear-gradient(135deg, #a78bfa, #2dd4bf)' }}>
               No configuration. Just works.
@@ -944,7 +944,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </h2>
 
           <p className="text-white/50 mb-12 text-sm leading-relaxed max-w-lg mx-auto">
-            The desktop app runs MavenAI natively — no setup, no configuration, no browser sandbox. Install it and Maven is ready the moment you open the app.
+            The desktop app runs MeyvnAi natively — no setup, no configuration, no browser sandbox. Install it and Meyvn is ready the moment you open the app.
           </p>
 
           {/* Platform cards */}
@@ -1000,7 +1000,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
           </a>
 
           <p className="text-white/30 text-xs mt-4">
-            Powered by <span className="text-white/50 font-medium">MavenAI</span> · Built exclusively for writers · All data stays on your device
+            Powered by <span className="text-white/50 font-medium">MeyvnAi</span> · Built exclusively for writers · All data stays on your device
           </p>
         </div>
       </section>
@@ -1015,7 +1015,7 @@ export function LandingPage({ onEnter, onEnterMaven, onEnterTraining }: Props) {
             </div>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-3">Ready to write your story?</h2>
-          <p className="text-slate-500 text-sm mb-6">Free forever. No account. No cloud. Your words stay yours — and Maven is waiting.</p>
+          <p className="text-slate-500 text-sm mb-6">Free forever. No account. No cloud. Your words stay yours — and Meyvn is waiting.</p>
           <button
             onClick={onEnter}
             className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold mx-auto
