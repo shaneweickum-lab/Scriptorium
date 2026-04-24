@@ -20,9 +20,9 @@ class TrainConfig:
     # ------------------------------------------------------------------
     # Sequence / batch
     # ------------------------------------------------------------------
-    block_size: int        = 2048   # tokens per sample = model max_seq_len
+    block_size: int        = 1024   # tokens per sample = model max_seq_len
     micro_batch_size: int  = 4      # sequences per forward pass
-    grad_accum_steps: int  = 32     # accumulate before optimizer step
+    grad_accum_steps: int  = 8     # accumulate before optimizer step
     # effective_batch_tokens = micro_batch_size × grad_accum_steps × block_size
     #                        = 4 × 32 × 2048 = 262,144
 
@@ -45,10 +45,10 @@ class TrainConfig:
     # ------------------------------------------------------------------
     # Logging and checkpointing
     # ------------------------------------------------------------------
-    log_interval: int               = 10
+    log_interval: int               = 1
     val_interval: int               = 250    # evaluate val loss every N steps
     val_steps: int                  = 50     # val batches per evaluation
-    sample_interval: int            = 500    # generate a text sample every N steps
+    sample_interval: int            = 50    # generate a text sample every N steps
     checkpoint_interval: int        = 500
     checkpoint_dir: str             = "checkpoints"
     keep_last_n_checkpoints: int    = 3
