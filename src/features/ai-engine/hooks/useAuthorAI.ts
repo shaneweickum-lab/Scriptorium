@@ -88,7 +88,7 @@ export interface UseAuthorAIOptions {
   bookId?: string;
   /**
    * Live plain-text content of the scene the author is currently writing.
-   * When provided, Maven sees what is on the page and can make contextually
+   * When provided, Meyvn sees what is on the page and can make contextually
    * grounded suggestions without the author having to paste it in manually.
    * Updated from editorStore on every debounced save (~500 ms).
    */
@@ -96,7 +96,7 @@ export interface UseAuthorAIOptions {
   /** Title of the active writing node — shown in the scene context fence. */
   sceneTitle?: string;
   /**
-   * OracleML corpus profile for this book. When provided, Maven's system
+   * OracleML corpus profile for this book. When provided, Meyvn's system
    * prompt is enriched with the author's full craft signature so her
    * suggestions feel increasingly native to their voice over time.
    */
@@ -185,9 +185,9 @@ export interface UseAuthorAIReturn {
    * Results are stored in `loreProposals` and `loreScanSummary`.
    */
   scanForLoreChanges: () => Promise<void>;
-  /** Plain-English summary Maven wrote describing detected lore changes. */
+  /** Plain-English summary Meyvn wrote describing detected lore changes. */
   loreScanSummary: string;
-  /** Structured update proposals parsed from Maven's sentinel response. */
+  /** Structured update proposals parsed from Meyvn's sentinel response. */
   loreProposals: LoreProposal[];
   /** Clear sentinel results without resetting the main chat state. */
   clearLoreProposals: () => void;

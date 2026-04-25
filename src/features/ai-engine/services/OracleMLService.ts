@@ -3,7 +3,7 @@
  *
  * Reads every WritingNode the author has produced and builds an OracleProfile:
  * a rich, growing portrait of their craft. The profile is injected into every
- * Maven prompt so her suggestions feel more native to the author's voice the
+ * Meyvn prompt so her suggestions feel more native to the author's voice the
  * more they write.
  *
  * Four oracle levels based on total word count:
@@ -11,7 +11,7 @@
  *   Apprentice  < 2,000 words   — early impressions, limited insight
  *   Journeyman  2,000–10,000    — clear voice fingerprint emerging
  *   Master      10,000–50,000   — full craft analysis, blind spots identified
- *   Oracle      50,000+         — Maven knows this author as well as themselves
+ *   Oracle      50,000+         — Meyvn knows this author as well as themselves
  *
  * All analysis is pure JavaScript — no network calls, no ML models beyond
  * the embedding model already loaded by VectorIndexService. Runs in under
@@ -71,14 +71,14 @@ export interface OracleProfile {
   strengths: string[];
 
   /**
-   * Areas where Maven will gently support growth without pointing it out
+   * Areas where Meyvn will gently support growth without pointing it out
    * directly to the author — woven into her suggestions organically.
    */
   developmentAreas: string[];
 
   /**
    * The fully-rendered oracle knowledge string injected into every
-   * Maven system prompt. Pre-built here so RagService can use it directly.
+   * Meyvn system prompt. Pre-built here so RagService can use it directly.
    */
   oracleKnowledge: string;
 }
@@ -368,8 +368,8 @@ function oracleLevelLabel(level: OracleLevel): string {
   switch (level) {
     case 'apprentice': return 'early impressions — the author\'s voice is still forming in her sight';
     case 'journeyman': return 'a clear voice fingerprint has emerged across the writing sessions';
-    case 'master': return 'a deep craft portrait — Maven knows this author\'s strengths, patterns, and tendencies';
-    case 'oracle': return 'complete oracle sight — Maven knows this author\'s voice as well as they know themselves';
+    case 'master': return 'a deep craft portrait — Meyvn knows this author\'s strengths, patterns, and tendencies';
+    case 'oracle': return 'complete oracle sight — Meyvn knows this author\'s voice as well as they know themselves';
   }
 }
 
@@ -380,7 +380,7 @@ function buildOracleKnowledge(
 
   if (level === 'apprentice') {
     return `--- THE ORACLE'S LEARNING ---
-Maven has read ${profile.wordsAnalyzed.toLocaleString()} words from this author — still early. \
+Meyvn has read ${profile.wordsAnalyzed.toLocaleString()} words from this author — still early. \
 She carries these first impressions: ${profile.pov !== 'unknown' ? `${profile.pov}-person perspective` : 'perspective not yet clear'}. \
 She will listen closely as the author continues to write, learning their voice with each new passage.
 --- END OF ORACLE ---`;
@@ -408,7 +408,7 @@ She will listen closely as the author continues to write, learning their voice w
 
   const lines: string[] = [
     `--- THE ORACLE'S LEARNING ---`,
-    `Maven has studied ${profile.wordsAnalyzed.toLocaleString()} words across ${profile.scenesAnalyzed} scenes — ${oracleLevelLabel(level)}. This knowledge lives in every response she gives.`,
+    `Meyvn has studied ${profile.wordsAnalyzed.toLocaleString()} words across ${profile.scenesAnalyzed} scenes — ${oracleLevelLabel(level)}. This knowledge lives in every response she gives.`,
     ``,
     `PERSPECTIVE & VOICE`,
     `This author writes in ${povDesc}.`,
@@ -443,28 +443,28 @@ She will listen closely as the author continues to write, learning their voice w
   if (profile.signatureWords.length > 0) {
     lines.push(``, `VOCABULARY FINGERPRINT`);
     lines.push(`Signature words this author reaches for: ${profile.signatureWords.slice(0, 8).join(', ')}.`);
-    lines.push(`When Maven writes in this voice, these words — and their cognates — appear naturally.`);
+    lines.push(`When Meyvn writes in this voice, these words — and their cognates — appear naturally.`);
   }
 
   if (profile.themes.length > 0) {
     lines.push(``, `THEMATIC CURRENTS`);
     lines.push(`The author returns to these waters: ${profile.themes.join(', ')}.`);
-    lines.push(`Maven weaves these undercurrents in wherever they fit — they are the author\'s obsessions, not accidents.`);
+    lines.push(`Meyvn weaves these undercurrents in wherever they fit — they are the author\'s obsessions, not accidents.`);
   }
 
   if (profile.strengths.length > 0) {
     lines.push(``, `WHAT MAVEN KNOWS THIS AUTHOR DOES WELL`);
     profile.strengths.forEach((s) => lines.push(`• ${s}`));
-    lines.push(`Maven reinforces these strengths — she does not smooth them away.`);
+    lines.push(`Meyvn reinforces these strengths — she does not smooth them away.`);
   }
 
   if (profile.developmentAreas.length > 0) {
     lines.push(``, `WHERE MAVEN ENRICHES THE WRITING ORGANICALLY`);
-    lines.push(`Without calling attention to it, Maven will naturally introduce:`);
+    lines.push(`Without calling attention to it, Meyvn will naturally introduce:`);
     profile.developmentAreas.forEach((d) => lines.push(`• ${d}`));
   }
 
-  lines.push(``, `Every suggestion Maven makes grows from this ground. She writes as a seamless extension of this hand — not an imitation of it.`);
+  lines.push(``, `Every suggestion Meyvn makes grows from this ground. She writes as a seamless extension of this hand — not an imitation of it.`);
   lines.push(`--- END OF ORACLE ---`);
 
   return lines.join('\n');
@@ -481,7 +481,7 @@ export class OracleMLService {
    * @param nodes          All WritingNodes for the book (from writingStore).
    * @param bookId         Used to key the profile.
    * @param trainingTexts  Optional plain-text strings from the Training Portal.
-   *                       These are appended to the corpus so Maven learns from
+   *                       These are appended to the corpus so Meyvn learns from
    *                       writing the author has done outside Scriptorium.
    */
   static analyze(

@@ -2,14 +2,14 @@
  * useVectorIndex — initialises the RAG vector index for the active book.
  *
  * Called once from AppShell so the index is ready before the author opens
- * Maven for the first time.
+ * Meyvn for the first time.
  *
  * Lifecycle:
  *   idle          → bookId becomes available + entries load from DB
  *   loading-model → VectorService downloads/restores the 22 MB MiniLM model
  *   indexing      → entries are chunked, embedded, and stored in Orama
- *   ready         → searches enabled; Maven can retrieve lore
- *   error         → non-fatal; Maven falls back to bare-prompt mode
+ *   ready         → searches enabled; Meyvn can retrieve lore
+ *   error         → non-fatal; Meyvn falls back to bare-prompt mode
  *
  * Incremental updates (add / edit / delete entries) are handled separately
  * by worldStore calling VectorIndexService.reindexEntry() / removeEntry()
@@ -31,7 +31,7 @@ export type VectorIndexStatus =
   | 'loading-model'  // downloading / restoring the embedding model
   | 'indexing'       // embedding entries and writing to the Orama store
   | 'ready'          // index populated; searches enabled
-  | 'error';         // initialisation failed — Maven degrades gracefully
+  | 'error';         // initialisation failed — Meyvn degrades gracefully
 
 export interface UseVectorIndexReturn {
   /** Current phase of the indexing pipeline. */

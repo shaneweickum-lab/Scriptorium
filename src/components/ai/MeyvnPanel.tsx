@@ -32,7 +32,7 @@ import type { OracleProfile } from '../../features/ai-engine/services/OracleMLSe
 
 type PanelTab = 'chat' | 'write' | 'lore';
 
-interface MavenPanelProps {
+interface MeyvnPanelProps {
   onClose: () => void;
   indexStatus: VectorIndexStatus;
   indexProgress: UseVectorIndexReturn['indexProgress'];
@@ -151,14 +151,14 @@ function ProposalCard({ proposal, applied, skipped, onApply, onSkip }: ProposalC
 // Main component
 // ---------------------------------------------------------------------------
 
-export function MavenPanel({
+export function MeyvnPanel({
   onClose,
   indexStatus,
   indexProgress,
   oracleProfile,
   isOracleAnalyzing,
   onRefreshOracle,
-}: MavenPanelProps) {
+}: MeyvnPanelProps) {
   const activeBook = useLibraryStore((s) => s.activeBook);
   const liveContent = useEditorStore((s) => s.liveContent);
   const activeNodeTitle = useEditorStore((s) => s.activeNodeTitle);
@@ -333,12 +333,12 @@ export function MavenPanel({
         {/* Header */}
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200 shrink-0">
           <Sparkles size={16} className="text-violet-500 shrink-0" />
-          <span className="font-semibold text-sm text-slate-800">Maven</span>
+          <span className="font-semibold text-sm text-slate-800">Meyvn</span>
           <input
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className="flex-1 min-w-0 text-xs text-slate-400 bg-transparent outline-none border-b border-transparent hover:border-slate-200 focus:border-violet-300 focus:text-slate-600 transition-all px-0.5"
-            title="MavenAI model"
+            title="MeyvnAi model"
           />
           <button
             onClick={onClose}
@@ -351,7 +351,7 @@ export function MavenPanel({
         {/* Coming Soon banner */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border-b border-amber-200 shrink-0">
           <Sparkles size={11} className="text-amber-500 shrink-0" />
-          <span className="text-[11px] font-medium text-amber-700">Coming Soon — Maven is not yet functional.</span>
+          <span className="text-[11px] font-medium text-amber-700">Coming Soon — Meyvn is not yet functional.</span>
         </div>
 
         {/* Tab toggle */}
@@ -424,20 +424,20 @@ export function MavenPanel({
           <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
             <AlertCircle size={10} className="text-amber-400 shrink-0" />
             <span className="text-[10px] text-slate-400">
-              Lore index unavailable — Maven will answer from context only
+              Lore index unavailable — Meyvn will answer from context only
             </span>
           </div>
         )}
 
-        {/* MavenAI connection banner */}
+        {/* MeyvnAi connection banner */}
         {ollamaStatus === 'unreachable' && (
           <div className="mx-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs shrink-0 space-y-2">
             <div className="flex items-center gap-1.5 text-amber-700 font-medium">
               <WifiOff size={12} className="shrink-0" />
-              MavenAI engine is not yet available
+              MeyvnAi engine is not yet available
             </div>
             <p className="text-[10px] text-amber-600 leading-relaxed">
-              MavenAI is being built from the ground up for Wizards Playground. She will be available in an upcoming release — no third-party setup required.
+              MeyvnAi is being built from the ground up for Wizards Playground. She will be available in an upcoming release — no third-party setup required.
             </p>
             <button
               onClick={probeHealth}
@@ -452,7 +452,7 @@ export function MavenPanel({
         {ollamaStatus === 'checking' && (
           <div className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-slate-400 shrink-0">
             <Loader2 size={10} className="animate-spin shrink-0" />
-            Connecting to MavenAI…
+            Connecting to MeyvnAi…
           </div>
         )}
 
@@ -481,7 +481,7 @@ export function MavenPanel({
 
             {/* Results */}
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-              {/* Maven's plain-English summary */}
+              {/* Meyvn's plain-English summary */}
               {loreScanSummary && (
                 <p className="text-xs text-slate-600 italic leading-relaxed border-l-2 border-violet-200 pl-2.5">
                   {loreScanSummary}
@@ -524,7 +524,7 @@ export function MavenPanel({
                 <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-8">
                   <ScrollText size={28} className="text-slate-200" />
                   <p className="text-xs text-slate-400 max-w-[200px]">
-                    Maven will read your scene and suggest which World Bible entries need updating.
+                    Meyvn will read your scene and suggest which World Bible entries need updating.
                   </p>
                 </div>
               ) : null}
@@ -568,13 +568,13 @@ export function MavenPanel({
                   <Sparkles size={28} className="text-slate-200" />
                   {tab === 'write' ? (
                     <p className="text-xs text-slate-400 max-w-[200px]">
-                      Tell Maven what to write and she'll weave prose you can insert directly into your scene.
+                      Tell Meyvn what to write and she'll weave prose you can insert directly into your scene.
                     </p>
                   ) : (
                     <p className="text-xs text-slate-400 max-w-[200px]">
                       {liveContent
-                        ? "Maven is watching your scene. Ask her anything and she'll weave from what you've written."
-                        : 'Ask Maven anything about your story. She will ground her suggestions in your World Bible lore.'}
+                        ? "Meyvn is watching your scene. Ask her anything and she'll weave from what you've written."
+                        : 'Ask Meyvn anything about your story. She will ground her suggestions in your World Bible lore.'}
                     </p>
                   )}
                 </div>
@@ -606,7 +606,7 @@ export function MavenPanel({
                   <button
                     onClick={reset}
                     className="px-2.5 py-1.5 text-xs rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
-                    title="Discard Maven's suggestion"
+                    title="Discard Meyvn's suggestion"
                   >
                     ✕
                   </button>
@@ -726,8 +726,8 @@ export function MavenPanel({
                 disabled={isStreaming}
                 placeholder={
                   tab === 'write'
-                    ? 'What should Maven write? (Enter to generate)'
-                    : 'Ask Maven\u2026 (Enter to send, Shift+Enter for newline)'
+                    ? 'What should Meyvn write? (Enter to generate)'
+                    : 'Ask Meyvn\u2026 (Enter to send, Shift+Enter for newline)'
                 }
                 rows={3}
                 className="w-full text-sm text-slate-700 placeholder-slate-300 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-violet-300 focus:bg-white resize-none transition-all disabled:opacity-50"
