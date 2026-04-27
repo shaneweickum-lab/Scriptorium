@@ -1,6 +1,6 @@
-"""MavenSLM pre-training script.
+"""MeyvnSLM pre-training script.
 
-Trains the ~50 M parameter decoder-only transformer on the tokenized binary
+Trains the ~75 M parameter decoder-only transformer on the tokenized binary
 shards produced by data/tokenize_corpus.py.
 
 Key features:
@@ -40,7 +40,7 @@ import torch.nn as nn
 from transformers import PreTrainedTokenizerFast
 
 sys.path.insert(0, str(Path(__file__).parent))
-from maven_slm import MavenSLM, MavenSLMConfig
+from meyvn_slm import MeyvnSLM, MeyvnSLMConfig
 from train_config import TrainConfig
 
 
@@ -138,11 +138,11 @@ class ShardLoader:
 
 def save_checkpoint(
     path: Path,
-    model: MavenSLM,
+    model: MeyvnSLM,
     optimizer: torch.optim.Optimizer,
     step: int,
     val_loss: float,
-    model_config: MavenSLMConfig,
+    model_config: MeyvnSLMConfig,
     train_config: TrainConfig,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -161,7 +161,7 @@ def save_checkpoint(
 
 def load_checkpoint(
     path: Path,
-    model: MavenSLM,
+    model: MeyvnSLM,
     optimizer: torch.optim.Optimizer,
 ) -> tuple[int, float]:
     ckpt = torch.load(path, map_location="cpu", weights_only=False)
@@ -182,7 +182,7 @@ def prune_checkpoints(ckpt_dir: Path, keep: int) -> None:
 
 @torch.no_grad()
 def evaluate_val_loss(
-    model: MavenSLM,
+    model: MeyvnSLM,
     val_loader: ShardLoader,
     val_steps: int,
     autocast_ctx,
@@ -204,7 +204,7 @@ def evaluate_val_loss(
 
 @torch.no_grad()
 def generate_sample(
-    model: MavenSLM,
+    model: MeyvnSLM,
     tokenizer: PreTrainedTokenizerFast,
     device: torch.device,
     prompt: str = "<|bos|>",
@@ -228,7 +228,7 @@ def train(cfg: TrainConfig) -> None:
     use_amp = dtype != torch.float32
     autocast_ctx = torch.autocast(device_type=device.type, dtype=dtype, enabled=use_amp)
 
-    print(f"\nMavenSLM Pre-Training")
+    print(f"\nMeyvnSLM Pre-Training")
     print(f"{'=' * 50}")
     print(f"Device          : {device}  (dtype={dtype})")
     print(f"Effective batch : {cfg.effective_batch_tokens():,} tokens/update")
@@ -245,8 +245,8 @@ def train(cfg: TrainConfig) -> None:
     # ------------------------------------------------------------------
     # Model
     # ------------------------------------------------------------------
-    model_config = MavenSLMConfig()
-    model = MavenSLM(model_config).to(device)
+    model_config = MeyvnSLMConfig()
+    model = MeyvnSLM(model_config).to(device)
     if cfg.compile and device.type == "cuda":
         print("Compiling model with torch.compile…")
         model = torch.compile(model)
@@ -277,14 +277,23 @@ def train(cfg: TrainConfig) -> None:
     # ------------------------------------------------------------------
     # Optimiser
     # ------------------------------------------------------------------
-    # Separate weight decay params (matrices) from no-decay (norms, biases)
-    decay_params     = [p for n, p in model.named_parameters() if p.dim() >= 2]
-    no_decay_params  = [p for n, p in model.named_parameters() if p.dim() < 2]
-    optimizer = torch.optim.AdamW(
-        [
+    # For BitLinear runs, use differential LR: shadow weights get 0.5× LR
+    # to prevent threshold ping-pong near ternary boundaries (see train_config.py).
+    if model_config.use_bitlinear:
+        param_groups = model.make_optimizer_groups(
+            base_lr=cfg.max_lr,
+            weight_decay=cfg.weight_decay,
+            bitlinear_lr_scale=cfg.bitlinear_lr_scale,
+        )
+    else:
+        decay_params    = [p for n, p in model.named_parameters() if p.dim() >= 2]
+        no_decay_params = [p for n, p in model.named_parameters() if p.dim() < 2]
+        param_groups    = [
             {"params": decay_params,    "weight_decay": cfg.weight_decay},
             {"params": no_decay_params, "weight_decay": 0.0},
-        ],
+        ]
+    optimizer = torch.optim.AdamW(
+        param_groups,
         lr=cfg.max_lr,
         betas=(cfg.beta1, cfg.beta2),
         fused=False,   # fused AdamW is CUDA-only
@@ -297,7 +306,7 @@ def train(cfg: TrainConfig) -> None:
     if cfg.use_wandb:
         try:
             import wandb
-            run_name = cfg.wandb_run_name or f"maven-slm-{time.strftime('%Y%m%d-%H%M%S')}"
+            run_name = cfg.wandb_run_name or f"meyvn-slm-{time.strftime('%Y%m%d-%H%M%S')}"
             wandb_run = wandb.init(
                 project=cfg.wandb_project,
                 name=run_name,
@@ -415,6 +424,17 @@ def train(cfg: TrainConfig) -> None:
             if wandb_run:
                 wandb_run.log({"val/loss": val_loss, "step": step})
 
+        # ------ Ternary health check (BitLinear only) ------
+        if (model_config.use_bitlinear
+                and step % cfg.ternary_health_interval == 0):
+            health = model.ternary_health_check()
+            avg_zero = sum(s["zero_pct"] for s in health.values()) / max(len(health), 1)
+            avg_std  = sum(s["w_std"]    for s in health.values()) / max(len(health), 1)
+            print(f"  [ternary] avg_zero={avg_zero:.1f}%  avg_w_std={avg_std:.4f}")
+            if wandb_run:
+                wandb_run.log({"ternary/avg_zero_pct": avg_zero,
+                               "ternary/avg_w_std": avg_std, "step": step})
+
         # ------ Text sample ------
         if step % cfg.sample_interval == 0 and tokenizer:
             sample = generate_sample(model, tokenizer, device)
@@ -450,7 +470,7 @@ def train(cfg: TrainConfig) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Train MavenSLM")
+    parser = argparse.ArgumentParser(description="Train MeyvnSLM")
 
     # Override any TrainConfig field from the command line
     parser.add_argument("--data-dir",             default=TrainConfig.data_dir)
