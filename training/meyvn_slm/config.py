@@ -7,16 +7,23 @@ class MeyvnSLMConfig:
     # Vocabulary
     vocab_size: int = 32768
 
-    # Transformer dimensions — tuned for ~75 M unique parameters.
-    # Budget: 32768×576 embed + 13×(4×576² attn + 3×576×1728 ffn) + norms
-    #       = 18,874,368 + 17,252,352 + 38,817,792 + 15,552
-    #       ≈ 74,960,064 ≈ 75.0 M (weight-tied LM head adds 0 extra)
-    d_model:  int = 576
-    n_heads:  int = 9        # 64-dim per head
-    n_layers: int = 13
+    # Transformer dimensions — tuned for ~3.0 B unique parameters.
+    #
+    # Budget (weight-tied LM head adds 0 extra):
+    #   Token embeddings   32768 × 2560                 =    83,886,080
+    #   34× attention      4 × 2560² per layer          =   891,289,600
+    #   34× SwiGLU FFN     3 × 2560 × 7680 per layer    = 2,005,401,600
+    #   34× RMSNorm pairs  2 × 2560 per layer           =       174,080
+    #   Final RMSNorm                                   =         2,560
+    #   ─────────────────────────────────────────────────────────────────
+    #   Total unique                                    = 2,980,753,920
+    #                                                   ≈ 2.98 B ≈ 3.0 B
+    d_model:  int = 2560
+    n_heads:  int = 20       # 128-dim per head
+    n_layers: int = 34
     # SwiGLU intermediate dim = 3 × d_model so the three matrices
     # (gate, up, down) keep total FFN params near the 2-matrix equivalent.
-    ffn_dim:  int = 1728
+    ffn_dim:  int = 7680
 
     # Sequence length
     max_seq_len: int = 2048
@@ -30,8 +37,9 @@ class MeyvnSLMConfig:
     # RoPE base frequency
     rope_theta: float = 10000.0
 
-    # Gradient checkpointing (saves activations at cost of recomputation)
-    gradient_checkpointing: bool = False
+    # Gradient checkpointing — essential at 3B scale to fit activation
+    # memory on single-GPU hardware. Adds ~30% compute overhead.
+    gradient_checkpointing: bool = True
 
     # ── BitLinear 1.58-bit quantization ───────────────────────────────────────
     # Set use_bitlinear=True to replace every nn.Linear projection in the
