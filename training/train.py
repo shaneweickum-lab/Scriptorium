@@ -51,10 +51,10 @@ from train_config import TrainConfig
 def pick_device(requested: str) -> torch.device:
     if requested:
         return torch.device(requested)
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
     if torch.cuda.is_available():
-        return torch.device("cuda")
+        return torch.device("cuda")      # A100 / cloud GPU preferred for 3B
+    if torch.backends.mps.is_available():
+        return torch.device("mps")       # M5 Max/Ultra fallback (fine-tuning)
     return torch.device("cpu")
 
 
@@ -277,8 +277,6 @@ def train(cfg: TrainConfig) -> None:
     # ------------------------------------------------------------------
     # Optimiser
     # ------------------------------------------------------------------
-    # For BitLinear runs, use differential LR: shadow weights get 0.5× LR
-    # to prevent threshold ping-pong near ternary boundaries (see train_config.py).
     if model_config.use_bitlinear:
         param_groups = model.make_optimizer_groups(
             base_lr=cfg.max_lr,
@@ -292,12 +290,29 @@ def train(cfg: TrainConfig) -> None:
             {"params": decay_params,    "weight_decay": cfg.weight_decay},
             {"params": no_decay_params, "weight_decay": 0.0},
         ]
-    optimizer = torch.optim.AdamW(
-        param_groups,
-        lr=cfg.max_lr,
-        betas=(cfg.beta1, cfg.beta2),
-        fused=False,   # fused AdamW is CUDA-only
-    )
+
+    if cfg.use_8bit_optimizer:
+        try:
+            import bitsandbytes as bnb
+            optimizer = bnb.optim.AdamW8bit(
+                param_groups,
+                lr=cfg.max_lr,
+                betas=(cfg.beta1, cfg.beta2),
+            )
+            print("Optimizer       : AdamW-8bit (bitsandbytes) — halved optimizer memory")
+        except ImportError:
+            print("Warning: bitsandbytes not installed; falling back to AdamW fp32.")
+            cfg.use_8bit_optimizer = False
+
+    if not cfg.use_8bit_optimizer:
+        fused = device.type == "cuda" and hasattr(torch.optim, "AdamW")
+        optimizer = torch.optim.AdamW(
+            param_groups,
+            lr=cfg.max_lr,
+            betas=(cfg.beta1, cfg.beta2),
+            fused=fused,   # fused kernel on CUDA Ampere+ for ~15% speedup
+        )
+        print(f"Optimizer       : AdamW (fused={fused})")
 
     # ------------------------------------------------------------------
     # Optional WandB
