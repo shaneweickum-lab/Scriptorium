@@ -1,4 +1,4 @@
-# MeyvnSLM — Custom 50M Parameter Writing Assistant Model
+# MeyvnSLM — Custom 75M Parameter Writing Assistant Model
 
 **Goal:** Build, train, and ship a custom small language model (SLM) purpose-built
 for MeyvnAi's writing-assistant tasks — story continuation, style matching, lore
@@ -8,16 +8,16 @@ integration, and outline expansion — running fully offline inside Scriptorium.
 
 ## Architecture Specification
 
-**Name:** MeyvnSLM-50M  
+**Name:** MeyvnSLM-75M  
 **Type:** Decoder-only causal transformer (GPT-style)  
-**Parameter target:** ~49–52 M  
+**Parameter target:** ~73–77 M  
 
 | Hyperparameter | Value | Rationale |
 |---|---|---|
-| `d_model` | 512 | Balanced capacity vs. memory |
-| `n_heads` | 8 | 64-dim per head, standard for d_model=512 |
-| `n_layers` | 10 | Hits ~49M with the other dims |
-| `ffn_dim` | 1536 | 3× d_model — SwiGLU uses 3 weight matrices (gate/up/down), so 1536 keeps total params near 50 M |
+| `d_model` | 576 | Balanced capacity vs. memory |
+| `n_heads` | 9 | 64-dim per head, standard for d_model=576 |
+| `n_layers` | 13 | Hits ~75M with the other dims |
+| `ffn_dim` | 1728 | 3× d_model — SwiGLU uses 3 weight matrices (gate/up/down), so 1728 keeps total params near 75 M |
 | `vocab_size` | 32,768 | BPE, writing-optimised |
 | `max_seq_len` | 2,048 | Full scene + lore context window |
 | `dropout` | 0.1 | Regularisation during pre-train |
@@ -29,18 +29,18 @@ integration, and outline expansion — running fully offline inside Scriptorium.
 
 | Component | Params |
 |---|---|
-| Token embeddings (32768 × 512) | 16,777,216 |
+| Token embeddings (32768 × 576) | 18,874,368 |
 | Rotary position — RoPE (no learned params) | 0 |
-| 10× attention Q,K,V,O (each 512²) | 10,485,760 |
-| 10× SwiGLU FFN — gate+up (512×1536×2) + down (1536×512) | 23,592,960 |
-| 10× RMSNorm pairs pre-attn + pre-ffn (2 × 512 each) | 10,240 |
-| Final RMSNorm | 512 |
+| 13× attention Q,K,V,O (each 576²) | 17,252,352 |
+| 13× SwiGLU FFN — gate+up (576×1728×2) + down (1728×576) | 38,817,792 |
+| 13× RMSNorm pairs pre-attn + pre-ffn (2 × 576 each) | 14,976 |
+| Final RMSNorm | 576 |
 | LM head (weight-tied to embedding — no extra params) | 0 |
-| **Total unique** | **~50,866,688 ≈ 50.9 M** |
+| **Total unique** | **~74,960,064 ≈ 75.0 M** |
 
 Note: SwiGLU uses three weight matrices per FFN block (gate, up, down) rather
-than two. Setting `ffn_dim = 3 × d_model = 1536` compensates and keeps the
-total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048`.
+than two. Setting `ffn_dim = 3 × d_model = 1728` compensates and keeps the
+total at ~75 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2304`.
 
 ---
 
@@ -48,7 +48,7 @@ total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048
 *Estimated effort: 1–2 weeks*
 
 ### 1.1 Python Model Implementation
-- [ ] Create `maven_slm/` Python package (separate from Scriptorium frontend)
+- [ ] Create `meyvn_slm/` Python package (separate from Scriptorium frontend)
 - [ ] Implement `MeyvnSLMConfig` dataclass (all hyperparams above)
 - [ ] Implement `MeyvnSLM` in PyTorch:
   - `RMSNorm` layer
@@ -57,7 +57,7 @@ total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048
   - `CausalSelfAttention` (grouped-query optional for v2)
   - `TransformerBlock` = attn + ffn + norms
   - `MeyvnSLM` = embedding + n blocks + final norm + tied LM head
-- [ ] `param_count()` utility to verify 50M budget
+- [ ] `param_count()` utility to verify 75M budget
 - [ ] Unit tests for forward pass shapes and causal mask correctness
 
 ### 1.2 Tokenizer
@@ -66,7 +66,7 @@ total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048
 - [ ] Add special tokens: `<|bos|>`, `<|eos|>`, `<|pad|>`, `<|sep|>`,
   `<|lore|>`, `<|scene|>`, `<|style|>`, `<|inst|>`, `<|/inst|>`
 - [ ] Writing-biased pre-tokenisation: preserve em-dash, ellipsis, dialogue quotes
-- [ ] Export `maven-tokenizer/` for reuse in both training and Transformers.js
+- [ ] Export `meyvn-tokenizer/` for reuse in both training and Transformers.js
 
 ---
 
@@ -84,8 +84,7 @@ total at ~50 M. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2048
 | Lore document pairs (synthetic) | ~50 M | Generated | World-building context injection |
 | Instruction pairs for fine-tuning | ~10 M | Generated | Meyvn task format |
 
-**Target pre-train tokens: ~5 B** (standard minimum for quality at 50M params per
-Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom)
+**Target pre-train tokens: ~1.5 B** (Chinchilla-optimal for 75M params: 20× params → 1.5B tokens exactly)
 
 ### 2.2 Preprocessing Pipeline
 - [ ] Download and deduplicate sources (`datasketch` MinHash LSH)
@@ -127,10 +126,10 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 
 ### 3.2 Training Run
 - [ ] Batch size: 512 (gradient-accumulated from micro-batch of 4)
-- [ ] ~10k steps on full corpus ≈ 5B tokens
+- [ ] ~3k steps on corpus ≈ 1.5B tokens
 - [ ] Checkpoint every 500 steps
 - [ ] Log to WandB: loss, perplexity, grad norm, throughput (tokens/sec)
-- [ ] Target validation loss: <3.0 (competitive for 50M on fiction)
+- [ ] Target validation loss: <3.0 (competitive for 75M on fiction)
 
 ### 3.3 Evaluation
 - [ ] Perplexity on held-out test split
@@ -150,9 +149,9 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 
 ### 4.2 Task-Specific Adapters (LoRA — optional v2)
 - [ ] If base SFT quality is insufficient, add LoRA (r=16, α=32) per task head:
-  - `maven-continue` — scene continuation
-  - `maven-lore` — lore-grounded generation
-  - `maven-sentinel` — structured lore detection
+  - `meyvn-continue` — scene continuation
+  - `meyvn-lore` — lore-grounded generation
+  - `meyvn-sentinel` — structured lore detection
 - [ ] Keeps base weights frozen; swappable adapters in browser
 
 ---
@@ -163,32 +162,32 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 ### 5.1 ONNX Export (for Transformers.js / browser)
 - [ ] `export_onnx.py`: export with `torch.onnx.export` using dynamic shapes
 - [ ] Fuse QKV projections for inference speed
-- [ ] Quantize to **int8** (ONNX Runtime static quantisation) → target ~48 MB
+- [ ] Quantize to **int8** (ONNX Runtime static quantisation) → target ~75 MB
 - [ ] Validate ONNX output matches PyTorch output within 1e-3 tolerance
 - [ ] Package as HuggingFace-compatible model directory:
   ```
-  maven-slm-50m-int8/
+  meyvn-slm-75m-int8/
   ├── config.json
   ├── tokenizer.json
   ├── tokenizer_config.json
-  ├── onnx/model.onnx       (~48 MB)
-  └── onnx/model_quant.onnx  (~24 MB int4 optional)
+  ├── onnx/model.onnx       (~75 MB)
+  └── onnx/model_quant.onnx  (~38 MB int4 optional)
   ```
 
 ### 5.2 GGUF Export (for Ollama compatibility)
 - [ ] Convert via `llama.cpp` `convert_hf_to_gguf.py`
-- [ ] Quantize to Q4_K_M (best quality/size ratio) → target ~30 MB
-- [ ] Test `ollama run maven-slm` end-to-end
+- [ ] Quantize to Q4_K_M (best quality/size ratio) → target ~45 MB
+- [ ] Test `ollama run meyvn-slm` end-to-end
 - [ ] Create `Modelfile` for Ollama with Meyvn system prompt baked in
 
 ### 5.3 Size Budget
 
 | Format | Size | Use Case |
 |---|---|---|
-| FP32 weights | ~193 MB | Training reference |
-| ONNX int8 | ~48 MB | Browser via Transformers.js |
-| ONNX int4 | ~24 MB | Browser (lower quality) |
-| GGUF Q4_K_M | ~30 MB | Ollama local server |
+| FP32 weights | ~300 MB | Training reference |
+| ONNX int8 | ~75 MB | Browser via Transformers.js |
+| ONNX int4 | ~38 MB | Browser (lower quality) |
+| GGUF Q4_K_M | ~45 MB | Ollama local server |
 
 ---
 
@@ -217,7 +216,7 @@ Chinchilla scaling: optimal tokens ≈ 20× params → 1B, but 5B gives headroom
 - [ ] Return `mavenModelStatus: 'not-downloaded' | 'downloading' | 'ready'`
 
 ### 6.4 UI Updates (MeyvnPanel)
-- [ ] Model selector: `Ollama (external)` vs `MeyvnSLM (built-in, ~48 MB)`
+- [ ] Model selector: `Ollama (external)` vs `MeyvnSLM (built-in, ~75 MB)`
 - [ ] First-time download flow: progress bar, estimated size warning
 - [ ] WebGPU badge if hardware acceleration active
 - [ ] Offline indicator: "Running locally — no internet required"
@@ -263,16 +262,16 @@ at $0.75–1.50/hr on A100 × 40 hrs.
 ## Apple Silicon Training Guide (MacBook Pro 24 GB Unified RAM)
 
 ### Memory — Not a concern at all
-The 50M param model is tiny relative to 24 GB unified RAM:
+The 75M param model is tiny relative to 24 GB unified RAM:
 
 | Component | Memory |
 |---|---|
-| Model weights (bfloat16) | ~100 MB |
-| AdamW optimizer states (fp32) | ~400 MB |
-| Gradients (bfloat16) | ~100 MB |
-| Activations + grad checkpoint | ~200 MB |
+| Model weights (bfloat16) | ~150 MB |
+| AdamW optimizer states (fp32) | ~600 MB |
+| Gradients (bfloat16) | ~150 MB |
+| Activations + grad checkpoint | ~300 MB |
 | PyTorch + framework overhead | ~1.5 GB |
-| **Total peak** | **~2.5 GB** |
+| **Total peak** | **~2.7 GB** |
 
 You have ~21 GB headroom. Memory is not the bottleneck.
 
@@ -287,21 +286,20 @@ The M5 generation is meaningfully faster than M3/M4 for ML workloads.
 > Run a quick `python train_benchmark.py` (small 100-step warmup) on your
 > actual machine to calibrate before committing to a full run.
 
-| Chip | GPU Cores (est.) | Mem BW (est.) | Est. tokens/sec | 1B tokens |
+| Chip | GPU Cores (est.) | Mem BW (est.) | Est. tokens/sec | 1.5B tokens |
 |---|---|---|---|---|
-| M4 Pro (ref) | 20 | 273 GB/s | ~60–90k | 3–5 hrs |
-| **M5 Pro** | **~24–28** | **~350–400 GB/s** | **~90–130k** | **~2–3 hrs** |
-| **M5 Max** | **~40–48** | **~600–700 GB/s** | **~180–250k** | **~1–1.5 hrs** |
-| A100 80GB (cloud ref) | — | 2,000 GB/s | ~500k+ | ~33 min |
+| M4 Pro (ref) | 20 | 273 GB/s | ~60–90k | 4.5–7 hrs |
+| **M5 Pro** | **~24–28** | **~350–400 GB/s** | **~90–130k** | **~3–4.5 hrs** |
+| **M5 Max** | **~40–48** | **~600–700 GB/s** | **~180–250k** | **~1.5–2.5 hrs** |
+| A100 80GB (cloud ref) | — | 2,000 GB/s | ~500k+ | ~50 min |
 
 **With 24 GB of unified RAM you almost certainly have an M5 Pro.**
-At ~90–130k tokens/sec, the full 1B token pre-training run completes in
-**roughly 2–3 hours** — fast enough to iterate and re-run if needed.
+At ~90–130k tokens/sec, the full 1.5B token pre-training run completes in
+**roughly 3–4.5 hours** — fast enough to iterate and re-run if needed.
 
-**Recommendation: keep pre-train corpus at 1B tokens.**  
-Chinchilla scaling says optimal for 50M params is ~1B tokens. 5B was a
-quality buffer — 1B still produces a competent model and your M5 handles
-it in a single afternoon rather than days.
+**Recommendation: train on 1.5B tokens.**  
+Chinchilla scaling says optimal for 75M params is exactly 1.5B tokens (20× params).
+This is the ideal compute-optimal point — maximum quality gain per GPU-hour.
 
 ### Required code changes for MPS
 
@@ -319,9 +317,11 @@ it in a single afternoon rather than days.
 ### Practical training schedule on Mac
 
 ```
-Phase 3 pre-train  (1B tokens, micro-batch 2, grad-accum 128):
-  M3 Pro:  ~5–7 days  (run overnight × 3–4 nights, check each morning)
-  M3 Max:  ~2–3 days
+Phase 3 pre-train  (1.5B tokens, micro-batch 2, grad-accum 128):
+  M3 Pro:  ~7–10 days  (run overnight × 5–6 nights, check each morning)
+  M3 Max:  ~3–4 days
+  M5 Pro:  ~3–4.5 hrs  (single session)
+  M5 Max:  ~1.5–2.5 hrs (single session)
 
 Phase 4 fine-tune  (50k instruction pairs × 3 epochs ≈ ~15M tokens):
   M3 Pro:  ~3–5 hours
