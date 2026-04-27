@@ -15,8 +15,8 @@ export function TopBar() {
   const setShowMobileSidebar = useUIStore((s) => s.setShowMobileSidebar);
   const showWorldRef = useUIStore((s) => s.showWorldRef);
   const setShowWorldRef = useUIStore((s) => s.setShowWorldRef);
-  const showMaven = useUIStore((s) => s.showMaven);
-  const setShowMaven = useUIStore((s) => s.setShowMaven);
+  const showMeyvn = useUIStore((s) => s.showMeyvn);
+  const setShowMeyvn = useUIStore((s) => s.setShowMeyvn);
   const setShowAchievementsModal = useUIStore((s) => s.setShowAchievementsModal);
   const { saveProject, loadProject } = useProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,16 +171,16 @@ export function TopBar() {
           <span className="hidden md:inline">World</span>
         </button>
         <button
-          onClick={() => setShowMaven(!showMaven)}
-          title="Maven AI Assistant"
+          onClick={() => setShowMeyvn(!showMeyvn)}
+          title="Meyvn AI Assistant"
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all
-            ${showMaven
+            ${showMeyvn
               ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
               : 'text-slate-500 hover:text-violet-700 hover:bg-violet-50'
             }`}
         >
           <Sparkles size={14} />
-          <span className="hidden md:inline">Maven</span>
+          <span className="hidden md:inline">Meyvn</span>
           <span className="hidden md:inline text-[9px] font-semibold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">Soon</span>
         </button>
       </div>

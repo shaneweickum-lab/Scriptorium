@@ -365,7 +365,7 @@ export function LibraryTrainingView() {
                     <p className="text-sm font-medium text-slate-500 mb-0.5">Paste your writing here</p>
                     <p className="text-xs text-slate-400 leading-relaxed">
                       Copy and paste any text you've written — {meta.description.toLowerCase()}
-                      {' '}Maven will study your vocabulary, rhythm, and style to write more like you.
+                      {' '}Meyvn will study your vocabulary, rhythm, and style to write more like you.
                     </p>
                   </div>
                 </div>
@@ -415,7 +415,7 @@ export function LibraryTrainingView() {
               </p>
               <p className="text-sm text-slate-500 leading-relaxed">
                 The <span className="font-medium text-amber-600">Oracle Intelligence System</span> will
-                study your vocabulary, rhythm, pacing, and style so Maven writes more like you.
+                study your vocabulary, rhythm, pacing, and style so Meyvn writes more like you.
               </p>
             </div>
 

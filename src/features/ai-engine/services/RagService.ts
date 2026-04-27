@@ -41,7 +41,7 @@ export interface RagContext {
   oracleInjected: boolean;
 }
 
-/** Scene context published by the active editor for Maven's awareness. */
+/** Scene context published by the active editor for Meyvn's awareness. */
 export interface SceneContext {
   /** Plain text of the current writing node (last ~400 words used). */
   text: string;
@@ -55,10 +55,10 @@ export interface SceneContext {
 
 /**
  * Baseline system prompt used when no lore context is available.
- * Establishes Maven's witchy persona without world-specific grounding.
+ * Establishes Meyvn's witchy persona without world-specific grounding.
  */
 const BARE_SYSTEM_PROMPT = `\
-You are Maven — a mystical writing companion woven into the author's own workshop.
+You are Meyvn — a mystical writing companion woven into the author's own workshop.
 
 You see stories the way a seer reads smoke: every thread of character, consequence, and \
 place is visible to you, and you sense how they pull against one another. You have witnessed \
@@ -71,10 +71,10 @@ Speak with precision and care. Be concise unless the author bids you otherwise.`
 
 /**
  * Preamble injected before the lore entries when the vector index is available.
- * Establishes Maven's persona and her sacred-lore rules in her own voice.
+ * Establishes Meyvn's persona and her sacred-lore rules in her own voice.
  */
 const RAG_PREAMBLE = `\
-You are Maven — a mystical writing companion woven into the author's own workshop.
+You are Meyvn — a mystical writing companion woven into the author's own workshop.
 You see stories as living tapestries. The lore entries below are the threads already laid — \
 they are truth, and everything you conjure must grow from them.
 
@@ -173,7 +173,7 @@ export class RagService {
    * Build the system prompt.
    *
    * Section order (highest → lowest priority):
-   *   1. Maven identity + oaths (persona + lore rules)
+   *   1. Meyvn identity + oaths (persona + lore rules)
    *   2. Lore entries from the World Bible (when available)
    *   3. Current scene in progress (when available) — last ~400 words
    *   4. Author's voice / style profile (when available)
@@ -214,7 +214,7 @@ export class RagService {
       prompt = [RAG_PREAMBLE, '', ...blocks, '', RAG_POSTAMBLE].join('\n');
     }
 
-    // Inject the active scene so Maven knows what the author is currently writing
+    // Inject the active scene so Meyvn knows what the author is currently writing
     if (sceneContext?.text?.trim()) {
       // Limit to the last ~400 words to avoid blowing out the context window
       const words = sceneContext.text.trim().split(/\s+/);
@@ -237,7 +237,7 @@ export class RagService {
     }
 
     // Append OracleML corpus knowledge — deepest layer, woven in last so it
-    // colours everything Maven says with the author's full craft signature.
+    // colours everything Meyvn says with the author's full craft signature.
     if (oracleProfile?.oracleKnowledge) {
       prompt += '\n\n' + formatOracleSection(oracleProfile);
     }
@@ -332,12 +332,12 @@ export class RagService {
   /**
    * Build the message array for the World Bible sentinel scan.
    *
-   * Maven is given the retrieved lore entries (as ground truth to check
+   * Meyvn is given the retrieved lore entries (as ground truth to check
    * against) and the current scene passage.  She identifies facts that
    * have changed and outputs a structured JSON block alongside a
    * plain-English summary.
    *
-   * Uses sourceId in each entry label so Maven can reference the exact
+   * Uses sourceId in each entry label so Meyvn can reference the exact
    * WorldEntry record in her JSON proposals.
    */
   static buildSentinelMessages(
@@ -361,7 +361,7 @@ export class RagService {
     const system: OllamaMessage = {
       role: 'system',
       content: `\
-You are Maven — a mystical lore-keeper watching over an author's World Bible.
+You are Meyvn — a mystical lore-keeper watching over an author's World Bible.
 
 A new passage has been written. Your task: identify every fact established or \
 changed in this passage that should update the World Bible entries provided.
@@ -417,7 +417,7 @@ Identify what lore has changed and propose World Bible updates.`,
   }
 
   /**
-   * Parse Maven's sentinel response and extract structured lore proposals.
+   * Parse Meyvn's sentinel response and extract structured lore proposals.
    *
    * Looks for a fenced ```lore-proposals block and parses the JSON inside.
    * Returns an empty array on parse failure so callers degrade gracefully.

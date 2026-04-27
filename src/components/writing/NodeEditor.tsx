@@ -55,7 +55,7 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
     async (content: string) => {
       if (!node) return;
       await updateNode(node.id, { content });
-      // Keep Maven's live context in sync with every debounced save
+      // Keep Meyvn's live context in sync with every debounced save
       setLiveContext(tiptapJsonToText(content), node.title);
     },
     [node, updateNode, setLiveContext]

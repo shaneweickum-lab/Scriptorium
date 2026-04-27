@@ -8,7 +8,7 @@
  *   thrashing — author is caught in a write-delete loop
  *
  * The card sits above the word-count bar, slides in from below, and offers a
- * single primary action (open Maven) and a soft dismiss.
+ * single primary action (open Meyvn) and a soft dismiss.
  */
 
 import { Sparkles, Clock, RefreshCw, X } from 'lucide-react';
@@ -29,7 +29,7 @@ const COPY = {
       mins >= 2
         ? `${mins} minutes of silence. Sometimes a different perspective breaks the spell.`
         : "A few minutes of silence. Sometimes a new angle is all it takes.",
-    primary: 'Ask Maven',
+    primary: 'Ask Meyvn',
     dismiss: "I'm thinking",
   },
   thrashing: {
@@ -37,19 +37,19 @@ const COPY = {
     iconGradient: 'linear-gradient(135deg, #e11d48, #7c3aed)',
     label: "Looks like you're in a loop",
     body: () =>
-      "You've been writing and deleting in circles. Maven can help you find the door out of this scene.",
-    primary: 'Get unstuck with Maven',
+      "You've been writing and deleting in circles. Meyvn can help you find the door out of this scene.",
+    primary: 'Get unstuck with Meyvn',
     dismiss: 'Keep writing',
   },
 } as const;
 
 export function WritingBlockCard({ type, idleMinutes = 0, onDismiss }: Props) {
-  const setShowMaven = useUIStore((s) => s.setShowMaven);
+  const setShowMeyvn = useUIStore((s) => s.setShowMeyvn);
   const copy = COPY[type];
   const { Icon, iconGradient, label, body, primary, dismiss } = copy;
 
-  const handleOpenMaven = () => {
-    setShowMaven(true);
+  const handleOpenMeyvn = () => {
+    setShowMeyvn(true);
     onDismiss();
   };
 
@@ -76,7 +76,7 @@ export function WritingBlockCard({ type, idleMinutes = 0, onDismiss }: Props) {
           <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full"
             style={{ background: 'rgba(124,58,237,0.08)' }}>
             <Sparkles size={9} className="text-violet-500" />
-            <span className="text-[9px] font-semibold text-violet-600 uppercase tracking-wide">Maven</span>
+            <span className="text-[9px] font-semibold text-violet-600 uppercase tracking-wide">Meyvn</span>
           </div>
         </div>
         <p className="text-[11px] text-slate-500 leading-relaxed">
@@ -87,7 +87,7 @@ export function WritingBlockCard({ type, idleMinutes = 0, onDismiss }: Props) {
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0 ml-1">
         <button
-          onClick={handleOpenMaven}
+          onClick={handleOpenMeyvn}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-px"
           style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
         >
