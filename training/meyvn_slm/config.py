@@ -7,23 +7,23 @@ class MeyvnSLMConfig:
     # Vocabulary
     vocab_size: int = 32768
 
-    # Transformer dimensions — tuned for ~3.0 B unique parameters.
+    # Transformer dimensions — tuned for ~100 M unique parameters.
     #
     # Budget (weight-tied LM head adds 0 extra):
-    #   Token embeddings   32768 × 2560                 =    83,886,080
-    #   34× attention      4 × 2560² per layer          =   891,289,600
-    #   34× SwiGLU FFN     3 × 2560 × 7680 per layer    = 2,005,401,600
-    #   34× RMSNorm pairs  2 × 2560 per layer           =       174,080
-    #   Final RMSNorm                                   =         2,560
+    #   Token embeddings   32768 × 640                  =    20,971,520
+    #   15× attention      4 × 640² per layer           =    24,576,000
+    #   15× SwiGLU FFN     3 × 640 × 1920 per layer     =    55,296,000
+    #   15× RMSNorm pairs  2 × 640 per layer            =        19,200
+    #   Final RMSNorm                                   =           640
     #   ─────────────────────────────────────────────────────────────────
-    #   Total unique                                    = 2,980,753,920
-    #                                                   ≈ 2.98 B ≈ 3.0 B
-    d_model:  int = 2560
-    n_heads:  int = 20       # 128-dim per head
-    n_layers: int = 34
+    #   Total unique                                    =   100,863,360
+    #                                                   ≈ 100.8 M
+    d_model:  int = 640
+    n_heads:  int = 10       # 64-dim per head (standard)
+    n_layers: int = 15
     # SwiGLU intermediate dim = 3 × d_model so the three matrices
     # (gate, up, down) keep total FFN params near the 2-matrix equivalent.
-    ffn_dim:  int = 7680
+    ffn_dim:  int = 1920
 
     # Sequence length
     max_seq_len: int = 2048
@@ -37,9 +37,10 @@ class MeyvnSLMConfig:
     # RoPE base frequency
     rope_theta: float = 10000.0
 
-    # Gradient checkpointing — essential at 3B scale to fit activation
-    # memory on single-GPU hardware. Adds ~30% compute overhead.
-    gradient_checkpointing: bool = True
+    # Gradient checkpointing — not required at 100M scale; the full
+    # activation memory fits comfortably on any modern device. Enable
+    # only if running with unusually large batch sizes on constrained hardware.
+    gradient_checkpointing: bool = False
 
     # ── BitLinear 1.58-bit quantization ───────────────────────────────────────
     # Set use_bitlinear=True to replace every nn.Linear projection in the

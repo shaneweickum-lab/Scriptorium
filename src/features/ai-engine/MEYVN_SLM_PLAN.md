@@ -1,4 +1,4 @@
-# MeyvnSLM — Custom 3B Parameter Writing Assistant Model
+# MeyvnSLM — Custom 100M Parameter Writing Assistant Model
 
 **Goal:** Build, train, and ship a custom large language model purpose-built
 for MeyvnAi's writing-assistant tasks — story continuation, style matching, lore
@@ -8,16 +8,16 @@ integration, and outline expansion — running fully offline inside Scriptorium.
 
 ## Architecture Specification
 
-**Name:** MeyvnSLM-3B  
+**Name:** MeyvnSLM-100M  
 **Type:** Decoder-only causal transformer (GPT-style) with optional BitLinear 1.58-bit quantization  
-**Parameter target:** ~2.97–3.0 B  
+**Parameter target:** ~100.8 M  
 
 | Hyperparameter | Value | Rationale |
 |---|---|---|
-| `d_model` | 2,560 | Provides sufficient capacity for long-form writing tasks |
-| `n_heads` | 20 | 128-dim per head — standard for this model class |
-| `n_layers` | 34 | Hits ~2.98 B with the other dims |
-| `ffn_dim` | 7,680 | 3× d_model — SwiGLU uses 3 weight matrices (gate/up/down), so 7680 keeps total params near 3 B |
+| `d_model` | 640 | Balanced capacity for writing tasks; fits in browser memory |
+| `n_heads` | 10 | 64-dim per head — standard head size |
+| `n_layers` | 15 | Hits ~100.8 M with the other dims |
+| `ffn_dim` | 1,920 | 3× d_model — SwiGLU uses 3 weight matrices (gate/up/down) |
 | `vocab_size` | 32,768 | BPE, writing-optimised |
 | `max_seq_len` | 2,048 | Full scene + lore context window |
 | `dropout` | 0.1 | Regularisation during pre-train |
@@ -30,18 +30,18 @@ integration, and outline expansion — running fully offline inside Scriptorium.
 
 | Component | Params |
 |---|---|
-| Token embeddings (32768 × 2560) | 83,886,080 |
+| Token embeddings (32768 × 640) | 20,971,520 |
 | Rotary position — RoPE (no learned params) | 0 |
-| 34× attention Q,K,V,O (each 2560²) | 891,289,600 |
-| 34× SwiGLU FFN — gate+up (2560×7680×2) + down (7680×2560) | 2,005,401,600 |
-| 34× RMSNorm pairs pre-attn + pre-ffn (2 × 2560 each) | 174,080 |
-| Final RMSNorm | 2,560 |
+| 15× attention Q,K,V,O (each 640²) | 24,576,000 |
+| 15× SwiGLU FFN — gate+up (640×1920×2) + down (1920×640) | 55,296,000 |
+| 15× RMSNorm pairs pre-attn + pre-ffn (2 × 640 each) | 19,200 |
+| Final RMSNorm | 640 |
 | LM head (weight-tied to embedding — no extra params) | 0 |
-| **Total unique** | **~2,980,753,920 ≈ 2.98 B** |
+| **Total unique** | **~100,863,360 ≈ 100.8 M** |
 
 Note: SwiGLU uses three weight matrices per FFN block (gate, up, down) rather
-than two. Setting `ffn_dim = 3 × d_model = 7680` compensates and keeps the
-total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240`.
+than two. Setting `ffn_dim = 3 × d_model = 1920` keeps the total at ~100 M.
+A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 2560`.
 
 ---
 
@@ -58,7 +58,7 @@ total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240
   - `CausalSelfAttention` (grouped-query optional for v2)
   - `TransformerBlock` = attn + ffn + norms
   - `MeyvnSLM` = embedding + n blocks + final norm + tied LM head
-- [ ] `param_count()` utility to verify 3B budget
+- [ ] `param_count()` utility to verify 100M budget
 - [ ] Unit tests for forward pass shapes and causal mask correctness
 
 ### 1.2 Tokenizer
@@ -85,7 +85,7 @@ total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240
 | Lore document pairs (synthetic) | ~50 M | Generated | World-building context injection |
 | Instruction pairs for fine-tuning | ~10 M | Generated | Meyvn task format |
 
-**Target pre-train tokens: ~60 B** (Chinchilla-optimal for 3B params: 20× params → 60B tokens exactly)
+**Target pre-train tokens: ~2.5 B** (Chinchilla-optimal for 100M params = 2B; training to 2.5B for extra convergence margin)
 
 ### 2.2 Preprocessing Pipeline
 - [ ] Download and deduplicate sources (`datasketch` MinHash LSH)
@@ -126,11 +126,11 @@ total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240
 - [ ] Context packing: bin-pack documents up to 2048 tokens per example
 
 ### 3.2 Training Run
-- [ ] Batch size: 524,288 tokens/step (micro-batch 4 × grad-accum 64 × block 2048)
-- [ ] ~114,500 steps ≈ 60B tokens (Chinchilla-optimal for 3B params)
+- [ ] Batch size: 131,072 tokens/step (micro-batch 4 × grad-accum 16 × block 2048)
+- [ ] ~19,073 steps ≈ 2.5B tokens
 - [ ] Checkpoint every 500 steps
 - [ ] Log to WandB: loss, perplexity, grad norm, throughput (tokens/sec)
-- [ ] Target validation loss: <2.5 (competitive for 3B on fiction)
+- [ ] Target validation loss: <2.8 (competitive for 100M on fiction)
 
 ### 3.3 Evaluation
 - [ ] Perplexity on held-out test split
@@ -163,22 +163,22 @@ total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240
 ### 5.1 ONNX Export (for Transformers.js / browser)
 - [ ] `export_onnx.py`: export with `torch.onnx.export` using dynamic shapes
 - [ ] Fuse QKV projections for inference speed
-- [ ] Quantize to **int4** (ONNX Runtime static quantisation) → target ~1.5 GB
-  - int8 (~2.9 GB) is too large for comfortable browser delivery; use int4 as primary
+- [ ] Quantize to **int4** (ONNX Runtime static quantisation) → target ~50 MB
+  - int8 (~100 MB) also browser-viable; int4 is the primary delivery format
 - [ ] Validate ONNX output matches PyTorch output within 1e-3 tolerance
 - [ ] Package as HuggingFace-compatible model directory:
   ```
-  meyvn-slm-3b-int4/
+  meyvn-slm-100m-int4/
   ├── config.json
   ├── tokenizer.json
   ├── tokenizer_config.json
-  ├── onnx/model.onnx        (~2.9 GB int8)
-  └── onnx/model_quant.onnx  (~1.5 GB int4 — primary browser target)
+  ├── onnx/model.onnx        (~100 MB int8)
+  └── onnx/model_quant.onnx  (~50 MB int4 — primary browser target)
   ```
 
 ### 5.2 GGUF Export (for Ollama compatibility)
 - [ ] Convert via `llama.cpp` `convert_hf_to_gguf.py`
-- [ ] Quantize to Q4_K_M (best quality/size ratio) → target ~1.7 GB
+- [ ] Quantize to Q4_K_M (best quality/size ratio) → target ~56 MB
 - [ ] Test `ollama run meyvn-slm` end-to-end
 - [ ] Create `Modelfile` for Ollama with Meyvn system prompt baked in
 
@@ -186,12 +186,12 @@ total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240
 
 | Format | Size | Use Case |
 |---|---|---|
-| FP32 weights | ~11.4 GB | Training reference only |
-| BF16 weights | ~5.7 GB | Fine-tuning / checkpoint |
-| ONNX int8 | ~2.9 GB | Browser (high-end WebGPU) |
-| ONNX int4 | ~1.5 GB | Browser primary (Transformers.js + WebGPU) |
-| GGUF Q4_K_M | ~1.7 GB | Ollama local server — recommended |
-| GGUF Q2_K | ~0.9 GB | Ollama (lower quality, fast on CPU) |
+| FP32 weights | ~390 MB | Training reference only |
+| BF16 weights | ~195 MB | Fine-tuning / checkpoint |
+| ONNX int8 | ~100 MB | Browser (any WebGPU device) |
+| ONNX int4 | ~50 MB | Browser primary (Transformers.js + WebGPU) |
+| GGUF Q4_K_M | ~56 MB | Ollama local server — recommended |
+| GGUF Q2_K | ~30 MB | Ollama (lower quality, fastest on CPU) |
 
 ---
 
@@ -220,7 +220,7 @@ total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240
 - [ ] Return `mavenModelStatus: 'not-downloaded' | 'downloading' | 'ready'`
 
 ### 6.4 UI Updates (MeyvnPanel)
-- [ ] Model selector: `Ollama (external)` vs `MeyvnSLM (built-in, ~1.5 GB int4 — requires WebGPU)`
+- [ ] Model selector: `Ollama (external)` vs `MeyvnSLM (built-in, ~50 MB int4 — runs in browser)`
 - [ ] First-time download flow: progress bar, estimated size warning
 - [ ] WebGPU badge if hardware acceleration active
 - [ ] Offline indicator: "Running locally — no internet required"
@@ -238,11 +238,11 @@ total at ~3 B. A standard 2-matrix FFN would use `ffn_dim = 4 × d_model = 10240
 
 ```
 Week 1–2   Phase 1: Model architecture + tokenizer
-Week 3–6   Phase 2: Data pipeline + corpus assembly (60B tokens needs significant storage)
-Week 7–9   Phase 3: Pre-training run (4× A100, ~4 days compute; rest is queueing + monitoring)
-Week 10    Phase 4: Instruction fine-tuning (A100 or M5 Max)
-Week 11    Phase 5: Export + quantisation (GGUF Q4_K_M, ONNX int4)
-Week 12–14 Phase 6: Scriptorium integration + WebGPU inference pipeline
+Week 3–4   Phase 2: Data pipeline + corpus assembly (2.5B tokens needs ~10 GB storage)
+Week 5     Phase 3: Pre-training run (M5 Max ~3 days; A100 ~10 hours)
+Week 6     Phase 4: Instruction fine-tuning (M5 Pro / any GPU)
+Week 7     Phase 5: Export + quantisation (GGUF Q4_K_M ~56 MB, ONNX int4 ~50 MB)
+Week 8–10  Phase 6: Scriptorium integration + WebGPU inference pipeline
 ```
 
 ---
@@ -253,80 +253,58 @@ Week 12–14 Phase 6: Scriptorium integration + WebGPU inference pipeline
 |---|---|---|
 | Tokenizer training | CPU 8 GB RAM | CPU 32 GB RAM |
 | Data preprocessing | 32 GB RAM | 64 GB RAM |
-| Pre-training (60B tokens) | 1× A100 80GB (~14.6 days) | 4–8× A100 80GB (2–4 days) |
-| Fine-tuning (full) | M5 Max 48 GB + 8-bit optimizer | 1× A100 80GB |
-| Fine-tuning (LoRA r=64) | M5 Pro 24 GB | RTX 4090 24 GB |
+| Pre-training (2.5B tokens) | M5 Pro 24 GB (~6 days) | 1× A100 80GB (~10 hours) |
+| Fine-tuning (full) | M5 Pro 24 GB | RTX 3080 10 GB |
+| Fine-tuning (LoRA r=16) | Any 4 GB VRAM | M5 Pro 24 GB |
 | ONNX export | CPU 32 GB RAM | CPU 64 GB RAM |
 | Browser inference | WebGPU + 8 GB VRAM (int4) | Apple M-series / RTX 4070+ |
 | Ollama inference | 8 GB RAM (Q2_K) | 16 GB RAM (Q4_K_M) |
 
 **Cloud training cost:**
-- 1× A100 80GB × 350 hrs ≈ **$525–875** at $1.50–2.50/hr (RunPod / Lambda)
-- 4× A100 80GB × 90 hrs ≈ **$540–900** (data-parallel, ~4× faster)
-- H100 80GB × 175 hrs ≈ **$875–1,400** (1.5–2× A100 throughput per GPU)
+- 1× A100 80GB × 10 hrs ≈ **$15–25** at $1.50–2.50/hr (RunPod / Lambda)
+- M5 Max (on-device) ≈ **$0** — 100M is practical to pre-train locally
 
 ---
 
-## Apple Silicon Guide (Fine-Tuning & Inference)
+## Apple Silicon Guide (Pre-Training, Fine-Tuning & Inference)
 
-Pre-training MeyvnSLM-3B on Apple Silicon is not practical — see the
-hardware table above. Apple Silicon M5 Max/Ultra is ideal for:
-- **LoRA fine-tuning** on the instruction dataset after cloud pre-training
-- **ONNX export and quantisation** (CPU-bound, no GPU required)
-- **Running inference** via Ollama (GGUF Q4_K_M) or Transformers.js (int4)
+MeyvnSLM-100M is fully practical to pre-train on Apple Silicon. The model
+fits in ~3 GB total — any M-series chip can handle the full pre-training run.
 
-### Memory — the primary constraint at 3B scale
+### Memory — 100M is well within any Apple Silicon chip
 
-**Standard AdamW (fp32 optimizer states) — requires A100 80GB:**
+**Standard AdamW (fp32 optimizer states):**
 
 | Component | Memory |
 |---|---|
-| Model weights (bfloat16) | ~5.6 GB |
-| AdamW m + v states (fp32) | ~22.4 GB |
-| Gradients (bfloat16) | ~5.6 GB |
-| Activations + grad checkpoint | ~2–4 GB |
-| PyTorch + framework overhead | ~2 GB |
-| **Total peak** | **~38–40 GB** |
+| Model weights (bfloat16) | ~195 MB |
+| AdamW m + v states (fp32) | ~775 MB |
+| Gradients (bfloat16) | ~195 MB |
+| Activations (micro-batch=4) | ~500 MB |
+| PyTorch + framework overhead | ~1 GB |
+| **Total peak** | **~2.5–3 GB** |
 
-**8-bit optimizer (bitsandbytes) — fits M5 Max 48 GB or A100 40 GB:**
+No gradient checkpointing required. No 8-bit optimizer required.
+The full standard AdamW training stack fits on the M5 Pro 24 GB with room
+to spare — this is a first-class Apple Silicon pre-training target.
 
-| Component | Memory |
-|---|---|
-| Model weights (bfloat16) | ~5.6 GB |
-| 8-bit AdamW states | ~5.6 GB |
-| Gradients (bfloat16) | ~5.6 GB |
-| Activations + grad checkpoint | ~2 GB |
-| PyTorch + framework overhead | ~2 GB |
-| **Total peak** | **~21 GB** |
+### Training throughput — Apple Silicon is the primary target
 
-M5 Pro (24 GB): technically fits with 8-bit optimizer + micro-batch 1, but
-throughput is ~200 tok/s — 60B tokens would take ~3,472 days. Use for
-inference, LoRA fine-tuning, or ONNX export only.
-
-### Training throughput — A100 is the target hardware
-
-At 3B parameters, Apple Silicon MPS is not practical for pre-training.
-The numbers below assume a single device with gradient checkpointing enabled
-and `micro_batch_size=4`, `block_size=2048`.
-
-| Hardware | Est. tok/s (training) | 60B tokens | Notes |
+| Hardware | Est. tok/s (100M training) | 2.5B tokens | Notes |
 |---|---|---|---|
-| M5 Pro 24 GB | ~200 | ~3,500 days | Inference / LoRA fine-tune only |
-| M5 Max 48 GB | ~500 | ~1,389 days | Fine-tuning only |
-| M5 Ultra 192 GB | ~1,200 | ~578 days | Fine-tuning / small runs only |
-| RTX 4090 24 GB | ~2,000 | ~347 days | Feasible for LoRA, not pre-train |
-| A100 40 GB SXM | ~8,000 | ~87 days | Use 4× for reasonable time |
-| **A100 80 GB SXM** | **~12,000** | **~58 days (1×); ~14.6 days (4×)** | **Recommended** |
-| H100 80 GB SXM | ~20,000 | ~35 days (1×); ~8.8 days (4×) | Fastest cloud option |
+| M5 Pro 24 GB | ~4,000 | ~7.2 days | ✓ Primary on-device option |
+| **M5 Max 48 GB** | **~8,000** | **~3.6 days** | **✓ Recommended** |
+| M5 Ultra 192 GB | ~14,000 | ~2.1 days | ✓ Fastest Apple Silicon |
+| RTX 4090 24 GB | ~20,000 | ~1.5 days | ✓ Fastest consumer GPU |
+| A100 80 GB SXM | ~50,000 | ~14 hours | Optional — fast but not required |
 
-> Throughput estimates for 3B bf16 training with gradient checkpointing.
-> Actual numbers vary ±30% based on batch size, memory bandwidth saturation,
-> and driver/kernel versions. Run a 100-step warmup benchmark first.
+> Throughput estimates for 100M bf16 training without gradient checkpointing,
+> `micro_batch_size=4`, `block_size=2048`. Actual ±30% based on batch size
+> and memory bandwidth saturation. Run a 100-step warmup benchmark first.
 
-**Recommendation: use 4× A100 80GB on RunPod / Lambda Labs.**
-~$540–900 total for the full Chinchilla-optimal 60B token run (~90 hrs).
-Apple Silicon M5 Max/Ultra is the right machine for fine-tuning, ONNX export,
-and running inference — not 60B-token pre-training.
+**Recommendation: pre-train on M5 Max or any available GPU.**
+Cloud (A100) brings wall-clock time under 14 hours for ~$15–25 total.
+Apple Silicon M5 Max finishes in ~3.6 days with zero cloud cost.
 
 ### Required code changes for MPS
 
@@ -344,21 +322,17 @@ and running inference — not 60B-token pre-training.
 ### Practical training schedule on Mac
 
 ```
-Phase 3 pre-train  (60B tokens, micro-batch 4, grad-accum 64, block 2048):
-  1× A100 80GB  : ~14.6 days    ← minimum viable (cloud)
-  4× A100 80GB  : ~3.7 days     ← recommended
-  8× A100 80GB  : ~1.9 days     ← fastest reasonable cloud config
-  1× H100 80GB  : ~8.8 days
-  4× H100 80GB  : ~2.2 days
-
-  Apple Silicon (for reference / fine-tuning only):
-  M5 Pro 24 GB  : not recommended for pre-training
-  M5 Max 48 GB  : suitable for LoRA fine-tuning only
+Phase 3 pre-train  (2.5B tokens, micro-batch 4, grad-accum 16, block 2048):
+  M5 Pro 24 GB  : ~7.2 days    ← on-device, zero cloud cost
+  M5 Max 48 GB  : ~3.6 days    ← recommended Apple Silicon option
+  M5 Ultra 192GB: ~2.1 days    ← fastest on-device option
+  RTX 4090 24GB : ~1.5 days    ← fastest consumer GPU
+  1× A100 80GB  : ~14 hours    ← optional cloud (< $25)
 
 Phase 4 fine-tune  (50k instruction pairs × 3 epochs ≈ ~15M tokens):
-  1× A100 80GB  : ~2–4 hours
-  M5 Max 48 GB  : ~6–10 hours (with 8-bit optimizer)
-  M5 Pro 24 GB  : ~12–20 hours (LoRA r=64, 8-bit optimizer)
+  1× A100 80GB  : ~20–30 min
+  M5 Max 48 GB  : ~1–2 hours
+  M5 Pro 24 GB  : ~2–4 hours (LoRA r=16)
 ```
 
 ### Keeping the Mac healthy during training
