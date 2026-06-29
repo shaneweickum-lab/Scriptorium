@@ -1,0 +1,927 @@
+<title>MeyvnAI — Architecture Reference</title>
+<meta name="description" content="Technical specification for MeyvnAI — a 100M parameter biologically-inspired writing assistant model built for Scriptorium.">
+
+<style>
+:root {
+  --bg:         #060d09;
+  --surface:    #0d1610;
+  --surface-2:  #111e14;
+  --border:     #1a2d20;
+  --border-dim: #122018;
+
+  --teal:       #2fcba0;
+  --teal-dim:   rgba(47,203,160,0.10);
+  --teal-glow:  rgba(47,203,160,0.06);
+  --violet:     #a78bfa;
+  --violet-dim: rgba(167,139,250,0.10);
+
+  --text:       #c8dfd0;
+  --text-sub:   #7da893;
+  --text-muted: #3e6050;
+  --text-dim:   #243d2e;
+
+  --sans: -apple-system, "Helvetica Neue", system-ui, sans-serif;
+  --mono: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+
+  --t-2xs: 0.625rem;
+  --t-xs:  0.6875rem;
+  --t-sm:  0.8125rem;
+  --t-base:0.9375rem;
+  --t-md:  1.0625rem;
+  --t-lg:  1.3125rem;
+  --t-xl:  1.625rem;
+  --t-2xl: 2.125rem;
+  --t-hero:clamp(3.75rem, 9.5vw, 7rem);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--t-base);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SIGNAL BAR ── */
+.signal-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #7c3aed 0%, #2fcba0 60%, transparent 100%);
+  background-size: 200% 100%;
+  animation: signal-pulse 4s ease-in-out infinite;
+  z-index: 100;
+}
+@keyframes signal-pulse {
+  0%   { background-position: 200% 0; opacity: 0.6; }
+  50%  { background-position: 0% 0;   opacity: 1; }
+  100% { background-position: -200% 0; opacity: 0.6; }
+}
+
+/* ── PAGE ── */
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 6.5rem 0 3.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.75rem;
+}
+.hero-name {
+  font-size: var(--t-hero);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+  margin-bottom: 1.5rem;
+  text-wrap: balance;
+  color: var(--text);
+}
+.hero-name .m { color: var(--teal); }
+.hero-sub {
+  font-size: var(--t-md);
+  color: var(--text-sub);
+  max-width: 52ch;
+  margin-bottom: 2.75rem;
+  line-height: 1.55;
+}
+.hero-stats {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  width: fit-content;
+}
+.hero-stat {
+  padding: 0.9rem 1.5rem;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.hero-stat:last-child { border-right: none; }
+.hero-stat-value {
+  font-family: var(--mono);
+  font-size: var(--t-xl);
+  font-weight: 600;
+  color: var(--teal);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.hero-stat-label {
+  font-size: var(--t-2xs);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── SECTIONS ── */
+section {
+  padding: 3.75rem 0;
+  border-bottom: 1px solid var(--border-dim);
+}
+section:last-of-type { border-bottom: none; }
+
+.section-label {
+  font-family: var(--mono);
+  font-size: var(--t-2xs);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+h2 {
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin-bottom: 0.65rem;
+  text-wrap: balance;
+  color: var(--text);
+}
+h3 {
+  font-size: var(--t-lg);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.5rem;
+  margin-top: 2rem;
+  color: var(--text);
+}
+p {
+  color: var(--text-sub);
+  max-width: 66ch;
+  margin-bottom: 0.85rem;
+}
+p:last-child { margin-bottom: 0; }
+em { color: var(--text); font-style: italic; }
+strong { color: var(--text); font-weight: 600; }
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--teal-dim);
+  color: var(--teal);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+/* ── TABLES ── */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 1.25rem 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+thead tr {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+thead th {
+  padding: 0.65rem 1rem;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: var(--t-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+thead th.r { text-align: right; }
+tbody tr {
+  border-bottom: 1px solid var(--border-dim);
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--teal-glow); }
+tbody td {
+  padding: 0.6rem 1rem;
+  color: var(--text-sub);
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+tbody td:first-child {
+  font-family: var(--mono);
+  color: var(--teal);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+td.r { text-align: right; font-family: var(--mono); }
+td.accent { color: var(--teal); font-weight: 600; }
+td.plain { font-family: var(--sans); color: var(--text-sub); }
+.table-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.55rem 1rem;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--teal);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── MODULE GRID ── */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 2rem;
+}
+.module-card {
+  background: var(--surface);
+  padding: 1.5rem 1.5rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.module-card.full { grid-column: 1 / -1; }
+.module-num {
+  font-family: var(--mono);
+  font-size: var(--t-2xs);
+  letter-spacing: 0.18em;
+  color: var(--teal);
+}
+.module-name {
+  font-size: var(--t-md);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.module-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.05rem 0 0.1rem;
+}
+.chip {
+  font-family: var(--mono);
+  font-size: 0.67rem;
+  padding: 0.13rem 0.42rem;
+  background: var(--teal-dim);
+  color: var(--teal);
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.chip.v {
+  background: var(--violet-dim);
+  color: var(--violet);
+}
+.module-desc {
+  font-size: var(--t-sm);
+  color: var(--text-sub);
+  line-height: 1.62;
+  max-width: none;
+  margin: 0;
+}
+
+/* ── PIPELINE ── */
+.pipeline-scroll { overflow-x: auto; margin: 2rem 0 0.5rem; }
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: max-content;
+  padding-bottom: 0.25rem;
+}
+.pipe-node {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.75rem 1rem;
+  min-width: 100px;
+  text-align: center;
+}
+.pipe-lbl {
+  font-family: var(--mono);
+  font-size: var(--t-2xs);
+  letter-spacing: 0.12em;
+  color: var(--teal);
+  margin-bottom: 0.2rem;
+}
+.pipe-name {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.pipe-arrow {
+  color: var(--text-dim);
+  font-size: 1rem;
+  padding: 0 0.4rem;
+  flex-shrink: 0;
+}
+.pipe-note {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  margin-top: 0.85rem;
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+}
+
+/* ── STAT ROW ── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+.stat-cell {
+  background: var(--surface);
+  padding: 1.1rem 1.25rem;
+}
+.stat-value {
+  font-family: var(--mono);
+  font-size: var(--t-xl);
+  font-weight: 600;
+  color: var(--teal);
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+.stat-label {
+  font-size: var(--t-2xs);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── EXPORT BARS ── */
+.size-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1.75rem 0;
+}
+.size-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 72px;
+  align-items: center;
+  gap: 0.75rem;
+}
+.size-format {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  color: var(--teal);
+  white-space: nowrap;
+}
+.size-track {
+  height: 3px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.size-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--teal);
+}
+.size-fill.v { background: var(--violet); }
+.size-fill.dim { opacity: 0.25; }
+.size-num {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--text-sub);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── PHASES ── */
+.phases {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1.75rem;
+}
+.phase {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  border-bottom: 1px solid var(--border-dim);
+  background: var(--surface);
+}
+.phase:last-child { border-bottom: none; }
+.phase:hover { background: var(--teal-glow); }
+.phase-period {
+  padding: 1rem 1.1rem;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  border-right: 1px solid var(--border-dim);
+  background: var(--surface-2);
+  display: flex;
+  align-items: flex-start;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+.phase-content { padding: 1rem 1.25rem; }
+.phase-name {
+  font-size: var(--t-sm);
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+.phase-detail {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  margin: 0;
+  max-width: none;
+  line-height: 1.55;
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 2.5rem 0 4rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: var(--t-2xs);
+  letter-spacing: 0.1em;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .hero-stats { flex-direction: column; width: 100%; }
+  .hero-stat { border-right: none; border-bottom: 1px solid var(--border); }
+  .hero-stat:last-child { border-bottom: none; }
+  .module-grid { grid-template-columns: 1fr; }
+  .module-card.full { grid-column: 1; }
+  .phase { grid-template-columns: 80px 1fr; }
+  .size-row { grid-template-columns: 100px 1fr 58px; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .signal-bar { animation: none; }
+}
+</style>
+
+<div class="signal-bar"></div>
+
+<div class="page">
+
+  <!-- ── HERO ── -->
+  <header class="hero">
+    <div class="hero-eyebrow">MeyvnAI &nbsp;·&nbsp; Architecture Reference &nbsp;·&nbsp; v1.0</div>
+    <h1 class="hero-name"><span class="m">M</span>eyvnAI</h1>
+    <p class="hero-sub">A 100M parameter writing assistant model built for Scriptorium — biologically inspired, offline-first, and designed to understand the writer as much as the writing.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-value">100.8M</span>
+        <span class="hero-stat-label">Parameters</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">2.5B</span>
+        <span class="hero-stat-label">Training Tokens</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">7</span>
+        <span class="hero-stat-label">Bio Modules</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">~50 MB</span>
+        <span class="hero-stat-label">Browser (int4)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── VISION ── -->
+  <section>
+    <div class="section-label">Vision</div>
+    <h2>What is MeyvnAI?</h2>
+    <p>MeyvnAI is a custom small language model purpose-built for creative writing assistance inside Scriptorium. Where general-purpose models are trained on everything, MeyvnAI is trained on fiction, lore, and dialogue — the craft materials of narrative writing.</p>
+    <p>The core design principle is <em>offline-first</em>: every component runs on the user's device. No API calls, no cloud dependency, no account required. The int4 ONNX export at ~50 MB is small enough to cache via the browser Cache API and accelerate in WebGPU.</p>
+    <p>Wrapped around the base transformer is the <strong>Digital Biology</strong> stack — seven modules that give MeyvnAI biologically inspired training dynamics, emotional awareness, and a persistent memory of who each user is as a writer.</p>
+  </section>
+
+  <!-- ── BASE ARCHITECTURE ── -->
+  <section>
+    <div class="section-label">Base Architecture</div>
+    <h2>Transformer Specification</h2>
+    <p>Decoder-only causal transformer (GPT-style) with RoPE positional encoding, SwiGLU activations, pre-norm RMSNorm, and an optional BitLinear 1.58-bit quantization path. The LM head is weight-tied to the token embedding table.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hyperparameter</th>
+            <th>Value</th>
+            <th class="plain" style="font-family:var(--sans)">Rationale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>d_model</td><td class="plain">640</td><td class="plain">Balanced capacity; fits comfortably in browser memory</td></tr>
+          <tr><td>n_heads</td><td class="plain">10</td><td class="plain">64-dim per head — standard, well-tested head size</td></tr>
+          <tr><td>n_layers</td><td class="plain">15</td><td class="plain">Hits ~100.8M params with these dims</td></tr>
+          <tr><td>ffn_dim</td><td class="plain">1,920</td><td class="plain">3× d_model — SwiGLU requires three weight matrices</td></tr>
+          <tr><td>vocab_size</td><td class="plain">32,768</td><td class="plain">BPE, writing-optimised with special structural tokens</td></tr>
+          <tr><td>max_seq_len</td><td class="plain">2,048</td><td class="plain">Full scene + lore context window</td></tr>
+          <tr><td>activation</td><td class="plain">SwiGLU</td><td class="plain">Better loss vs. ReLU/GELU at this scale</td></tr>
+          <tr><td>normalisation</td><td class="plain">RMSNorm ε=1e-8</td><td class="plain">Tighter ε for pre-quantization stability</td></tr>
+          <tr><td>pos encoding</td><td class="plain">RoPE</td><td class="plain">Length generalisation beyond training context</td></tr>
+          <tr><td>quantization</td><td class="plain">BitLinear 1.58-bit (opt.)</td><td class="plain">Ternary {−1, 0, +1} weights via STE QAT</td></tr>
+          <tr><td>dropout</td><td class="plain">0.10</td><td class="plain">Regularisation during pre-training</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Parameter Budget</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Component</th><th class="r">Parameters</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Token embeddings &nbsp;<span style="color:var(--text-muted);font-size:var(--t-xs)">(32,768 × 640)</span></td>
+            <td class="r">20,971,520</td>
+          </tr>
+          <tr>
+            <td>15× Attention Q, K, V, O &nbsp;<span style="color:var(--text-muted);font-size:var(--t-xs)">(each 640²)</span></td>
+            <td class="r">24,576,000</td>
+          </tr>
+          <tr>
+            <td>15× SwiGLU FFN — gate + up + down</td>
+            <td class="r">55,296,000</td>
+          </tr>
+          <tr>
+            <td>15× RMSNorm pairs + final norm</td>
+            <td class="r">19,840</td>
+          </tr>
+          <tr>
+            <td>LM head &nbsp;<span style="color:var(--text-muted);font-size:var(--t-xs)">(weight-tied to embedding — no extra params)</span></td>
+            <td class="r">0</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-foot">Total unique &nbsp;·&nbsp; 100,863,360 &nbsp;≈&nbsp; 100.8 M</div>
+    </div>
+  </section>
+
+  <!-- ── DIGITAL BIOLOGY ── -->
+  <section>
+    <div class="section-label">Digital Biology Stack</div>
+    <h2>Seven Biological Modules</h2>
+    <p>Layered on top of the base transformer, these modules introduce biologically inspired training dynamics, inference-time creativity control, emotional intelligence, and persistent user understanding — without adding significant parameter count.</p>
+
+    <div class="module-grid">
+
+      <div class="module-card">
+        <div class="module-num">MODULE 01</div>
+        <div class="module-name">Elastic Stability<br>BitLinear v2</div>
+        <div class="module-classes">
+          <span class="chip">ElasticBitLinear</span>
+        </div>
+        <p class="module-desc">Extends BitLinear with a momentum-based γ EMA to prevent bulk weight-flips across training steps, homeostatic τ scaling to keep the ternary {−1, 0, +1} weight distribution balanced, and an addition-only inner product — no floating-point multiplications in the forward pass.</p>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">MODULE 02</div>
+        <div class="module-name">Neuromorphic<br>Spiking Algorithm</div>
+        <div class="module-classes">
+          <span class="chip">SpikingFFN</span>
+          <span class="chip">LIFStateless</span>
+          <span class="chip">LIFStateful</span>
+        </div>
+        <p class="module-desc">Leaky Integrate-and-Fire activations wrap the FFN layers. Only the top 5% of neurons fire per token — natural temporal sparsity mirroring cortical firing patterns. Each position receives a sparse activation vector, dramatically reducing the effective computation per token.</p>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">MODULE 03</div>
+        <div class="module-name">Neuro-Plastic<br>Optimizer</div>
+        <div class="module-classes">
+          <span class="chip">NeuroPlasticOptimizer</span>
+        </div>
+        <p class="module-desc">AdamW extended with per-neuron Frequency-Intensity Weight adaptive learning rates. Hyperactive neurons (strong, frequent gradients) are dampened; underused neurons are rescued with a boosted rate. Biologically equivalent to synaptic scaling — only ~10 MB of additional state for the full model.</p>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">MODULE 04</div>
+        <div class="module-name">Creativity &amp;<br>Permission</div>
+        <div class="module-classes">
+          <span class="chip">StochasticDivergenceGovernor</span>
+        </div>
+        <p class="module-desc">A continuous creativity dial: <code>creativity=0</code> is near-greedy calculation mode (highest-probability continuation); <code>creativity=1</code> is maximum emotional resonance discovery mode. Four mechanisms govern the dial — temperature interpolation, resonance bonus on self-information, anti-mode penalty, and entropy momentum correction.</p>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">MODULE 05</div>
+        <div class="module-name">Token Compression<br>&amp; Addition Kernel</div>
+        <div class="module-classes">
+          <span class="chip">TokenCompressor21</span>
+          <span class="chip">ActivationQuantizer</span>
+          <span class="chip">AddOnlyOps</span>
+        </div>
+        <p class="module-desc">Gated 2-to-1 adjacent-token merging reduces attention FLOPs by 4×. Activation quantizer supports 8-bit and 4-bit (two nibbles packed per int8 byte). The addition-only kernel decomposes ternary weights into binary {0,1} masks and replaces all multiplications with conditional additions.</p>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">MODULE 06</div>
+        <div class="module-name">Emotion Engine</div>
+        <div class="module-classes">
+          <span class="chip">EmotionEngine</span>
+          <span class="chip v">EmotionState</span>
+          <span class="chip v">EmotionalMemory</span>
+          <span class="chip v">EmpathyModulator</span>
+        </div>
+        <p class="module-desc">Detects the user's emotional state across three dimensions — Valence (negative ↔ positive), Arousal (calm ↔ excited), Dominance (overwhelmed ↔ in-control) — using a built-in 130-word lexicon plus a learned hidden-state projection. Tracks the session arc via EMA memory with escalation detection. Modulates creativity, empathy warmth, and temperature in response: distressed writers get structure and warmth; excited writers get expansion and energy-matching.</p>
+      </div>
+
+      <div class="module-card full">
+        <div class="module-num">MODULE 07</div>
+        <div class="module-name">DNA Memory</div>
+        <div class="module-classes">
+          <span class="chip v">DNAMemory</span>
+          <span class="chip v">Trait</span>
+        </div>
+        <p class="module-desc">A persistent, observation-driven user profile that accumulates across every session. Seven categories — topics, style preferences, creative triggers, sensitivities, emotional patterns, vocabulary, and session metadata. Each trait carries an EMA strength score that grows with repeated evidence (decay half-life ~4 sessions if unconfirmed; auto-pruned below 5%). On each generation pass, the top-K traits per category are formatted into a <code>[DNA]</code> context prefix that conditions the model on who this specific user is as a writer — no fine-tuning required. Fully serialisable to JSON for browser IndexedDB storage alongside the user's book data. Entirely on-device; nothing is sent to any server.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── INFERENCE PIPELINE ── -->
+  <section>
+    <div class="section-label">Inference</div>
+    <h2>Generation Pipeline</h2>
+    <p>How the Digital Biology modules connect during a single response generation pass — from raw user message to output tokens.</p>
+
+    <div class="pipeline-scroll">
+      <div class="pipeline">
+        <div class="pipe-node">
+          <div class="pipe-lbl">Input</div>
+          <div class="pipe-name">User<br>Message</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">M06</div>
+          <div class="pipe-name">Emotion<br>Detect</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">M07</div>
+          <div class="pipe-name">DNA<br>Prefix</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">M05</div>
+          <div class="pipe-name">Token<br>Compress</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">M01 + M02</div>
+          <div class="pipe-name">Elastic<br>Spiking FFN</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">M06</div>
+          <div class="pipe-name">Emotion<br>Condition</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">M04</div>
+          <div class="pipe-name">Creative<br>Sample</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">M07</div>
+          <div class="pipe-name">DNA<br>Update</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-node">
+          <div class="pipe-lbl">Output</div>
+          <div class="pipe-name">Response<br>Tokens</div>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-note">M03 (NeuroPlasticOptimizer) operates at training time only — not shown in the inference path.</div>
+  </section>
+
+  <!-- ── TRAINING ── -->
+  <section>
+    <div class="section-label">Training</div>
+    <h2>Pre-Training Configuration</h2>
+    <p>Chinchilla-optimal for 100M parameters is 2B tokens. MeyvnAI trains to 2.5B — 25% over-trained for extra convergence margin. The full stack fits in ~2.5–3 GB; no gradient checkpointing or 8-bit optimizer required.</p>
+
+    <div class="stat-row">
+      <div class="stat-cell">
+        <div class="stat-value">2.5B</div>
+        <div class="stat-label">Training Tokens</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">19,073</div>
+        <div class="stat-label">Total Steps</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">131k</div>
+        <div class="stat-label">Tokens / Step</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">3e−4</div>
+        <div class="stat-label">Peak LR</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">1,000</div>
+        <div class="stat-label">Warmup Steps</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hardware</th>
+            <th class="r">Est. Tokens/s</th>
+            <th>Time (2.5B)</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>M5 Pro 24 GB</td>
+            <td class="r">~4,000</td>
+            <td class="plain">~7.2 days</td>
+            <td class="plain">$0 &nbsp;(on-device)</td>
+          </tr>
+          <tr>
+            <td>M5 Max 48 GB</td>
+            <td class="r">~8,000</td>
+            <td class="plain">~3.6 days</td>
+            <td class="accent">$0 &nbsp;— recommended</td>
+          </tr>
+          <tr>
+            <td>RTX 4090 24 GB</td>
+            <td class="r">~20,000</td>
+            <td class="plain">~1.5 days</td>
+            <td class="plain">Local hardware</td>
+          </tr>
+          <tr>
+            <td>A100 80 GB SXM</td>
+            <td class="r">~50,000</td>
+            <td class="plain">~14 hours</td>
+            <td class="plain">~$15–25 cloud</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Corpus Sources</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Source</th><th class="r">Est. Tokens</th><th>License</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Project Gutenberg fiction (pre-1928)</td><td class="r">~1,200M</td><td class="plain">Public domain</td></tr>
+          <tr><td>BookCorpus-style fiction scrape</td><td class="r">~900M</td><td class="plain">Per-title</td></tr>
+          <tr><td>WikiText-103 narrative sections</td><td class="r">~100M</td><td class="plain">CC-BY-SA</td></tr>
+          <tr><td>WritingPrompts Reddit dataset</td><td class="r">~200M</td><td class="plain">Varies</td></tr>
+          <tr><td>Synthetic lore document pairs</td><td class="r">~50M</td><td class="plain">Generated</td></tr>
+          <tr><td>Instruction fine-tuning pairs</td><td class="r">~10M</td><td class="plain">Generated</td></tr>
+        </tbody>
+      </table>
+      <div class="table-foot">Target corpus &nbsp;·&nbsp; ~2.46B pre-train tokens + ~10M instruction tokens</div>
+    </div>
+  </section>
+
+  <!-- ── EXPORT ── -->
+  <section>
+    <div class="section-label">Export</div>
+    <h2>Deployment Formats</h2>
+    <p>At 100M parameters every export format is browser-viable. The primary delivery target is ONNX int4 — small enough to cache on-device via the browser Cache API and run in WebGPU. GGUF Q4_K_M serves Ollama local inference.</p>
+
+    <div class="size-bars">
+      <div class="size-row">
+        <div class="size-format">FP32 ckpt</div>
+        <div class="size-track"><div class="size-fill dim" style="width:100%"></div></div>
+        <div class="size-num">~390 MB</div>
+      </div>
+      <div class="size-row">
+        <div class="size-format">BF16 ckpt</div>
+        <div class="size-track"><div class="size-fill dim" style="width:50%"></div></div>
+        <div class="size-num">~195 MB</div>
+      </div>
+      <div class="size-row">
+        <div class="size-format">ONNX int8</div>
+        <div class="size-track"><div class="size-fill" style="width:26%"></div></div>
+        <div class="size-num">~100 MB</div>
+      </div>
+      <div class="size-row">
+        <div class="size-format">ONNX int4</div>
+        <div class="size-track"><div class="size-fill" style="width:13%"></div></div>
+        <div class="size-num">~50 MB</div>
+      </div>
+      <div class="size-row">
+        <div class="size-format">GGUF Q4_K_M</div>
+        <div class="size-track"><div class="size-fill v" style="width:14%"></div></div>
+        <div class="size-num">~56 MB</div>
+      </div>
+      <div class="size-row">
+        <div class="size-format">GGUF Q2_K</div>
+        <div class="size-track"><div class="size-fill v" style="width:8%"></div></div>
+        <div class="size-num">~30 MB</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ROADMAP ── -->
+  <section>
+    <div class="section-label">Roadmap</div>
+    <h2>Development Phases</h2>
+
+    <div class="phases">
+      <div class="phase">
+        <div class="phase-period">Week 1–2</div>
+        <div class="phase-content">
+          <div class="phase-name">Phase 1 — Architecture &amp; Tokenizer</div>
+          <div class="phase-detail">MeyvnSLM PyTorch implementation with RoPE, SwiGLU, RMSNorm, BitLinear. BPE tokenizer at 32,768 vocab with writing-specific special tokens: <code>&lt;|scene|&gt;</code>, <code>&lt;|lore|&gt;</code>, <code>&lt;|inst|&gt;</code>.</div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-period">Week 3–4</div>
+        <div class="phase-content">
+          <div class="phase-name">Phase 2 — Data Pipeline</div>
+          <div class="phase-detail">2.5B token corpus assembly. MinHash LSH deduplication, perplexity filtering, language detection, structural token formatting. Memory-mapped uint16 shards for fast DataLoader.</div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-period">Week 5</div>
+        <div class="phase-content">
+          <div class="phase-name">Phase 3 — Pre-Training</div>
+          <div class="phase-detail">19,073 steps at 131k tokens/step. M5 Max on-device (~3.6 days, $0) or A100 cloud (~14 hours, &lt;$25). Cosine LR schedule, AdamW β=(0.9, 0.95), grad clip 1.0. WandB logging, checkpoints every 500 steps.</div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-period">Week 6</div>
+        <div class="phase-content">
+          <div class="phase-name">Phase 4 — Instruction Fine-Tuning</div>
+          <div class="phase-detail">50k instruction pairs: scene continuation, style matching, lore-grounded generation, outline expansion, lore sentinel detection. SFT with response-only loss masking. M5 Pro or M5 Max.</div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-period">Week 7</div>
+        <div class="phase-content">
+          <div class="phase-name">Phase 5 — Export &amp; Quantisation</div>
+          <div class="phase-detail">ONNX int4 (~50 MB) for browser delivery, GGUF Q4_K_M (~56 MB) for Ollama. Validate outputs within 1e-3 tolerance of PyTorch reference. Package as HuggingFace-compatible model directory.</div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-period">Week 8–10</div>
+        <div class="phase-content">
+          <div class="phase-name">Phase 6 — Scriptorium Integration</div>
+          <div class="phase-detail"><code>MeyvnModelService.ts</code> streaming token generation via WebGPU. Model download + Cache API caching with progress UI. DNA Memory persistence in IndexedDB alongside book data. Ollama fallback provider.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>MeyvnAI &nbsp;·&nbsp; Scriptorium / Wizards Playground</span>
+    <span>Architecture Reference &nbsp;·&nbsp; v1.0</span>
+  </footer>
+
+</div>
