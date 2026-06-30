@@ -11,6 +11,7 @@ import { useWritingStore } from './store/writingStore';
 import { useAssemblyStore } from './store/assemblyStore';
 import { useWorldBibleStore } from './store/worldBibleStore';
 import { useAchievementStore } from './store/achievementStore';
+import { useSyncStore } from './store/syncStore';
 
 const LS_LANDING = 'wp_seen_landing';
 
@@ -25,12 +26,30 @@ function App() {
   const { activeWorldBible, loadWorldBibles } = useWorldBibleStore();
   const loadAchievements = useAchievementStore((s) => s.loadAchievements);
 
+  const loadSync = useSyncStore((s) => s.load);
+  const syncNow = useSyncStore((s) => s.syncNow);
+
   // Bootstrap: load library + world bibles list on mount
   useEffect(() => {
     loadLibrary();
     loadWorldBibles();
     loadAchievements();
+    loadSync();
   }, []);
+
+  // Auto-sync to file 2.5 s after any writing node change
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsub = useWritingStore.subscribe(() => {
+      if (!useSyncStore.getState().handle) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(syncNow, 2500);
+    });
+    return () => {
+      unsub();
+      if (timer) clearTimeout(timer);
+    };
+  }, [syncNow]);
 
   // When a book becomes active, load all its data + any linked world bible
   useEffect(() => {

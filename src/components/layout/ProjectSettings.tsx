@@ -1,18 +1,19 @@
 import { useState } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, FolderOpen, RefreshCw, Unlink } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Input, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useAchievementStore } from '../../store/achievementStore';
+import { useSyncStore } from '../../store/syncStore';
 import { BOOK_COLORS, DEFAULT_ENABLED_LEVELS } from '../../types';
 import type { HierarchyLabels, EnabledLevels } from '../../types';
 import { ACHIEVEMENTS, CATEGORY_COLORS } from '../../types/achievements';
 
 interface Props { onClose: () => void }
 
-type Tab = 'settings' | 'achievements';
+type Tab = 'settings' | 'achievements' | 'sync';
 
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -37,6 +38,7 @@ export function ProjectSettings({ onClose }: Props) {
   const { activeBook, updateBook, updateHierarchyLabels } = useLibraryStore();
   const addToast = useUIStore((s) => s.addToast);
   const { unlockSet } = useAchievementStore();
+  const { handle, folderName, syncing, lastSynced, pendingApplied, supported, pickFolder, syncNow, disconnect } = useSyncStore();
 
   const [tab, setTab] = useState<Tab>('settings');
   const [title, setTitle] = useState(activeBook?.title || '');
@@ -76,7 +78,7 @@ export function ProjectSettings({ onClose }: Props) {
     <Modal title="Book Settings" onClose={onClose} size="md">
       {/* Tab bar */}
       <div className="flex gap-1 mb-5 border-b border-slate-200 pb-0">
-        {(['settings', 'achievements'] as Tab[]).map((t) => (
+        {(['settings', 'achievements', 'sync'] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 text-xs font-semibold capitalize rounded-t-lg transition-colors border-b-2 -mb-px ${
               tab === t
@@ -218,6 +220,90 @@ export function ProjectSettings({ onClose }: Props) {
           </div>
 
           <div className="flex justify-end pt-2">
+            <Button variant="ghost" onClick={onClose}>Close</Button>
+          </div>
+        </div>
+      )}
+
+      {tab === 'sync' && (
+        <div className="flex flex-col gap-4">
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Connect a local folder and Scriptorium will write a{' '}
+            <code className="text-xs bg-slate-100 px-1 rounded">scriptorium-sync.json</code> file
+            there after every save. Point the{' '}
+            <code className="text-xs bg-slate-100 px-1 rounded">scriptorium-mcp</code> server at
+            that file to give any MCP-compatible AI agent full access to your library.
+          </p>
+
+          {!supported && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-700">
+              Your browser does not support the File System Access API. Try Chrome or Edge.
+            </div>
+          )}
+
+          {supported && !handle && (
+            <div className="rounded-lg border-2 border-dashed border-slate-200 px-5 py-6 flex flex-col items-center gap-3 text-center">
+              <FolderOpen size={28} className="text-slate-300" />
+              <p className="text-sm font-medium text-slate-600">No sync folder connected</p>
+              <p className="text-xs text-slate-400 max-w-[30ch]">
+                Pick any local folder — Scriptorium will keep it up to date automatically.
+              </p>
+              <Button variant="primary" onClick={pickFolder}>
+                Connect Folder
+              </Button>
+            </div>
+          )}
+
+          {supported && handle && (
+            <div className="flex flex-col gap-3">
+              <div className="rounded-lg bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-teal-800 truncate">{folderName}</p>
+                  {lastSynced && (
+                    <p className="text-xs text-teal-600">
+                      Last synced {lastSynced.toLocaleTimeString()}
+                      {pendingApplied > 0 && ` · applied ${pendingApplied} MCP write${pendingApplied !== 1 ? 's' : ''}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={syncNow}
+                  disabled={syncing}
+                >
+                  <RefreshCw size={13} className={syncing ? 'animate-spin' : ''} />
+                  {syncing ? 'Syncing…' : 'Sync Now'}
+                </Button>
+                <Button variant="ghost" onClick={disconnect}>
+                  <Unlink size={13} />
+                  Disconnect
+                </Button>
+              </div>
+
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-500 leading-relaxed">
+                <p className="font-semibold text-slate-600 mb-1">MCP server setup</p>
+                <p>Add to your MCP client config:</p>
+                <pre className="mt-2 bg-slate-100 rounded p-2 overflow-x-auto text-[10px] leading-relaxed">{`{
+  "mcpServers": {
+    "scriptorium": {
+      "command": "node",
+      "args": [
+        "/path/to/scriptorium-mcp/dist/index.js",
+        "--sync-file",
+        "<folder>/${folderName ?? 'your-folder'}/scriptorium-sync.json"
+      ]
+    }
+  }
+}`}</pre>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-1">
             <Button variant="ghost" onClick={onClose}>Close</Button>
           </div>
         </div>
