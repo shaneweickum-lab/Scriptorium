@@ -107,7 +107,7 @@ interface OllamaTagsResponse {
 // ---------------------------------------------------------------------------
 
 export const OLLAMA_DEFAULT_URL = 'http://localhost:11434';
-export const OLLAMA_DEFAULT_MODEL = 'llama3.2';
+export const OLLAMA_DEFAULT_MODEL = 'qwen3:8b';
 
 /** Candidate base URLs tried in order when auto-detecting a working host. */
 const OLLAMA_FALLBACK_URLS = [
