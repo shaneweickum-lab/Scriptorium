@@ -48,6 +48,11 @@ import {
   OLLAMA_DEFAULT_URL,
   type OllamaMessage,
 } from '../services/OllamaService';
+import {
+  WebLLMService,
+  type WebLLMStatus,
+  type WebLLMProgress,
+} from '../services/WebLLMService';
 import { RagService, type SceneContext } from '../services/RagService';
 import { VectorIndexService } from '../services/VectorIndexService';
 import {
@@ -66,9 +71,13 @@ import type { SearchResult } from '../services/VectorStore';
 export type AIStatus =
   | 'idle'
   | 'retrieving'   // running vector search
-  | 'generating'   // streaming tokens from Ollama
+  | 'generating'   // streaming tokens from Ollama or WebLLM
   | 'done'         // stream finished cleanly
   | 'error';       // terminal error — see `error` field
+
+export type AIProvider = 'ollama' | 'webgpu';
+
+export type { WebLLMStatus, WebLLMProgress };
 
 export interface UseAuthorAIOptions {
   /** Ollama model tag. Default: 'llama3.2' */
@@ -178,6 +187,20 @@ export interface UseAuthorAIReturn {
    */
   connectionErrorKind: 'cors' | 'network' | null;
 
+  // ── Provider selection ─────────────────────────────────────────────────────
+  /** Active inference provider: 'ollama' (default) or 'webgpu' (SmolLM2-1.7B). */
+  provider: AIProvider;
+  /** Switch between Ollama and WebGPU providers. */
+  setProvider: (p: AIProvider) => void;
+  /** Whether navigator.gpu is available in this browser. */
+  isWebGPUSupported: boolean;
+  /** Lifecycle status of the WebLLM engine (idle → loading → ready | error). */
+  webllmStatus: WebLLMStatus;
+  /** Download/init progress for WebLLM (0–1 fraction + status text). */
+  webllmProgress: WebLLMProgress | null;
+  /** Load SmolLM2-1.7B weights into the browser. Safe to call multiple times. */
+  loadWebLLM: () => Promise<void>;
+
   // ── Lore Sentinel ──────────────────────────────────────────────────────────
   /**
    * Scan the current scene for lore-changing events and propose World Bible
@@ -244,6 +267,9 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   const [loreProposals, setLoreProposals] = useState<LoreProposal[]>([]);
   const [loreScanSummary, setLoreScanSummary] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [provider, setProvider] = useState<AIProvider>('ollama');
+  const [webllmStatus, setWebllmStatus] = useState<WebLLMStatus>(() => WebLLMService.status);
+  const [webllmProgress, setWebllmProgress] = useState<WebLLMProgress | null>(null);
 
   // ── Load persisted style profile on mount / bookId change ──────────────────
   useEffect(() => {
@@ -251,6 +277,17 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     const saved = StyleProfileStore.load(bookId);
     if (saved) setStyleProfile(saved);
   }, [bookId]);
+
+  // ── WebLLM progress subscription ───────────────────────────────────────────
+  useEffect(() => {
+    const unsub = WebLLMService.onProgress((p) => {
+      setWebllmProgress(p);
+      setWebllmStatus(WebLLMService.status);
+    });
+    // Sync status in case the engine was already loaded before this render
+    setWebllmStatus(WebLLMService.status);
+    return unsub;
+  }, []);
 
   // ── Refs (stable across renders, mutable without triggering re-renders) ─────
   const abortRef = useRef<AbortController | null>(null);
@@ -293,6 +330,48 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     setStyleProfile(null);
     if (bookId) StyleProfileStore.clear(bookId);
   }, [bookId]);
+
+  // ── WebLLM loader ──────────────────────────────────────────────────────────
+  const loadWebLLM = useCallback(async () => {
+    setWebllmStatus('loading');
+    try {
+      await WebLLMService.load();
+      setWebllmStatus('ready');
+    } catch {
+      setWebllmStatus('error');
+    }
+  }, []);
+
+  // ── Unified LLM caller — routes to Ollama or WebLLM based on provider ──────
+  const providerRef = useRef<AIProvider>('ollama');
+  providerRef.current = provider;
+
+  const callLLM = useCallback((opts: {
+    messages: OllamaMessage[];
+    temperature: number;
+    signal: AbortSignal;
+    onToken: (t: string) => void;
+    onDone: (full: string) => void;
+  }) => {
+    if (providerRef.current === 'webgpu') {
+      return WebLLMService.chat({
+        messages: opts.messages,
+        temperature: opts.temperature,
+        signal: opts.signal,
+        onToken: opts.onToken,
+        onDone: opts.onDone,
+      });
+    }
+    return ollamaRef.current!.chat({
+      model,
+      messages: opts.messages,
+      temperature: opts.temperature,
+      signal: opts.signal,
+      onToken: opts.onToken,
+      onDone: opts.onDone,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model]);
 
   // ── cancel ──────────────────────────────────────────────────────────────────
   const cancel = useCallback(() => {
@@ -360,8 +439,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
       setStatus('generating');
 
       try {
-        await ollamaRef.current!.chat({
-          model,
+        await callLLM({
           messages,
           signal,
           temperature,
@@ -433,8 +511,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
       const messages = RagService.buildSentinelMessages(entries, scene);
 
       let fullText = '';
-      await ollamaRef.current!.chat({
-        model,
+      await callLLM({
         messages,
         signal,
         temperature: 0.2, // deterministic output for structured JSON
@@ -459,7 +536,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
       if (!signal.aborted) setIsScanning(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [model]);
+  }, [callLLM]);
 
   // ── Utilities ───────────────────────────────────────────────────────────────
   const clearHistory = useCallback(() => setHistory([]), []);
@@ -535,5 +612,11 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     loreProposals,
     clearLoreProposals,
     isScanning,
+    provider,
+    setProvider,
+    isWebGPUSupported: WebLLMService.isWebGPUSupported(),
+    webllmStatus,
+    webllmProgress,
+    loadWebLLM,
   };
 }

@@ -64,10 +64,9 @@ export default defineConfig({
   ],
 
   optimizeDeps: {
-    // Exclude @xenova/transformers from Vite pre-bundling.
-    // It loads ONNX Runtime WebAssembly dynamically; pre-bundling breaks the
-    // WASM file paths and worker thread instantiation.
-    exclude: ['@xenova/transformers'],
+    // These packages load WASM / WebGPU resources dynamically — pre-bundling
+    // breaks their asset paths and worker instantiation.
+    exclude: ['@xenova/transformers', '@mlc-ai/web-llm'],
   },
 
   // Tauri: prevent Vite from obscuring Rust errors
@@ -79,6 +78,11 @@ export default defineConfig({
     strictPort: true,
     host: host || false,
     hmr: host ? { protocol: 'ws', host, port: 5174 } : undefined,
+    // Required for WebLLM/WebGPU: enables SharedArrayBuffer in the browser.
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
   },
 
   envPrefix: ['VITE_', 'TAURI_ENV_'],

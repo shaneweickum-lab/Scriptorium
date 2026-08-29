@@ -188,6 +188,12 @@ export function MeyvnPanel({
     loreProposals,
     clearLoreProposals,
     isScanning,
+    provider,
+    setProvider,
+    isWebGPUSupported,
+    webllmStatus,
+    webllmProgress,
+    loadWebLLM,
   } = useAuthorAI({
     bookId: activeBook?.id,
     sceneText: liveContent,
@@ -423,8 +429,96 @@ export function MeyvnPanel({
           </div>
         )}
 
-        {/* MeyvnAi connection banner */}
-        {ollamaStatus === 'unreachable' && (
+        {/* ── Provider selector ─────────────────────────────────────────── */}
+        <div className="px-3 py-2 border-b border-slate-100 shrink-0">
+          <div className="flex bg-slate-100 rounded-lg p-0.5 gap-0.5">
+            <button
+              onClick={() => setProvider('ollama')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                provider === 'ollama'
+                  ? 'bg-white text-violet-700 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Ollama · Qwen3:8B
+            </button>
+            <button
+              onClick={() => setProvider('webgpu')}
+              disabled={!isWebGPUSupported}
+              title={!isWebGPUSupported ? 'WebGPU is not supported in this browser' : undefined}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[11px] font-semibold rounded-md transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                provider === 'webgpu'
+                  ? 'bg-white text-teal-700 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              SmolLM2 · WebGPU
+            </button>
+          </div>
+        </div>
+
+        {/* ── WebGPU load / status ──────────────────────────────────────── */}
+        {provider === 'webgpu' && webllmStatus === 'idle' && (
+          <div className="mx-3 mb-1 rounded-lg border border-teal-200 bg-teal-50 p-3 text-xs shrink-0 space-y-2">
+            <p className="text-teal-700 font-medium">SmolLM2-1.7B via WebGPU</p>
+            <p className="text-[10px] text-teal-600 leading-relaxed">
+              Runs entirely in your browser — no server required. Model weights (~900 MB)
+              download once and are cached locally.
+            </p>
+            <button
+              onClick={loadWebLLM}
+              className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-md border border-teal-300 text-teal-700 hover:bg-teal-100 transition-all font-medium"
+            >
+              Load SmolLM2-1.7B
+            </button>
+          </div>
+        )}
+
+        {provider === 'webgpu' && webllmStatus === 'loading' && (
+          <div className="mx-3 mb-1 rounded-lg border border-teal-200 bg-teal-50 p-3 text-xs shrink-0 space-y-2">
+            <div className="flex items-center gap-1.5 text-teal-700 font-medium">
+              <Loader2 size={12} className="animate-spin shrink-0" />
+              Loading SmolLM2-1.7B…
+            </div>
+            {webllmProgress && (
+              <>
+                <div className="w-full h-1.5 bg-teal-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-teal-400 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.round(webllmProgress.progress * 100)}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-teal-600 truncate">{webllmProgress.text}</p>
+              </>
+            )}
+          </div>
+        )}
+
+        {provider === 'webgpu' && webllmStatus === 'ready' && (
+          <div className="flex items-center gap-1.5 px-3 py-1 shrink-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />
+            <span className="text-[10px] text-slate-400">SmolLM2-1.7B ready · WebGPU</span>
+          </div>
+        )}
+
+        {provider === 'webgpu' && webllmStatus === 'error' && (
+          <div className="mx-3 mb-1 rounded-lg border border-red-200 bg-red-50 p-3 text-xs shrink-0 space-y-2">
+            <p className="text-red-700 font-medium">Failed to load WebLLM engine</p>
+            <p className="text-[10px] text-red-600 leading-relaxed">
+              Make sure WebGPU is enabled and you have enough VRAM. Chrome 113+ is recommended.
+            </p>
+            <button
+              onClick={loadWebLLM}
+              className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-md border border-red-300 text-red-700 hover:bg-red-100 transition-all font-medium"
+            >
+              <RefreshCw size={11} />
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* MeyvnAi connection banner — Ollama only */}
+        {provider === 'ollama' && ollamaStatus === 'unreachable' && (
           <div className="mx-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs shrink-0 space-y-2">
             <div className="flex items-center gap-1.5 text-amber-700 font-medium">
               <WifiOff size={12} className="shrink-0" />
@@ -447,7 +541,7 @@ export function MeyvnPanel({
           </div>
         )}
 
-        {ollamaStatus === 'checking' && (
+        {provider === 'ollama' && ollamaStatus === 'checking' && (
           <div className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-slate-400 shrink-0">
             <Loader2 size={10} className="animate-spin shrink-0" />
             Connecting to MeyvnAi…
