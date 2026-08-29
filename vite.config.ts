@@ -32,9 +32,14 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // The ONNX Runtime WASM bundle pushes the main chunk above Workbox's
-        // default 2 MiB precache limit. Raise it to 5 MiB.
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // WebLLM's JS bundle can reach ~6 MB — raise the precache cap to 10 MiB.
+        // Large dynamic-only chunks (WebLLM, ONNX WASM) are excluded below since
+        // they are fetched on demand and should not bloat the SW precache manifest.
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        globIgnores: [
+          // Exclude the WebLLM vendor chunk from precaching (downloaded on demand)
+          '**/lib-*.js',
+        ],
         // Cache HuggingFace model weights and ONNX WASM runtime so the
         // embedding model works offline after the first online load.
         runtimeCaching: [
