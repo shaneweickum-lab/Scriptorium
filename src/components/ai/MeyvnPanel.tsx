@@ -348,12 +348,6 @@ export function MeyvnPanel({
           </button>
         </div>
 
-        {/* Coming Soon banner */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border-b border-amber-200 shrink-0">
-          <Sparkles size={11} className="text-amber-500 shrink-0" />
-          <span className="text-[11px] font-medium text-amber-700">Coming Soon — Meyvn is not yet functional.</span>
-        </div>
-
         {/* Tab toggle */}
         <div className="flex gap-0.5 bg-slate-100 rounded-lg mx-3 mt-2 mb-1 p-0.5 shrink-0">
           {([
@@ -434,11 +428,15 @@ export function MeyvnPanel({
           <div className="mx-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs shrink-0 space-y-2">
             <div className="flex items-center gap-1.5 text-amber-700 font-medium">
               <WifiOff size={12} className="shrink-0" />
-              MeyvnAi engine is not yet available
+              Ollama not detected
             </div>
             <p className="text-[10px] text-amber-600 leading-relaxed">
-              MeyvnAi is being built from the ground up for Wizards Playground. She will be available in an upcoming release — no third-party setup required.
+              Meyvn runs on Qwen3:8B via Ollama. Start Ollama, then run:
             </p>
+            <code className="block text-[10px] bg-amber-100 text-amber-800 rounded px-2 py-1 font-mono leading-relaxed">
+              ollama pull qwen3:8b<br />
+              OLLAMA_ORIGINS="*" ollama serve
+            </code>
             <button
               onClick={probeHealth}
               className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-md border border-amber-300 text-amber-700 hover:bg-amber-100 transition-all font-medium"
