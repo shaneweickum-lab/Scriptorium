@@ -34,7 +34,7 @@ export function TopBar() {
   const level = getLevel(totalXP);
   const { pct } = getLevelProgress(totalXP);
 
-  const viewLabels = { world: 'World Bible', writing: 'Writing', assembly: 'Assembly' };
+  const viewLabels = { world: 'World Bible', writing: 'Writing', assembly: 'Assembly', sketchpad: 'Sketchpad' };
 
   const handleTitleClick = () => {
     setTitleValue(activeBook?.title || '');

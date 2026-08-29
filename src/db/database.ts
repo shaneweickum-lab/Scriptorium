@@ -2,6 +2,7 @@ import Dexie from 'dexie';
 import type { Table } from 'dexie';
 import type { WorldSection, WorldEntry, WritingNode, Assembly, Book, WorldBible, TrainingEntry } from '../types';
 import type { AchievementUnlock } from '../types/achievements';
+import type { SketchpadEntry } from '../types/sketchpad';
 import { generateId } from '../utils/id';
 import { DEFAULT_HIERARCHY_LABELS } from '../types';
 import { BOOK_COLORS } from '../types';
@@ -15,6 +16,7 @@ export class ScriptoriumDB extends Dexie {
   assemblies!: Table<Assembly, string>;
   achievementUnlocks!: Table<AchievementUnlock, string>;
   trainingEntries!: Table<TrainingEntry, string>;
+  sketchpadEntries!: Table<SketchpadEntry, string>;
 
   constructor() {
     super('ScriptoriumDB');
@@ -79,6 +81,11 @@ export class ScriptoriumDB extends Dexie {
     // v5 schema - add training corpus for OracleML / Oracle Intelligence System
     this.version(5).stores({
       trainingEntries: 'id, category, updatedAt',
+    });
+
+    // v6 schema - add sketchpad idea entries
+    this.version(6).stores({
+      sketchpadEntries: 'id, bookId, category, status, updatedAt',
     });
   }
 }

@@ -1,4 +1,4 @@
-import { PenLine, BookMarked, Download, Settings, ArrowLeft, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { PenLine, BookMarked, Download, Settings, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Lightbulb } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { useLibraryStore } from '../../store/libraryStore';
 import type { ActiveView } from '../../store/uiStore';
@@ -6,6 +6,7 @@ import type { ActiveView } from '../../store/uiStore';
 const navItems: { view: ActiveView; icon: typeof PenLine; label: string }[] = [
   { view: 'writing', icon: PenLine, label: 'Writing' },
   { view: 'assembly', icon: BookMarked, label: 'Assembly' },
+  { view: 'sketchpad', icon: Lightbulb, label: 'Sketchpad' },
 ];
 
 export function Sidebar() {
