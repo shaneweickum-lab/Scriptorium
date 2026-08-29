@@ -8,8 +8,9 @@ import { useEditorStore } from '../../store/editorStore';
 import { streakStore } from '../../store/streakStore';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { WorldReferencePanel } from './WorldReferencePanel';
+import { StructureAssistantPanel } from './StructureAssistantPanel';
 import { EmptyState } from '../common/EmptyState';
-import { PenLine, Maximize2 } from 'lucide-react';
+import { PenLine, Maximize2, Sparkles } from 'lucide-react';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { tiptapJsonToText } from '../../utils/tiptapToHtml';
 
@@ -48,6 +49,7 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
   const labels = activeBook?.hierarchyLabels || { part: 'Part', chapter: 'Chapter', scene: 'Scene', note: 'Note' };
 
   const [referencedEntryId, setReferencedEntryId] = useState<string | null>(null);
+  const [showStructurePanel, setShowStructurePanel] = useState(false);
   const referencedEntry = referencedEntryId ? entries.find((e) => e.id === referencedEntryId) ?? null : null;
   const referencedSection = referencedEntry ? sections.find((s) => s.id === referencedEntry.sectionId) : undefined;
 
@@ -118,15 +120,31 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
       <div className="px-6 pt-4 pb-2 border-b border-slate-200">
         <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-[10px] font-semibold text-teal-600 uppercase tracking-widest">{typeLabel}</span>
-          {!distractFree && (
-            <button
-              onClick={() => setShowDistractFree(true)}
-              title="Distraction-free mode (Esc to exit)"
-              className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            >
-              <Maximize2 size={13} />
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {(node.type === 'chapter' || node.type === 'scene') && !distractFree && (
+              <button
+                onClick={() => setShowStructurePanel((v) => !v)}
+                title="Analyze structure with Meyvn AI"
+                className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
+                  showStructurePanel
+                    ? 'bg-violet-100 text-violet-700'
+                    : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+                }`}
+              >
+                <Sparkles size={11} />
+                <span className="hidden sm:inline">Analyze</span>
+              </button>
+            )}
+            {!distractFree && (
+              <button
+                onClick={() => setShowDistractFree(true)}
+                title="Distraction-free mode (Esc to exit)"
+                className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <Maximize2 size={13} />
+              </button>
+            )}
+          </div>
         </div>
         <input
           value={node.title}
@@ -163,6 +181,12 @@ export function NodeEditor({ distractFree = false }: NodeEditorProps) {
             entry={referencedEntry}
             section={referencedSection}
             onClose={() => setReferencedEntryId(null)}
+          />
+        )}
+        {showStructurePanel && (
+          <StructureAssistantPanel
+            node={node}
+            onClose={() => setShowStructurePanel(false)}
           />
         )}
       </div>
