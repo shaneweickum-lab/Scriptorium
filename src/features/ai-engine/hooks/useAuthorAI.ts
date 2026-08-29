@@ -270,6 +270,8 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState(options.model ?? OLLAMA_DEFAULT_MODEL);
   const [history, setHistory] = useState<OllamaMessage[]>([]);
+  // Track whether we should persist history (false during initial load to avoid overwriting)
+  const shouldPersistHistoryRef = useRef(false);
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
   const [loreProposals, setLoreProposals] = useState<LoreProposal[]>([]);
   const [loreScanSummary, setLoreScanSummary] = useState('');
@@ -294,6 +296,39 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     const saved = StyleProfileStore.load(bookId);
     if (saved) setStyleProfile(saved);
   }, [bookId]);
+
+  // ── Load persisted chat history on mount / bookId change ───────────────────
+  useEffect(() => {
+    shouldPersistHistoryRef.current = false;
+    try {
+      const key = `meyvn_hist_${bookId ?? 'lib'}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed: OllamaMessage[] = JSON.parse(stored);
+        // Only restore user+assistant messages, filter out any system prompt leakage
+        setHistory(parsed.filter((m) => m.role === 'user' || m.role === 'assistant'));
+      } else {
+        setHistory([]);
+      }
+    } catch { setHistory([]); }
+    // Allow persistence after the state settles
+    setTimeout(() => { shouldPersistHistoryRef.current = true; }, 0);
+  }, [bookId]);
+
+  // ── Persist history to localStorage whenever it grows ──────────────────────
+  useEffect(() => {
+    if (!shouldPersistHistoryRef.current) return;
+    try {
+      const key = `meyvn_hist_${bookId ?? 'lib'}`;
+      if (history.length === 0) {
+        localStorage.removeItem(key);
+      } else {
+        // Store only last 40 messages to cap storage usage
+        const toStore = history.filter((m) => m.role !== 'system').slice(-40);
+        localStorage.setItem(key, JSON.stringify(toStore));
+      }
+    } catch { /* storage full or unavailable — ignore */ }
+  }, [history, bookId]);
 
   // ── WebLLM progress subscription ───────────────────────────────────────────
   useEffect(() => {
@@ -452,10 +487,12 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
       setRetrievedEntries(context.entries);
 
       // ── Step 2: Assemble message array ────────────────────────────────────
+      // Limit context to the last 8 messages (4 turns) so small models
+      // don't run out of context window on long conversations
       const messages = RagService.buildMessages(
         userPrompt,
         context,
-        historyRef.current,
+        historyRef.current.slice(-8),
       );
 
       // ── Step 3: Stream from Ollama ────────────────────────────────────────

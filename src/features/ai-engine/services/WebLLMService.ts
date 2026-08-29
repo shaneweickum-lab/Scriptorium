@@ -31,6 +31,12 @@ export const WEB_LLM_MODELS: WebLLMModelDef[] = [
     description: 'Mobile-optimised — runs on phones and low-VRAM devices',
   },
   {
+    id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+    label: 'Llama 3.2 1B',
+    vram: '~800 MB',
+    description: 'Near-1B from Meta — stronger writing quality, fits most phones',
+  },
+  {
     id: 'SmolLM2-1.7B-Instruct-q4f16_1-MLC',
     label: 'SmolLM2 1.7B',
     vram: '~1.5 GB',
