@@ -39,7 +39,7 @@ export const useSyncStore = create<SyncStore>((set, get) => ({
   pickFolder: async () => {
     if (!isFSASupported()) return;
     try {
-      const h = await (window as Window & { showDirectoryPicker: (opts?: object) => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({ mode: 'readwrite' });
+      const h = await (window as unknown as { showDirectoryPicker: (opts?: object) => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({ mode: 'readwrite' });
       await setSyncDirHandle(h);
       set({ handle: h, folderName: h.name });
       await get().syncNow();
