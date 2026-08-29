@@ -272,8 +272,17 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   const [loreProposals, setLoreProposals] = useState<LoreProposal[]>([]);
   const [loreScanSummary, setLoreScanSummary] = useState('');
   const [isScanning, setIsScanning] = useState(false);
-  const [provider, setProvider] = useState<AIProvider>('ollama');
-  const [webllmModel, setWebllmModel] = useState<string>(WEB_LLM_DEFAULT_MODEL);
+  const [provider, setProvider] = useState<AIProvider>(() => {
+    try {
+      const saved = localStorage.getItem('meyvn_provider');
+      return (saved === 'ollama' || saved === 'webgpu') ? saved : 'ollama';
+    } catch { return 'ollama'; }
+  });
+  const [webllmModel, setWebllmModel] = useState<string>(() => {
+    try {
+      return localStorage.getItem('meyvn_webllm_model') ?? WEB_LLM_DEFAULT_MODEL;
+    } catch { return WEB_LLM_DEFAULT_MODEL; }
+  });
   const [webllmStatus, setWebllmStatus] = useState<WebLLMStatus>(() => WebLLMService.status);
   const [webllmProgress, setWebllmProgress] = useState<WebLLMProgress | null>(null);
 
@@ -622,10 +631,16 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     clearLoreProposals,
     isScanning,
     provider,
-    setProvider,
+    setProvider: (p: AIProvider) => {
+      try { localStorage.setItem('meyvn_provider', p); } catch { /* ignore */ }
+      setProvider(p);
+    },
     isWebGPUSupported: WebLLMService.isWebGPUSupported(),
     webllmModel,
-    setWebllmModel,
+    setWebllmModel: (id: string) => {
+      try { localStorage.setItem('meyvn_webllm_model', id); } catch { /* ignore */ }
+      setWebllmModel(id);
+    },
     webllmStatus,
     webllmProgress,
     loadWebLLM,

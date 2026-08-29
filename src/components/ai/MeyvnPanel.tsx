@@ -207,7 +207,9 @@ export function MeyvnPanel({
   });
 
   const [tab, setTab] = useState<PanelTab>('chat');
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(() => {
+    try { return sessionStorage.getItem('meyvn_draft') ?? ''; } catch { return ''; }
+  });
   const [showSources, setShowSources] = useState(false);
   const [showAISetup, setShowAISetup] = useState(false);
   // Local tracking of applied/skipped proposal IDs
@@ -233,6 +235,13 @@ export function MeyvnPanel({
     if (status === 'generating' || status === 'done') setOllamaStatus('ok');
   }, [status]);
 
+  // Mark that a WebGPU session was active so the reload banner shows after a crash
+  useEffect(() => {
+    if (webllmStatus === 'ready') {
+      try { sessionStorage.setItem('meyvn_webgpu_session', '1'); } catch { /* ignore */ }
+    }
+  }, [webllmStatus]);
+
   // Auto-scroll as tokens arrive
   useEffect(() => {
     if (responseRef.current) {
@@ -253,6 +262,7 @@ export function MeyvnPanel({
     if (!prompt.trim() || isStreaming) return;
     const p = prompt.trim();
     setPrompt('');
+    try { sessionStorage.removeItem('meyvn_draft'); } catch { /* ignore */ }
     suggest(tab === 'write' ? toWritePrompt(p) : p);
   };
 
@@ -494,20 +504,32 @@ export function MeyvnPanel({
         </div>
 
         {/* ── WebGPU load / status ──────────────────────────────────────── */}
-        {provider === 'webgpu' && webllmStatus === 'idle' && (
-          <div className="mx-3 mb-1 rounded-lg border border-teal-200 bg-teal-50 p-3 text-xs shrink-0 space-y-2">
-            <p className="text-teal-700 font-medium">
-              {WEB_LLM_MODELS.find((m) => m.id === webllmModel)?.label ?? 'WebGPU model'} · in-browser
-            </p>
-            <p className="text-[10px] text-teal-600 leading-relaxed">
-              Runs entirely in your browser — no server required. Weights are cached after first load.
-            </p>
-            <button onClick={loadWebLLM}
-              className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-md border border-teal-300 text-teal-700 hover:bg-teal-100 transition-all font-medium">
-              Load model
-            </button>
-          </div>
-        )}
+        {provider === 'webgpu' && webllmStatus === 'idle' && (() => {
+          let hadSession = false;
+          try { hadSession = !!sessionStorage.getItem('meyvn_webgpu_session'); } catch { /* ignore */ }
+          const modelLabel = WEB_LLM_MODELS.find((m) => m.id === webllmModel)?.label ?? 'WebGPU model';
+          return (
+            <div className={`mx-3 mb-1 rounded-lg border p-3 text-xs shrink-0 space-y-2 ${hadSession ? 'border-amber-200 bg-amber-50' : 'border-teal-200 bg-teal-50'}`}>
+              {hadSession ? (
+                <p className="text-amber-700 font-medium flex items-center gap-1.5">
+                  <AlertCircle size={12} className="shrink-0" />
+                  Browser restarted AI session — reload {modelLabel}
+                </p>
+              ) : (
+                <>
+                  <p className="text-teal-700 font-medium">{modelLabel} · in-browser</p>
+                  <p className="text-[10px] text-teal-600 leading-relaxed">
+                    Runs entirely in your browser — no server required. Weights are cached after first load.
+                  </p>
+                </>
+              )}
+              <button onClick={loadWebLLM}
+                className={`flex items-center gap-1.5 w-full justify-center py-1.5 rounded-md border transition-all font-medium ${hadSession ? 'border-amber-300 text-amber-700 hover:bg-amber-100' : 'border-teal-300 text-teal-700 hover:bg-teal-100'}`}>
+                {hadSession ? 'Reload model' : 'Load model'}
+              </button>
+            </div>
+          );
+        })()}
 
         {provider === 'webgpu' && webllmStatus === 'loading' && (
           <div className="mx-3 mb-1 rounded-lg border border-teal-200 bg-teal-50 p-3 text-xs shrink-0 space-y-2">
@@ -850,7 +872,10 @@ export function MeyvnPanel({
             <div className="border-t border-slate-200 p-3 space-y-2 shrink-0">
               <textarea
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  try { sessionStorage.setItem('meyvn_draft', e.target.value); } catch { /* ignore */ }
+                }}
                 onKeyDown={handleKeyDown}
                 disabled={isStreaming}
                 placeholder={

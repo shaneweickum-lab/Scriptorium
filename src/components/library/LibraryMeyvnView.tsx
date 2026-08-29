@@ -180,7 +180,9 @@ export function LibraryMeyvnView() {
   } = useAuthorAI(); // no bookId — bare prompt mode
 
   const [tab, setTab] = useState<LibraryMeyvnTab>('chat');
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(() => {
+    try { return sessionStorage.getItem('meyvn_draft') ?? ''; } catch { return ''; }
+  });
   const [showAISetup, setShowAISetup] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -200,6 +202,13 @@ export function LibraryMeyvnView() {
     if (status === 'generating' || status === 'done') setOllamaStatus('ok');
   }, [status]);
 
+  // Mark that a WebGPU session was active so the reload banner shows after a crash
+  useEffect(() => {
+    if (webllmStatus === 'ready') {
+      try { sessionStorage.setItem('meyvn_webgpu_session', '1'); } catch { /* ignore */ }
+    }
+  }, [webllmStatus]);
+
   // ── Auto-scroll ─────────────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -218,6 +227,7 @@ export function LibraryMeyvnView() {
     if (!prompt.trim() || isStreaming) return;
     const p = prompt.trim();
     setPrompt('');
+    try { sessionStorage.removeItem('meyvn_draft'); } catch { /* ignore */ }
     suggest(tab === 'write' ? toWritePrompt(p) : p);
   }, [prompt, isStreaming, suggest, tab]);
 
@@ -363,19 +373,31 @@ export function LibraryMeyvnView() {
       </div>
 
       {/* ── WebGPU load / status ──────────────────────────────────────── */}
-      {provider === 'webgpu' && webllmStatus === 'idle' && (
-        <div className="shrink-0 px-6 pb-2 border-b border-slate-100">
-          <div className="max-w-3xl mx-auto rounded-xl border border-teal-200 bg-teal-50 p-3 space-y-2">
-            <p className="text-xs font-medium text-teal-700">
-              {WEB_LLM_MODELS.find((m) => m.id === webllmModel)?.label ?? 'WebGPU model'} · in-browser, no server required
-            </p>
-            <button onClick={loadWebLLM}
-              className="w-full py-1.5 rounded-lg border border-teal-300 text-xs font-semibold text-teal-700 hover:bg-teal-100 transition-all">
-              Load model (cached after first download)
-            </button>
+      {provider === 'webgpu' && webllmStatus === 'idle' && (() => {
+        let hadSession = false;
+        try { hadSession = !!sessionStorage.getItem('meyvn_webgpu_session'); } catch { /* ignore */ }
+        const modelLabel = WEB_LLM_MODELS.find((m) => m.id === webllmModel)?.label ?? 'WebGPU model';
+        return (
+          <div className="shrink-0 px-6 pb-2 border-b border-slate-100">
+            <div className={`max-w-3xl mx-auto rounded-xl border p-3 space-y-2 ${hadSession ? 'border-amber-200 bg-amber-50' : 'border-teal-200 bg-teal-50'}`}>
+              {hadSession ? (
+                <p className="text-xs font-medium text-amber-700 flex items-center gap-1.5">
+                  <AlertCircle size={12} className="shrink-0" />
+                  Your browser restarted the AI session — tap below to reload {modelLabel}
+                </p>
+              ) : (
+                <p className="text-xs font-medium text-teal-700">
+                  {modelLabel} · in-browser, no server required
+                </p>
+              )}
+              <button onClick={loadWebLLM}
+                className={`w-full py-1.5 rounded-lg border text-xs font-semibold transition-all ${hadSession ? 'border-amber-300 text-amber-700 hover:bg-amber-100' : 'border-teal-300 text-teal-700 hover:bg-teal-100'}`}>
+                {hadSession ? 'Reload model' : 'Load model (cached after first download)'}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
       {provider === 'webgpu' && webllmStatus === 'loading' && (
         <div className="shrink-0 px-6 pb-2 border-b border-slate-100">
           <div className="max-w-3xl mx-auto rounded-xl border border-teal-200 bg-teal-50 p-3 space-y-2">
@@ -526,7 +548,10 @@ export function LibraryMeyvnView() {
             <textarea
               ref={textareaRef}
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => {
+                setPrompt(e.target.value);
+                try { sessionStorage.setItem('meyvn_draft', e.target.value); } catch { /* ignore */ }
+              }}
               onKeyDown={handleKeyDown}
               disabled={isStreaming}
               placeholder={
