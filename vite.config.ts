@@ -86,7 +86,7 @@ export default defineConfig({
     // Required for WebLLM/WebGPU: enables SharedArrayBuffer in the browser.
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
     },
   },
 

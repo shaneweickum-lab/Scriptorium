@@ -243,7 +243,7 @@ function CreateCard({ onClick, label }: { onClick: () => void; label: string }) 
 }
 
 /* ── Safari Install Modal ─────────────────────────────────── */
-function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safari-ios'; onClose: () => void }) {
+function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safari-ios' | 'ios-chrome'; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
@@ -253,7 +253,27 @@ function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safar
             <X size={16} />
           </button>
         </div>
-        {method === 'safari-ios' ? (
+        {method === 'ios-chrome' ? (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600">
+              Chrome on iPhone can't install PWAs — Apple requires Safari for this.
+            </p>
+            <ol className="space-y-3 text-sm text-slate-600">
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
+                <span>Copy this URL and open it in <strong>Safari</strong></span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">2</span>
+                <span>Tap <Share size={13} className="inline mx-1 text-blue-500" /><strong>Share</strong>, then <strong>"Add to Home Screen"</strong></span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">3</span>
+                <span>Tap <strong>"Add"</strong></span>
+              </li>
+            </ol>
+          </div>
+        ) : method === 'safari-ios' ? (
           <ol className="space-y-3 text-sm text-slate-600">
             <li className="flex items-start gap-3">
               <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">1</span>
@@ -577,7 +597,7 @@ export function Library() {
         unlockCount={unlocks.length}
         onAchievements={() => setShowAchievementsModal(true)}
         canInstall={canInstall}
-        onInstall={installMethod === 'safari-mac' || installMethod === 'safari-ios'
+        onInstall={installMethod === 'safari-mac' || installMethod === 'safari-ios' || installMethod === 'ios-chrome'
           ? () => setShowInstallModal(true) : install}
         onAbout={() => { localStorage.removeItem('wp_seen_landing'); window.location.reload(); }}
         mobileOpen={mobileSidebarOpen}
@@ -759,7 +779,7 @@ export function Library() {
             updateWorldBible(editWorldTarget.id, { name, description, coverColor: color })}
           initialColor={editWorldTarget.coverColor} />
       )}
-      {showInstallModal && (installMethod === 'safari-mac' || installMethod === 'safari-ios') && (
+      {showInstallModal && (installMethod === 'safari-mac' || installMethod === 'safari-ios' || installMethod === 'ios-chrome') && (
         <SafariInstallModal method={installMethod} onClose={() => setShowInstallModal(false)} />
       )}
       {showAchievementsModal && <AchievementsModal onClose={() => setShowAchievementsModal(false)} />}
