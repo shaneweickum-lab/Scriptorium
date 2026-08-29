@@ -207,7 +207,9 @@ export function MeyvnPanel({
   });
 
   const [tab, setTab] = useState<PanelTab>('chat');
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(() => {
+    try { return sessionStorage.getItem('meyvn_draft') ?? ''; } catch { return ''; }
+  });
   const [showSources, setShowSources] = useState(false);
   const [showAISetup, setShowAISetup] = useState(false);
   // Local tracking of applied/skipped proposal IDs
@@ -253,6 +255,7 @@ export function MeyvnPanel({
     if (!prompt.trim() || isStreaming) return;
     const p = prompt.trim();
     setPrompt('');
+    try { sessionStorage.removeItem('meyvn_draft'); } catch { /* ignore */ }
     suggest(tab === 'write' ? toWritePrompt(p) : p);
   };
 
@@ -850,7 +853,10 @@ export function MeyvnPanel({
             <div className="border-t border-slate-200 p-3 space-y-2 shrink-0">
               <textarea
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  try { sessionStorage.setItem('meyvn_draft', e.target.value); } catch { /* ignore */ }
+                }}
                 onKeyDown={handleKeyDown}
                 disabled={isStreaming}
                 placeholder={
