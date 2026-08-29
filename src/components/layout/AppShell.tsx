@@ -6,6 +6,7 @@ import { useLibraryStore } from '../../store/libraryStore';
 import { useAuthStore } from '../../store/authStore';
 import { WritingSpace } from '../writing/WritingSpace';
 import { Assembly } from '../assembly/Assembly';
+import { SketchpadView } from '../sketchpad/SketchpadView';
 import { ExportModal } from '../export/ExportModal';
 import { ProjectSettings } from './ProjectSettings';
 import { ToastContainer } from '../common/Toast';
@@ -53,6 +54,11 @@ export function AppShell() {
             {activeView === 'assembly' && (
               <div key="assembly" className="wp-view-enter h-full">
                 <Assembly />
+              </div>
+            )}
+            {activeView === 'sketchpad' && (
+              <div key="sketchpad" className="wp-view-enter h-full">
+                <SketchpadView />
               </div>
             )}
           </main>

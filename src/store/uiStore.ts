@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ActiveView = 'world' | 'writing' | 'assembly';
+export type ActiveView = 'world' | 'writing' | 'assembly' | 'sketchpad';
 
 interface Toast {
   id: string;
