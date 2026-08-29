@@ -262,6 +262,42 @@ Do NOT correct by rewriting. Coach by asking.`;
   // Personalised prompt generation (for the "Write" section)
   // ---------------------------------------------------------------------------
 
+  // ---------------------------------------------------------------------------
+  // Error analysis (returns JSON highlight array — NOT a coaching reply)
+  // ---------------------------------------------------------------------------
+
+  static buildAnalysisMessages(opts: {
+    userText: string;
+    subcategory: CoachSubcategory;
+  }): OllamaMessage[] {
+    const { userText, subcategory } = opts;
+    // Cap length so small models don't get overwhelmed
+    const text = userText.slice(0, 600);
+
+    return [
+      {
+        role: 'system',
+        content: `You are a writing error detector. Output ONLY a JSON array — no explanation, no markdown, no prose.
+
+Format: [{"span":"exact words from the input text","type":"spelling|punctuation|tense|grammar|structure","label":"brief note"}]
+If no errors: []
+
+Rules:
+- "span" must be an exact substring copied from the input.
+- "type" must be one of: spelling, punctuation, tense, grammar, structure.
+- Return at most 8 errors.`,
+      },
+      {
+        role: 'user',
+        content: `Identify ${subcategory.label} errors. Return only the JSON array.\n\nText:\n"${text}"`,
+      },
+    ];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Personalised prompt generation (for the "Write" section)
+  // ---------------------------------------------------------------------------
+
   static buildPromptMessages(opts: {
     subcategory: CoachSubcategory;
     profile: WriterProfile | null;
