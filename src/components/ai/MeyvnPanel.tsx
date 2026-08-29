@@ -85,12 +85,26 @@ interface ProposalCardProps {
   proposal: LoreProposal;
   applied: boolean;
   skipped: boolean;
-  onApply: () => void;
+  sections: { id: string; name: string }[];
+  onApply: (sectionId?: string) => void;
   onSkip: () => void;
 }
 
-function ProposalCard({ proposal, applied, skipped, onApply, onSkip }: ProposalCardProps) {
+function ProposalCard({ proposal, applied, skipped, sections, onApply, onSkip }: ProposalCardProps) {
   const done = applied || skipped;
+  const isCreate = proposal.changeType === 'create_entry';
+  const defaultSection = sections.find(
+    (s) => proposal.sectionTitle && s.name.toLowerCase() === proposal.sectionTitle.toLowerCase(),
+  ) ?? sections[0];
+  const [selectedSectionId, setSelectedSectionId] = useState(defaultSection?.id ?? '');
+
+  const badgeClass = isCreate
+    ? 'bg-teal-100 text-teal-700'
+    : proposal.changeType === 'add_tag'
+    ? 'bg-amber-100 text-amber-700'
+    : 'bg-violet-100 text-violet-700';
+  const badgeLabel = isCreate ? 'new entry' : proposal.changeType === 'add_tag' ? 'tag' : 'append';
+
   return (
     <div
       className={`rounded-lg border text-xs transition-all ${
@@ -107,18 +121,26 @@ function ProposalCard({ proposal, applied, skipped, onApply, onSkip }: ProposalC
           <p className="font-semibold text-slate-700 leading-tight truncate flex-1">
             {proposal.entryTitle}
           </p>
-          <span
-            className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full uppercase tracking-wide ${
-              proposal.changeType === 'add_tag'
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-violet-100 text-violet-700'
-            }`}
-          >
-            {proposal.changeType === 'add_tag' ? 'tag' : 'append'}
+          <span className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full uppercase tracking-wide ${badgeClass}`}>
+            {badgeLabel}
           </span>
         </div>
+        {isCreate && sections.length > 0 && !done && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-[10px] text-slate-400 shrink-0">Section:</span>
+            <select
+              value={selectedSectionId}
+              onChange={(e) => setSelectedSectionId(e.target.value)}
+              className="flex-1 text-[10px] text-slate-600 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 outline-none"
+            >
+              {sections.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <p className="text-slate-500 leading-relaxed mb-2">{proposal.description}</p>
-        <p className="text-slate-700 bg-slate-50 rounded px-2 py-1.5 font-mono text-[10px] leading-relaxed border border-slate-100">
+        <p className="text-slate-700 bg-slate-50 rounded px-2 py-1.5 font-mono text-[10px] leading-relaxed border border-slate-100 line-clamp-4">
           {proposal.proposed}
         </p>
       </div>
@@ -126,10 +148,10 @@ function ProposalCard({ proposal, applied, skipped, onApply, onSkip }: ProposalC
       {!done && (
         <div className="flex border-t border-violet-100">
           <button
-            onClick={onApply}
+            onClick={() => onApply(isCreate ? selectedSectionId : undefined)}
             className="flex-1 flex items-center justify-center gap-1 py-1.5 text-teal-700 hover:bg-teal-50 transition-all rounded-bl-lg border-r border-violet-100 font-medium"
           >
-            <Check size={11} /> Apply
+            <Check size={11} /> {isCreate ? 'Add to World Bible' : 'Apply'}
           </button>
           <button
             onClick={onSkip}
@@ -143,7 +165,7 @@ function ProposalCard({ proposal, applied, skipped, onApply, onSkip }: ProposalC
       {applied && (
         <div className="flex items-center gap-1.5 px-3 py-1.5 border-t border-teal-200 text-teal-600">
           <Check size={11} />
-          <span>Applied</span>
+          <span>{isCreate ? 'Added to World Bible' : 'Applied'}</span>
         </div>
       )}
     </div>
@@ -171,6 +193,7 @@ export function MeyvnPanel({
   const worldSections = useWorldStore((s) => s.sections);
   const linkedSections = useWorldStore((s) => s.linkedSections);
   const updateEntry = useWorldStore((s) => s.updateEntry);
+  const addEntry = useWorldStore((s) => s.addEntry);
 
   const {
     status,
@@ -212,6 +235,10 @@ export function MeyvnPanel({
   });
   const [showSources, setShowSources] = useState(false);
   const [showAISetup, setShowAISetup] = useState(false);
+  // Long-form write: target word count + accumulated chunks from continuation
+  const [wordTarget, setWordTarget] = useState(500);
+  const [writtenChunks, setWrittenChunks] = useState<string[]>([]);
+  const continuationDirectionRef = useRef<string>('');
   // Local tracking of applied/skipped proposal IDs
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
@@ -263,7 +290,31 @@ export function MeyvnPanel({
     const p = prompt.trim();
     setPrompt('');
     try { sessionStorage.removeItem('meyvn_draft'); } catch { /* ignore */ }
-    suggest(tab === 'write' ? toWritePrompt(p) : p);
+    if (tab === 'write') {
+      continuationDirectionRef.current = p;
+      setWrittenChunks([]);
+      const maxTokens = Math.ceil(wordTarget * 1.4);
+      suggest(toWritePrompt(p) + `\n\nWrite approximately ${wordTarget} words.`, { maxTokens });
+    } else {
+      suggest(p);
+    }
+  };
+
+  const handleContinueWriting = () => {
+    if (isStreaming) return;
+    const allText = [...writtenChunks, streamedText].join('\n\n');
+    const words = allText.trim().split(/\s+/).filter(Boolean);
+    // Pass last 300 words as context so the model continues seamlessly
+    const tail = words.slice(-300).join(' ');
+    const remaining = Math.max(250, wordTarget - countWords(allText));
+    setWrittenChunks([...writtenChunks, streamedText]);
+    const maxTokens = Math.ceil(remaining * 1.4);
+    suggest(
+      `Continue this story seamlessly. Here is where it left off:\n\n"${tail}"\n\n` +
+      `Write the next ${remaining} words, continuing directly from this point without repeating anything. ` +
+      `Author's original direction: ${continuationDirectionRef.current}`,
+      { maxTokens },
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -275,13 +326,45 @@ export function MeyvnPanel({
 
   const handleSendToEditor = (action: SuggestionAction) => {
     if (!streamedText) return;
-    setPendingSuggestion({ text: streamedText, action });
+    // If the user accumulated multiple chunks, send all of them joined
+    const fullText = writtenChunks.length > 0
+      ? [...writtenChunks, streamedText].join('\n\n')
+      : streamedText;
+    setPendingSuggestion({ text: fullText, action });
+    setWrittenChunks([]);
     reset();
   };
 
   // ── Lore Watch ────────────────────────────────────────────────────────────
   const handleApplyProposal = useCallback(
-    async (proposal: LoreProposal) => {
+    async (proposal: LoreProposal, targetSectionId?: string) => {
+      if (proposal.changeType === 'create_entry') {
+        const bookId = activeBook?.id;
+        if (!bookId) return;
+        // Find or use provided section
+        const allSections = [...worldSections, ...linkedSections];
+        let sectionId = targetSectionId;
+        if (!sectionId && proposal.sectionTitle) {
+          const match = allSections.find(
+            (s) => s.name.toLowerCase() === proposal.sectionTitle!.toLowerCase(),
+          );
+          sectionId = match?.id ?? allSections[0]?.id;
+        }
+        if (!sectionId) return;
+        // Create the entry then immediately populate its title + content
+        const tiptapContent = JSON.stringify({
+          type: 'doc',
+          content: [{
+            type: 'paragraph',
+            content: [{ type: 'text', text: proposal.proposed }],
+          }],
+        });
+        const newEntry = await addEntry(bookId, sectionId);
+        await updateEntry(newEntry.id, { title: proposal.entryTitle, content: tiptapContent });
+        setAppliedIds((prev) => new Set([...prev, proposal.id]));
+        return;
+      }
+
       const entry = worldEntries.find((e) => e.id === proposal.entryId);
       if (!entry) return;
 
@@ -311,7 +394,7 @@ export function MeyvnPanel({
         }
       } catch { /* silent */ }
     },
-    [worldEntries, worldSections, linkedSections, updateEntry],
+    [activeBook?.id, worldEntries, worldSections, linkedSections, updateEntry, addEntry],
   );
 
   const handleSkipProposal = (id: string) => {
@@ -336,6 +419,9 @@ export function MeyvnPanel({
       : null;
 
   const showWriteActions = tab === 'write' && streamedText && !isStreaming;
+  const totalWrittenWords = countWords([...writtenChunks, streamedText].join(' '));
+  const showContinueAction = showWriteActions && writtenChunks.length > 0 && totalWrittenWords < wordTarget * 0.92;
+  const showContinuePrompt = showWriteActions && writtenChunks.length === 0 && countWords(streamedText) < wordTarget * 0.75;
 
   const pendingProposalCount = loreProposals.filter(
     (p) => !appliedIds.has(p.id) && !skippedIds.has(p.id),
@@ -648,7 +734,8 @@ export function MeyvnPanel({
                       proposal={p}
                       applied={appliedIds.has(p.id)}
                       skipped={skippedIds.has(p.id)}
-                      onApply={() => handleApplyProposal(p)}
+                      sections={[...worldSections, ...linkedSections]}
+                      onApply={(sectionId) => handleApplyProposal(p, sectionId)}
                       onSkip={() => handleSkipProposal(p.id)}
                     />
                   ))}
@@ -734,10 +821,22 @@ export function MeyvnPanel({
 
             {/* Write mode: Send to Editor action row */}
             {showWriteActions && (
-              <div className="border-t border-violet-100 bg-violet-50 px-3 py-2 shrink-0">
-                <p className="text-[10px] text-violet-500 mb-1.5 font-medium">
-                  {countWords(streamedText)} words — send to editor:
-                </p>
+              <div className="border-t border-violet-100 bg-violet-50 px-3 py-2 shrink-0 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-violet-500 font-medium">
+                    {totalWrittenWords} / {wordTarget} words
+                    {writtenChunks.length > 0 && ` · ${writtenChunks.length + 1} parts`}
+                  </p>
+                  {(showContinuePrompt || showContinueAction) && (
+                    <button
+                      onClick={handleContinueWriting}
+                      className="text-[10px] font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-0.5"
+                    >
+                      Continue writing →
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-violet-400">Send to editor:</p>
                 <div className="flex gap-1.5">
                   <button
                     onClick={() => handleSendToEditor('insert_at_cursor')}
@@ -755,7 +854,7 @@ export function MeyvnPanel({
                     Append
                   </button>
                   <button
-                    onClick={reset}
+                    onClick={() => { reset(); setWrittenChunks([]); }}
                     className="px-2.5 py-1.5 text-xs rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
                     title="Discard Meyvn's suggestion"
                   >
@@ -870,6 +969,20 @@ export function MeyvnPanel({
 
             {/* Input area */}
             <div className="border-t border-slate-200 p-3 space-y-2 shrink-0">
+              {tab === 'write' && (
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] text-slate-400 shrink-0">Target length</label>
+                  <select
+                    value={wordTarget}
+                    onChange={(e) => setWordTarget(Number(e.target.value))}
+                    className="flex-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 outline-none focus:border-violet-300"
+                  >
+                    {[250, 500, 750, 1000, 1500, 2000, 3000].map((n) => (
+                      <option key={n} value={n}>{n} words</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <textarea
                 value={prompt}
                 onChange={(e) => {

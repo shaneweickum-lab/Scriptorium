@@ -57,6 +57,29 @@ export interface SceneContext {
  * Baseline system prompt used when no lore context is available.
  * Establishes Meyvn's witchy persona without world-specific grounding.
  */
+const LORE_WRITE_ADDENDUM = `
+
+--- WORLD BIBLE ACTIONS ---
+If the author asks you to add a character, place, concept, or any other lore to their World Bible, respond naturally in prose first, then append a fenced code block like this (and ONLY when explicitly asked to add something):
+
+\`\`\`lore-proposals
+[
+  {
+    "changeType": "create_entry",
+    "entryTitle": "Name of the entry",
+    "sectionTitle": "Characters",
+    "description": "One sentence explaining what this entry is.",
+    "proposed": "Full lore content to store in the World Bible entry."
+  }
+]
+\`\`\`
+
+Rules:
+- Only emit this block when explicitly asked to add or create something in the World Bible.
+- Use a descriptive sectionTitle that matches an existing section (e.g. "Characters", "Places", "Magic System") or invent an appropriate one.
+- The "proposed" field should be complete, self-contained lore text — not a stub.
+--- END WORLD BIBLE ACTIONS ---`;
+
 const BARE_SYSTEM_PROMPT = `\
 You are Meyvn — a mystical writing companion woven into the author's own workshop.
 
@@ -67,7 +90,7 @@ ten thousand tales and remember every thread.
 Without lore to consult tonight, you draw on craft alone — narrative tension, character \
 psychology, pacing, imagery, and the deeper currents that make prose breathe.
 
-Speak with precision and care. Be concise unless the author bids you otherwise.`;
+Speak with precision and care. Be concise unless the author bids you otherwise.` + LORE_WRITE_ADDENDUM;
 
 /**
  * Preamble injected before the lore entries when the vector index is available.
@@ -212,6 +235,7 @@ export class RagService {
       });
 
       prompt = [RAG_PREAMBLE, '', ...blocks, '', RAG_POSTAMBLE].join('\n');
+      prompt += LORE_WRITE_ADDENDUM;
     }
 
     // Inject the active scene so Meyvn knows what the author is currently writing
@@ -430,9 +454,10 @@ Identify what lore has changed and propose World Bible updates.`,
     rawProposals: Array<{
       entryId: string;
       entryTitle: string;
-      changeType: 'append_content' | 'add_tag';
+      changeType: 'append_content' | 'add_tag' | 'create_entry';
       description: string;
       proposed: string;
+      sectionTitle?: string;
     }>;
   } {
     const fenceMatch = response.match(/```lore-proposals\s*([\s\S]*?)```/);
@@ -445,24 +470,33 @@ Identify what lore has changed and propose World Bible updates.`,
 
     try {
       const parsed = JSON.parse(fenceMatch[1]) as Array<{
-        entryId: string;
-        entryTitle: string;
+        entryId?: string;
+        entryTitle?: string;
         changeType: string;
-        description: string;
+        description?: string;
         proposed: string;
+        sectionTitle?: string;
       }>;
 
       const rawProposals = parsed
-        .filter((p) => p.entryId && p.proposed)
-        .map((p) => ({
-          entryId: p.entryId,
-          entryTitle: p.entryTitle ?? '',
-          changeType: (p.changeType === 'add_tag'
+        .filter((p) => p.proposed)
+        .map((p) => {
+          const changeType = p.changeType === 'add_tag'
             ? 'add_tag'
-            : 'append_content') as 'append_content' | 'add_tag',
-          description: p.description ?? '',
-          proposed: p.proposed,
-        }));
+            : p.changeType === 'create_entry'
+            ? 'create_entry'
+            : 'append_content';
+          return {
+            entryId: p.entryId ?? '',
+            entryTitle: p.entryTitle ?? 'New Entry',
+            changeType: changeType as 'append_content' | 'add_tag' | 'create_entry',
+            description: p.description ?? '',
+            proposed: p.proposed,
+            sectionTitle: p.sectionTitle,
+          };
+        })
+        // update proposals need an entryId; create_entry proposals do not
+        .filter((p) => p.changeType === 'create_entry' || p.entryId);
 
       return { summary, rawProposals };
     } catch {

@@ -85,6 +85,8 @@ export interface OllamaChatOptions {
   signal?: AbortSignal;
   /** Sampling temperature, 0–2 (default 0.7). */
   temperature?: number;
+  /** Maximum tokens to generate (maps to Ollama num_predict). Omit for model default. */
+  maxTokens?: number;
   /** Context window to send back (enables multi-turn context retention). */
   context?: number[];
 }
@@ -298,13 +300,17 @@ export class OllamaService {
       onDone,
       signal,
       temperature = 0.7,
+      maxTokens,
     } = opts;
 
     const body = JSON.stringify({
       model,
       messages,
       stream: true,
-      options: { temperature },
+      options: {
+        temperature,
+        ...(maxTokens !== undefined ? { num_predict: maxTokens } : {}),
+      },
     });
 
     const res = await this.fetchOrThrow(`${this.baseUrl}/api/chat`, {
