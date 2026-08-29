@@ -13,7 +13,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Sparkles, Loader2, AlertCircle, CornerDownRight,
-  WifiOff, RefreshCw, SendHorizonal, X as XIcon, ChevronRight,
+  WifiOff, RefreshCw, SendHorizonal, X as XIcon, ChevronRight, Play,
 } from 'lucide-react';
 import { useAuthorAI } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
@@ -184,6 +184,9 @@ export function LibraryMeyvnView() {
     try { return sessionStorage.getItem('meyvn_draft') ?? ''; } catch { return ''; }
   });
   const [showAISetup, setShowAISetup] = useState(false);
+  const [lastInsertedText, setLastInsertedText] = useState<string | null>(null);
+  const [wordTarget, setWordTarget] = useState(500);
+  const continuationDirectionRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -228,8 +231,15 @@ export function LibraryMeyvnView() {
     const p = prompt.trim();
     setPrompt('');
     try { sessionStorage.removeItem('meyvn_draft'); } catch { /* ignore */ }
-    suggest(tab === 'write' ? toWritePrompt(p) : p);
-  }, [prompt, isStreaming, suggest, tab]);
+    if (tab === 'write') {
+      continuationDirectionRef.current = p;
+      setLastInsertedText(null);
+      const maxTokens = Math.ceil(wordTarget * 1.4);
+      suggest(toWritePrompt(p) + `\n\nWrite approximately ${wordTarget} words.`, { maxTokens });
+    } else {
+      suggest(p);
+    }
+  }, [prompt, isStreaming, suggest, tab, wordTarget]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -240,9 +250,23 @@ export function LibraryMeyvnView() {
 
   const handleSendToEditor = (action: SuggestionAction) => {
     if (!streamedText) return;
+    if (action === 'insert_at_cursor') setLastInsertedText(streamedText);
     setPendingSuggestion({ text: streamedText, action });
     reset();
   };
+
+  const handleContinueFromInsert = useCallback(() => {
+    if (!lastInsertedText || isStreaming) return;
+    const words = lastInsertedText.trim().split(/\s+/).filter(Boolean);
+    const tail = words.slice(-300).join(' ');
+    const maxTokens = Math.ceil(wordTarget * 1.4);
+    suggest(
+      `Continue this story seamlessly. Here is where it left off:\n\n"${tail}"\n\n` +
+      `Write the next ${wordTarget} words, continuing directly. Do not repeat what came before.\n` +
+      (continuationDirectionRef.current ? `Author's direction: ${continuationDirectionRef.current}` : ''),
+      { maxTokens },
+    );
+  }, [lastInsertedText, isStreaming, suggest, wordTarget]);
 
   const handleSuggestedPrompt = (p: string) => {
     setPrompt(p);
@@ -259,6 +283,7 @@ export function LibraryMeyvnView() {
   // ── Derived state ───────────────────────────────────────────────────────────
   const showWriteActions = tab === 'write' && streamedText && !isStreaming;
   const showEmptyState = history.length === 0 && !streamedText;
+  const showContinueFromInsert = tab === 'write' && !isStreaming && !streamedText && lastInsertedText !== null;
 
   // Build the visible conversation: committed history + in-flight streaming message
   const allMessages = [
@@ -541,9 +566,40 @@ export function LibraryMeyvnView() {
         </div>
       )}
 
+      {/* Continue-from-insert bar */}
+      {showContinueFromInsert && (
+        <div className="shrink-0 border-t border-teal-100 bg-teal-50 px-6 py-3">
+          <div className="max-w-3xl mx-auto flex items-center gap-3">
+            <p className="text-xs text-teal-700 font-medium flex-1">Ready to continue from last insert</p>
+            <button onClick={handleContinueFromInsert}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-white"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+              <Play size={11} /> Continue writing
+            </button>
+            <button onClick={() => setLastInsertedText(null)}
+              className="p-1.5 rounded-lg text-teal-400 hover:text-teal-600 hover:bg-teal-100 transition-all" title="Dismiss">
+              <XIcon size={13} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Input area ─────────────────────────────────────────────────── */}
       <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-4">
         <div className="max-w-3xl mx-auto">
+          {tab === 'write' && (
+            <div className="flex items-center gap-2 mb-2">
+              <label className="text-[10px] text-slate-400 shrink-0">Target length</label>
+              <select
+                value={wordTarget}
+                onChange={(e) => setWordTarget(Number(e.target.value))}
+                className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-violet-300">
+                {[250, 500, 750, 1000, 1500, 2000, 3000].map((n) => (
+                  <option key={n} value={n}>{n} words</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex items-end gap-3">
             <textarea
               ref={textareaRef}

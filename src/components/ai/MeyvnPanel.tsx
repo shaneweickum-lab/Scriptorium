@@ -17,6 +17,8 @@ import {
   SkipForward,
   WifiOff,
   RefreshCw,
+  User,
+  Play,
 } from 'lucide-react';
 import { useAuthorAI, type LoreProposal } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -205,6 +207,7 @@ export function MeyvnPanel({
     setModel,
     styleProfile,
     history,
+    clearHistory,
     suggest,
     cancel,
     reset,
@@ -239,6 +242,8 @@ export function MeyvnPanel({
   const [wordTarget, setWordTarget] = useState(500);
   const [writtenChunks, setWrittenChunks] = useState<string[]>([]);
   const continuationDirectionRef = useRef<string>('');
+  // Tracks the last text sent to editor so "Continue" can pick up from there
+  const [lastInsertedText, setLastInsertedText] = useState<string | null>(null);
   // Local tracking of applied/skipped proposal IDs
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
@@ -293,6 +298,7 @@ export function MeyvnPanel({
     if (tab === 'write') {
       continuationDirectionRef.current = p;
       setWrittenChunks([]);
+      setLastInsertedText(null); // New direction resets the continuation anchor
       const maxTokens = Math.ceil(wordTarget * 1.4);
       suggest(toWritePrompt(p) + `\n\nWrite approximately ${wordTarget} words.`, { maxTokens });
     } else {
@@ -326,13 +332,31 @@ export function MeyvnPanel({
 
   const handleSendToEditor = (action: SuggestionAction) => {
     if (!streamedText) return;
-    // If the user accumulated multiple chunks, send all of them joined
     const fullText = writtenChunks.length > 0
       ? [...writtenChunks, streamedText].join('\n\n')
       : streamedText;
+    // Remember the inserted text so the Continue button can pick up from here
+    if (action === 'insert_at_cursor') setLastInsertedText(fullText);
     setPendingSuggestion({ text: fullText, action });
     setWrittenChunks([]);
     reset();
+  };
+
+  // Continue writing from wherever was last inserted into the editor
+  const handleContinueFromInsert = () => {
+    if (!lastInsertedText || isStreaming) return;
+    const words = lastInsertedText.trim().split(/\s+/).filter(Boolean);
+    const tail = words.slice(-300).join(' ');
+    const maxTokens = Math.ceil(wordTarget * 1.4);
+    setWrittenChunks([]);
+    suggest(
+      `Continue this story seamlessly. Here is where it left off:\n\n"${tail}"\n\n` +
+      `Write the next ${wordTarget} words, continuing directly. Do not repeat what came before.\n` +
+      (continuationDirectionRef.current
+        ? `Author's direction: ${continuationDirectionRef.current}`
+        : ''),
+      { maxTokens },
+    );
   };
 
   // ── Lore Watch ────────────────────────────────────────────────────────────
@@ -422,6 +446,14 @@ export function MeyvnPanel({
   const totalWrittenWords = countWords([...writtenChunks, streamedText].join(' '));
   const showContinueAction = showWriteActions && writtenChunks.length > 0 && totalWrittenWords < wordTarget * 0.92;
   const showContinuePrompt = showWriteActions && writtenChunks.length === 0 && countWords(streamedText) < wordTarget * 0.75;
+  // Show "Continue from last insert" when idle and something was just sent to the editor
+  const showContinueFromInsert = tab === 'write' && !isStreaming && !streamedText && lastInsertedText !== null;
+
+  // Build visible conversation: past turns + live streaming response
+  const allMessages = [
+    ...history,
+    ...(streamedText ? [{ role: 'assistant' as const, content: streamedText, live: true }] : []),
+  ];
 
   const pendingProposalCount = loreProposals.filter(
     (p) => !appliedIds.has(p.id) && !skippedIds.has(p.id),
@@ -789,25 +821,27 @@ export function MeyvnPanel({
               </div>
             )}
 
-            {/* Response area */}
+            {/* Response area — conversation history + live stream */}
             <div
               ref={responseRef}
-              className="flex-1 overflow-y-auto px-3 py-3 text-sm text-slate-700 leading-relaxed"
+              className="flex-1 overflow-y-auto px-3 py-2 space-y-3 text-sm text-slate-700"
             >
-              {streamedText ? (
-                <div className="whitespace-pre-wrap">
-                  {streamedText}
-                  {status === 'generating' && (
-                    <span className="inline-block w-0.5 h-4 bg-violet-400 ml-0.5 animate-pulse align-text-bottom" />
-                  )}
-                </div>
-              ) : status === 'idle' && history.length === 0 ? (
+              {allMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-8">
                   <Sparkles size={28} className="text-slate-200" />
                   {tab === 'write' ? (
-                    <p className="text-xs text-slate-400 max-w-[200px]">
-                      Tell Meyvn what to write and she'll weave prose you can insert directly into your scene.
-                    </p>
+                    <>
+                      <p className="text-xs text-slate-400 max-w-[200px]">
+                        Tell Meyvn what to write and she'll weave prose you can insert directly into your scene.
+                      </p>
+                      {showContinueFromInsert && (
+                        <button onClick={handleContinueFromInsert}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                          style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+                          <Play size={11} /> Continue writing
+                        </button>
+                      )}
+                    </>
                   ) : (
                     <p className="text-xs text-slate-400 max-w-[200px]">
                       {liveContent
@@ -816,7 +850,55 @@ export function MeyvnPanel({
                     </p>
                   )}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  {/* New thread / clear button at top of history */}
+                  {history.length > 0 && (
+                    <div className="flex justify-end pt-1">
+                      <button
+                        onClick={() => { clearHistory(); reset(); setLastInsertedText(null); }}
+                        className="text-[10px] text-slate-400 hover:text-slate-600 px-2 py-0.5 rounded hover:bg-slate-100 transition-all">
+                        New thread
+                      </button>
+                    </div>
+                  )}
+                  {allMessages.map((msg, i) => (
+                    <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {msg.role === 'assistant' && (
+                        <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center"
+                          style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+                          <Sparkles size={10} className="text-white" />
+                        </div>
+                      )}
+                      <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-violet-600 text-white rounded-tr-sm'
+                          : 'bg-slate-100 text-slate-700 rounded-tl-sm'
+                      }`}>
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        {'live' in msg && msg.live && status === 'generating' && (
+                          <span className="inline-block w-0.5 h-3.5 bg-slate-500 ml-0.5 animate-pulse align-text-bottom" />
+                        )}
+                      </div>
+                      {msg.role === 'user' && (
+                        <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 bg-slate-200 flex items-center justify-center">
+                          <User size={10} className="text-slate-500" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {/* Continue from insert — shown below the conversation */}
+                  {showContinueFromInsert && (
+                    <div className="flex justify-center pt-1">
+                      <button onClick={handleContinueFromInsert}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                        style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+                        <Play size={11} /> Continue writing
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Write mode: Send to Editor action row */}
@@ -832,7 +914,7 @@ export function MeyvnPanel({
                       onClick={handleContinueWriting}
                       className="text-[10px] font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-0.5"
                     >
-                      Continue writing →
+                      Continue →
                     </button>
                   )}
                 </div>
@@ -859,6 +941,26 @@ export function MeyvnPanel({
                     title="Discard Meyvn's suggestion"
                   >
                     ✕
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Continue-from-insert bar — shows after "At cursor" when conversation area is visible */}
+            {showContinueFromInsert && allMessages.length > 0 && (
+              <div className="border-t border-teal-100 bg-teal-50 px-3 py-2 shrink-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-teal-600 flex-1">Ready to continue from last insert</p>
+                  <button
+                    onClick={handleContinueFromInsert}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold text-white transition-all"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+                    <Play size={10} /> Continue
+                  </button>
+                  <button
+                    onClick={() => setLastInsertedText(null)}
+                    className="p-1 text-teal-400 hover:text-teal-600 transition-all" title="Dismiss">
+                    <X size={11} />
                   </button>
                 </div>
               </div>
