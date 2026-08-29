@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useUIStore } from '../../store/uiStore';
 import { useLibraryStore } from '../../store/libraryStore';
+import { useAuthStore } from '../../store/authStore';
 import { WritingSpace } from '../writing/WritingSpace';
 import { Assembly } from '../assembly/Assembly';
 import { ExportModal } from '../export/ExportModal';
@@ -9,6 +11,7 @@ import { ProjectSettings } from './ProjectSettings';
 import { ToastContainer } from '../common/Toast';
 import { AchievementsModal } from '../achievements/AchievementsModal';
 import { MeyvnPanel } from '../ai/MeyvnPanel';
+import { AuthModal } from '../auth/AuthModal';
 import { useVectorIndex } from '../../features/ai-engine/hooks/useVectorIndex';
 import { useOracleML } from '../../features/ai-engine/hooks/useOracleML';
 
@@ -22,6 +25,14 @@ export function AppShell() {
   const setShowAchievementsModal = useUIStore((s) => s.setShowAchievementsModal);
   const showMeyvn = useUIStore((s) => s.showMeyvn);
   const setShowMeyvn = useUIStore((s) => s.setShowMeyvn);
+  const showAuthModal = useUIStore((s) => s.showAuthModal);
+  const authModalTab = useUIStore((s) => s.authModalTab);
+  const closeAuthModal = useUIStore((s) => s.closeAuthModal);
+
+  const initAuth = useAuthStore((s) => s.init);
+
+  // Initialise Supabase auth once on mount
+  useEffect(() => { initAuth(); }, [initAuth]);
 
   const activeBook = useLibraryStore((s) => s.activeBook);
   const { indexStatus, indexProgress } = useVectorIndex(activeBook?.id);
@@ -63,6 +74,7 @@ export function AppShell() {
       {showExportModal && <ExportModal onClose={() => setShowExportModal(false)} />}
       {showProjectSettings && <ProjectSettings onClose={() => setShowProjectSettings(false)} />}
       {showAchievementsModal && <AchievementsModal onClose={() => setShowAchievementsModal(false)} />}
+      {showAuthModal && <AuthModal onClose={closeAuthModal} defaultTab={authModalTab} />}
       <ToastContainer />
     </div>
   );

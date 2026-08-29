@@ -17,6 +17,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@orama/orama": "^3.1.18",
+    "@supabase/supabase-js": "^2.112.4",
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-http": "^2.5.8",
     "@tiptap/extension-character-count": "^3.22.0",

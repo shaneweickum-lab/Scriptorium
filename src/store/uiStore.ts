@@ -23,6 +23,8 @@ interface UIState {
   showMeyvn: boolean;
   showOutlinePanel: boolean;
   showNavSidebar: boolean;
+  showAuthModal: boolean;
+  authModalTab: 'signin' | 'signup';
   toasts: Toast[];
 
   setActiveView: (view: ActiveView) => void;
@@ -37,6 +39,8 @@ interface UIState {
   setShowMeyvn: (show: boolean) => void;
   setShowOutlinePanel: (show: boolean) => void;
   setShowNavSidebar: (show: boolean) => void;
+  openAuthModal: (tab?: 'signin' | 'signup') => void;
+  closeAuthModal: () => void;
   addToast: (message: string, type?: Toast['type']) => void;
   addAchievementToast: (name: string, xp: number, emoji: string) => void;
   removeToast: (id: string) => void;
@@ -55,6 +59,8 @@ export const useUIStore = create<UIState>((set) => ({
   showMeyvn: false,
   showOutlinePanel: true,
   showNavSidebar: true,
+  showAuthModal: false,
+  authModalTab: 'signin' as const,
   toasts: [],
 
   setActiveView: (view) => set({ activeView: view }),
@@ -69,6 +75,8 @@ export const useUIStore = create<UIState>((set) => ({
   setShowMeyvn: (show) => set({ showMeyvn: show }),
   setShowOutlinePanel: (show) => set({ showOutlinePanel: show }),
   setShowNavSidebar: (show) => set({ showNavSidebar: show }),
+  openAuthModal: (tab = 'signin') => set({ showAuthModal: true, authModalTab: tab }),
+  closeAuthModal: () => set({ showAuthModal: false }),
 
   addToast: (message, type = 'success') => {
     const id = crypto.randomUUID();

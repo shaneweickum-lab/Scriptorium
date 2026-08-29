@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star, Sparkles, User, LogOut, Cloud } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
+import { useAuthStore } from '../../store/authStore';
 import { useAchievementStore } from '../../store/achievementStore';
 import { useProject } from '../../hooks/useProject';
 import { getLevel, getLevelProgress } from '../../types/achievements';
 import { FocusTimer } from '../timer/FocusTimer';
+import { backupBook } from '../../services/cloudBackupService';
 
 export function TopBar() {
   const { activeBook, updateBook, closeBook } = useLibraryStore();
@@ -22,6 +24,11 @@ export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
+
+  const { user, profile, signOut } = useAuthStore();
+  const openAuthModal = useUIStore((s) => s.openAuthModal);
 
   const { totalXP, unlocks } = useAchievementStore();
   const level = getLevel(totalXP);
@@ -45,6 +52,19 @@ export function TopBar() {
     const file = e.target.files?.[0];
     if (file) loadProject(file);
     e.target.value = '';
+  };
+
+  const handleBackup = async () => {
+    if (!user || !activeBook) return;
+    setBackingUp(true);
+    const result = await backupBook(activeBook.id, user);
+    setBackingUp(false);
+    setShowAccountMenu(false);
+    if (result.ok) {
+      useUIStore.getState().addToast('Book backed up to cloud', 'success');
+    } else {
+      useUIStore.getState().addToast(result.error, 'error');
+    }
   };
 
   return (
@@ -181,8 +201,78 @@ export function TopBar() {
         >
           <Sparkles size={14} />
           <span className="hidden md:inline">Meyvn</span>
-          <span className="hidden md:inline text-[9px] font-semibold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">Soon</span>
         </button>
+
+        <div className="w-px h-4 bg-slate-200 mx-0.5" />
+
+        {/* Account */}
+        <div className="relative">
+          {user ? (
+            <>
+              <button
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                title={profile?.display_name ?? user.email ?? 'Account'}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 transition-all"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-teal-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+                  {(profile?.display_name ?? user.email ?? '?')[0].toUpperCase()}
+                </div>
+                <span className="hidden md:inline max-w-[80px] truncate">
+                  {profile?.display_name ?? user.email}
+                </span>
+              </button>
+
+              {showAccountMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowAccountMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-52 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-100">
+                      <p className="text-xs font-semibold text-slate-800 truncate">
+                        {profile?.display_name ?? 'Account'}
+                      </p>
+                      <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+                      {profile?.plan && (
+                        <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                          profile.plan === 'pro'
+                            ? 'bg-violet-100 text-violet-700'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {profile.plan}
+                        </span>
+                      )}
+                    </div>
+                    {activeBook && (
+                      <button
+                        onClick={handleBackup}
+                        disabled={backingUp}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition-all disabled:opacity-50"
+                      >
+                        <Cloud size={13} />
+                        {backingUp ? 'Backing up…' : 'Back up this book'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { signOut(); setShowAccountMenu(false); }}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all"
+                    >
+                      <LogOut size={13} />
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={() => openAuthModal('signin')}
+              title="Sign in"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 transition-all"
+            >
+              <User size={14} />
+              <span className="hidden md:inline">Sign In</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileChange} className="hidden" />
