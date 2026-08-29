@@ -50,6 +50,7 @@ import {
 } from '../services/OllamaService';
 import {
   WebLLMService,
+  WEB_LLM_DEFAULT_MODEL,
   type WebLLMStatus,
   type WebLLMProgress,
 } from '../services/WebLLMService';
@@ -188,17 +189,21 @@ export interface UseAuthorAIReturn {
   connectionErrorKind: 'cors' | 'network' | null;
 
   // ── Provider selection ─────────────────────────────────────────────────────
-  /** Active inference provider: 'ollama' (default) or 'webgpu' (SmolLM2-1.7B). */
+  /** Active inference provider: 'ollama' (default) or 'webgpu'. */
   provider: AIProvider;
   /** Switch between Ollama and WebGPU providers. */
   setProvider: (p: AIProvider) => void;
   /** Whether navigator.gpu is available in this browser. */
   isWebGPUSupported: boolean;
+  /** Currently selected WebLLM model ID. */
+  webllmModel: string;
+  /** Switch the WebGPU model (triggers a reload when loading next). */
+  setWebllmModel: (id: string) => void;
   /** Lifecycle status of the WebLLM engine (idle → loading → ready | error). */
   webllmStatus: WebLLMStatus;
   /** Download/init progress for WebLLM (0–1 fraction + status text). */
   webllmProgress: WebLLMProgress | null;
-  /** Load SmolLM2-1.7B weights into the browser. Safe to call multiple times. */
+  /** Load the selected WebLLM model into the browser. Safe to call multiple times. */
   loadWebLLM: () => Promise<void>;
 
   // ── Lore Sentinel ──────────────────────────────────────────────────────────
@@ -268,6 +273,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   const [loreScanSummary, setLoreScanSummary] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [provider, setProvider] = useState<AIProvider>('ollama');
+  const [webllmModel, setWebllmModel] = useState<string>(WEB_LLM_DEFAULT_MODEL);
   const [webllmStatus, setWebllmStatus] = useState<WebLLMStatus>(() => WebLLMService.status);
   const [webllmProgress, setWebllmProgress] = useState<WebLLMProgress | null>(null);
 
@@ -332,10 +338,13 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   }, [bookId]);
 
   // ── WebLLM loader ──────────────────────────────────────────────────────────
+  const webllmModelRef = useRef<string>(WEB_LLM_DEFAULT_MODEL);
+  webllmModelRef.current = webllmModel;
+
   const loadWebLLM = useCallback(async () => {
     setWebllmStatus('loading');
     try {
-      await WebLLMService.load();
+      await WebLLMService.load(webllmModelRef.current);
       setWebllmStatus('ready');
     } catch {
       setWebllmStatus('error');
@@ -615,6 +624,8 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     provider,
     setProvider,
     isWebGPUSupported: WebLLMService.isWebGPUSupported(),
+    webllmModel,
+    setWebllmModel,
     webllmStatus,
     webllmProgress,
     loadWebLLM,

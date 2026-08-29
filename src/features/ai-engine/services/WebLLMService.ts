@@ -1,18 +1,44 @@
 /**
- * WebLLMService — runs SmolLM2-1.7B in the browser via WebGPU using MLC/WebLLM.
+ * WebLLMService — runs small LLMs in the browser via WebGPU using MLC/WebLLM.
  *
- * The engine is a module-level singleton so model weights are downloaded once
- * and reused across renders. Dynamic import() keeps WebLLM out of the main
- * bundle until the user explicitly activates the WebGPU provider.
+ * Supports SmolLM2-1.7B and Qwen2.5-3B. The engine is a module-level
+ * singleton so weights are downloaded once per model and cached by the
+ * browser's Cache API. Dynamic import() keeps the WebLLM bundle out of the
+ * main chunk until the user explicitly activates the WebGPU provider.
  *
- * Usage:
- *   if (!WebLLMService.isWebGPUSupported()) { ... }
- *   const unsubscribe = WebLLMService.onProgress(p => setProgress(p));
- *   await WebLLMService.load();
- *   await WebLLMService.chat({ messages, onToken, onDone });
+ * Switching models: call load(newModelId) — the engine resets and reloads.
  */
 
 import type { OllamaMessage } from './OllamaService';
+
+// ---------------------------------------------------------------------------
+// Model catalogue
+// ---------------------------------------------------------------------------
+
+export interface WebLLMModelDef {
+  id: string;
+  label: string;
+  vram: string;
+  description: string;
+}
+
+export const WEB_LLM_MODELS: WebLLMModelDef[] = [
+  {
+    id: 'SmolLM2-1.7B-Instruct-q4f16_1-MLC',
+    label: 'SmolLM2 1.7B',
+    vram: '~1.5 GB',
+    description: 'Fast — works on most WebGPU-capable devices',
+  },
+  {
+    id: 'Qwen2.5-3B-Instruct-q4f16_1-MLC',
+    label: 'Qwen2.5 3B',
+    vram: '~2.5 GB',
+    description: 'Better quality — needs ≥4 GB VRAM',
+  },
+];
+
+/** Default WebGPU model ID. */
+export const WEB_LLM_DEFAULT_MODEL = WEB_LLM_MODELS[0].id;
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -21,22 +47,21 @@ import type { OllamaMessage } from './OllamaService';
 export type WebLLMStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 export interface WebLLMProgress {
-  /** 0–1 fraction complete (WebLLM reports this during weight download). */
+  /** 0–1 fraction complete. */
   progress: number;
-  /** Human-readable status line, e.g. "Loading model weights [3/10]". */
+  /** Human-readable status line. */
   text: string;
 }
 
 // ---------------------------------------------------------------------------
-// Module-level singleton state — survives React re-renders
+// Module-level singleton state
 // ---------------------------------------------------------------------------
-
-export const WEB_LLM_MODEL = 'SmolLM2-1.7B-Instruct-q4f16_1-MLC';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _engine: any = null;
 let _status: WebLLMStatus = 'idle';
 let _loadPromise: Promise<void> | null = null;
+let _loadedModelId: string | null = null;
 let _progressListeners: Array<(p: WebLLMProgress) => void> = [];
 let _lastError: string | null = null;
 
@@ -44,40 +69,41 @@ function _notifyProgress(p: WebLLMProgress) {
   for (const fn of _progressListeners) fn(p);
 }
 
+function _reset() {
+  _engine = null;
+  _status = 'idle';
+  _loadPromise = null;
+  _loadedModelId = null;
+  _lastError = null;
+}
+
 // ---------------------------------------------------------------------------
 // Service object
 // ---------------------------------------------------------------------------
 
 export const WebLLMService = {
-  /** Current engine lifecycle status. */
   get status(): WebLLMStatus { return _status; },
-
-  /** Last error message if status === 'error'. */
   get lastError(): string | null { return _lastError; },
+  get loadedModelId(): string | null { return _loadedModelId; },
 
-  /** True when the browser exposes navigator.gpu (WebGPU API). */
   isWebGPUSupported(): boolean {
     return typeof navigator !== 'undefined' && 'gpu' in navigator;
   },
 
-  /**
-   * Subscribe to load-progress events. Returns an unsubscribe function.
-   * Useful for driving a progress bar in the UI.
-   */
   onProgress(fn: (p: WebLLMProgress) => void): () => void {
     _progressListeners = [..._progressListeners, fn];
-    return () => {
-      _progressListeners = _progressListeners.filter((f) => f !== fn);
-    };
+    return () => { _progressListeners = _progressListeners.filter((f) => f !== fn); };
   },
 
   /**
-   * Download and initialise the SmolLM2-1.7B engine.
-   * Safe to call multiple times — subsequent calls return the same promise.
-   * Model weights are cached in the browser's Cache API by WebLLM.
+   * Load (or switch to) a model. If the same model is already loaded this is
+   * a no-op. Switching to a different model resets the engine first.
    */
-  async load(): Promise<void> {
-    if (_status === 'ready') return;
+  async load(modelId: string = WEB_LLM_DEFAULT_MODEL): Promise<void> {
+    if (_status === 'ready' && _loadedModelId === modelId) return;
+
+    // Different model or prior error — reset before reloading
+    if (_loadedModelId !== null && _loadedModelId !== modelId) _reset();
     if (_loadPromise) return _loadPromise;
 
     _status = 'loading';
@@ -85,28 +111,25 @@ export const WebLLMService = {
     _loadPromise = (async () => {
       try {
         const { CreateMLCEngine } = await import('@mlc-ai/web-llm');
-        _engine = await CreateMLCEngine(WEB_LLM_MODEL, {
+        _engine = await CreateMLCEngine(modelId, {
           initProgressCallback: (report: { progress: number; text: string }) => {
             _notifyProgress({ progress: report.progress, text: report.text });
           },
         });
+        _loadedModelId = modelId;
         _status = 'ready';
-        _notifyProgress({ progress: 1, text: 'SmolLM2-1.7B ready' });
+        const def = WEB_LLM_MODELS.find((m) => m.id === modelId);
+        _notifyProgress({ progress: 1, text: `${def?.label ?? modelId} ready` });
       } catch (err) {
         _status = 'error';
         _lastError = err instanceof Error ? err.message : String(err);
-        _loadPromise = null; // allow retry
+        _loadPromise = null;
         throw err;
       }
     })();
     return _loadPromise;
   },
 
-  /**
-   * Stream a chat completion through SmolLM2. Calls `onToken` for each
-   * streamed piece and `onDone` once with the full accumulated response.
-   * Respects `signal.aborted` to interrupt mid-stream.
-   */
   async chat(opts: {
     messages: OllamaMessage[];
     temperature?: number;
@@ -126,10 +149,7 @@ export const WebLLMService = {
     for await (const chunk of stream) {
       if (opts.signal?.aborted) break;
       const token = (chunk.choices[0]?.delta?.content as string) ?? '';
-      if (token) {
-        full += token;
-        opts.onToken(token);
-      }
+      if (token) { full += token; opts.onToken(token); }
     }
     opts.onDone(full);
   },
