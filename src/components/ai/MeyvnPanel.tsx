@@ -19,14 +19,15 @@ import {
   RefreshCw,
   User,
   Play,
+  Copy,
 } from 'lucide-react';
 import { useAuthorAI, type LoreProposal } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
 import { useWorldStore } from '../../store/worldStore';
 import { VectorIndexService } from '../../features/ai-engine/services/VectorIndexService';
-import { OLLAMA_CHAT_MODELS } from '../../features/ai-engine/services/OllamaService';
-import { WEB_LLM_MODELS } from '../../features/ai-engine/services/WebLLMService';
+import { OllamaService, OLLAMA_CHAT_MODELS } from '../../features/ai-engine/services/OllamaService';
+import { WebLLMService, WEB_LLM_MODELS } from '../../features/ai-engine/services/WebLLMService';
 import { AISetupModal } from './AISetupModal';
 import type { VectorIndexStatus, UseVectorIndexReturn } from '../../features/ai-engine/hooks/useVectorIndex';
 import type { OracleProfile } from '../../features/ai-engine/services/OracleMLService';
@@ -208,6 +209,7 @@ export function MeyvnPanel({
     styleProfile,
     history,
     clearHistory,
+    undoLastTurn,
     suggest,
     cancel,
     reset,
@@ -248,6 +250,16 @@ export function MeyvnPanel({
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
   const responseRef = useRef<HTMLDivElement>(null);
+  const [copiedMsgIdx, setCopiedMsgIdx] = useState<number | null>(null);
+
+  // ── Human engagement tracking ─────────────────────────────────────────────
+  // Counts cumulative AI-generated words inserted into the editor since the
+  // last human writing contribution. Triggers a warm check-in at 1500 words.
+  const aiInsertedWordsRef = useRef(0);
+  const editorBaseWordsRef = useRef<number | null>(null);
+  const [engagementQuestion, setEngagementQuestion] = useState<string | null>(null);
+  const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
+  const engagementAbortRef = useRef<AbortController | null>(null);
 
   // ── Ollama connection health ──────────────────────────────────────────────
   type OllamaStatus = 'checking' | 'ok' | 'unreachable';
@@ -261,6 +273,72 @@ export function MeyvnPanel({
 
   // Probe once on mount
   useEffect(() => { probeHealth(); }, [probeHealth]);
+
+  // Detect when the author writes in the editor (not via AI insert) and reset
+  // the engagement counter so they aren't interrupted while actively writing.
+  useEffect(() => {
+    const current = countWords(liveContent);
+    if (editorBaseWordsRef.current === null) {
+      editorBaseWordsRef.current = current;
+      return;
+    }
+    const expected = editorBaseWordsRef.current + aiInsertedWordsRef.current;
+    if (current > expected + 40) {
+      aiInsertedWordsRef.current = 0;
+      editorBaseWordsRef.current = current;
+      engagementAbortRef.current?.abort();
+      setEngagementQuestion(null);
+      setIsGeneratingQuestion(false);
+    }
+  }, [liveContent]);
+
+  // Cleanup engagement abort on unmount
+  useEffect(() => () => { engagementAbortRef.current?.abort(); }, []);
+
+  // Generate a personalised check-in question about the last AI passage.
+  const generateEngagementQuestion = useCallback(async (passageExcerpt: string) => {
+    engagementAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    engagementAbortRef.current = ctrl;
+    setIsGeneratingQuestion(true);
+    setEngagementQuestion(null);
+
+    const fallback =
+      "I've been doing most of the writing! What's something YOU want to happen next — " +
+      "a plot twist, something a character feels, or a small world detail?";
+
+    const sysMsg =
+      'You are Meyvn, a warm writing mentor. Generate ONE short question (max 45 words) ' +
+      'to invite the author to contribute their own creative idea about this passage. ' +
+      "Be specific to the content. Open with something warm like \"I'd love to know —\" or \"Quick question —\".";
+    const userMsg = `Recent passage:\n\n${passageExcerpt.slice(-600)}\n\nGenerate one specific creative question.`;
+    const msgs = [
+      { role: 'system' as const, content: sysMsg },
+      { role: 'user' as const, content: userMsg },
+    ];
+
+    let answer = '';
+    const onToken = (t: string) => { answer += t; };
+    const onDone = () => {
+      if (!ctrl.signal.aborted) {
+        setEngagementQuestion(answer.trim() || fallback);
+        setIsGeneratingQuestion(false);
+      }
+    };
+
+    try {
+      if (provider === 'webgpu' && WebLLMService.status === 'ready') {
+        await WebLLMService.chat({ messages: msgs, temperature: 0.7, maxTokens: 70, onToken, onDone, signal: ctrl.signal });
+      } else {
+        await new OllamaService().chat({ model, messages: msgs, temperature: 0.7, maxTokens: 70, onToken, onDone, signal: ctrl.signal });
+      }
+    } catch {
+      if (!ctrl.signal.aborted) {
+        setEngagementQuestion(fallback);
+        setIsGeneratingQuestion(false);
+      }
+    }
+  }, [provider, model]);
 
   // Auto-clear the warning once a successful stream completes
   useEffect(() => {
@@ -289,19 +367,51 @@ export function MeyvnPanel({
     }
   };
 
+  // Undo the last AI response + user prompt, then re-run it for a fresh reply
+  const handleRegenerate = useCallback(() => {
+    if (isStreaming) return;
+    reset();
+    const lastPrompt = undoLastTurn();
+    if (lastPrompt) {
+      const maxTokens = tab === 'write' ? Math.ceil(wordTarget * 1.4) : undefined;
+      suggest(lastPrompt, { maxTokens });
+    }
+  }, [isStreaming, reset, undoLastTurn, suggest, tab, wordTarget]);
+
   // ── Chat / Write submit ────────────────────────────────────────────────────
   const handleSubmit = () => {
     if (!prompt.trim() || isStreaming) return;
     const p = prompt.trim();
     setPrompt('');
     try { sessionStorage.removeItem('meyvn_draft'); } catch { /* ignore */ }
+
     if (tab === 'write') {
-      continuationDirectionRef.current = p;
-      setWrittenChunks([]);
-      setLastInsertedText(null); // New direction resets the continuation anchor
       const maxTokens = Math.ceil(wordTarget * 1.4);
-      suggest(toWritePrompt(p) + `\n\nWrite approximately ${wordTarget} words.`, { maxTokens });
+      setWrittenChunks([]);
+      setLastInsertedText(null);
+
+      if (engagementQuestion) {
+        // User answered Meyvn's check-in — weave their input into next generation
+        const enrichedPrompt =
+          `Continue the story naturally. The author has shared this creative input: "${p}"\n\n` +
+          `Weave it organically into the prose — don't reference it directly, just let it shape what happens. ` +
+          `Write approximately ${wordTarget} words.` +
+          (continuationDirectionRef.current
+            ? `\n\nOriginal story direction: ${continuationDirectionRef.current}`
+            : '');
+        setEngagementQuestion(null);
+        aiInsertedWordsRef.current = 0;
+        editorBaseWordsRef.current = countWords(liveContent);
+        suggest(enrichedPrompt, { maxTokens });
+      } else {
+        continuationDirectionRef.current = p;
+        suggest(toWritePrompt(p) + `\n\nWrite approximately ${wordTarget} words.`, { maxTokens });
+      }
     } else {
+      if (engagementQuestion) {
+        setEngagementQuestion(null);
+        aiInsertedWordsRef.current = 0;
+      }
       suggest(p);
     }
   };
@@ -335,9 +445,16 @@ export function MeyvnPanel({
     const fullText = writtenChunks.length > 0
       ? [...writtenChunks, streamedText].join('\n\n')
       : streamedText;
-    // Remember the inserted text so the Continue button can pick up from here
     if (action === 'insert_at_cursor') setLastInsertedText(fullText);
     setPendingSuggestion({ text: fullText, action });
+
+    // Track AI words inserted — trigger a check-in once 1500 words accumulate
+    // without the author writing anything themselves in the editor.
+    aiInsertedWordsRef.current += countWords(fullText);
+    if (aiInsertedWordsRef.current >= 1500 && !engagementQuestion && !isGeneratingQuestion) {
+      generateEngagementQuestion(fullText);
+    }
+
     setWrittenChunks([]);
     reset();
   };
@@ -863,23 +980,54 @@ export function MeyvnPanel({
                     </div>
                   )}
                   {allMessages.map((msg, i) => (
-                    <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div key={i} className={`flex gap-2 items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       {msg.role === 'assistant' && (
                         <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center"
                           style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
                           <Sparkles size={10} className="text-white" />
                         </div>
                       )}
-                      <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
-                        msg.role === 'user'
-                          ? 'bg-violet-600 text-white rounded-tr-sm'
-                          : 'bg-slate-100 text-slate-700 rounded-tl-sm'
-                      }`}>
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
-                        {'live' in msg && msg.live && status === 'generating' && (
-                          <span className="inline-block w-0.5 h-3.5 bg-slate-500 ml-0.5 animate-pulse align-text-bottom" />
-                        )}
-                      </div>
+                      {msg.role === 'assistant' ? (
+                        <div className="flex flex-col items-start gap-0.5 max-w-[85%]">
+                          <div className="bg-slate-100 text-slate-700 rounded-2xl rounded-tl-sm px-3 py-2 text-xs leading-relaxed">
+                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                            {'live' in msg && msg.live && status === 'generating' && (
+                              <span className="inline-block w-0.5 h-3.5 bg-slate-500 ml-0.5 animate-pulse align-text-bottom" />
+                            )}
+                          </div>
+                          {/* Copy + Regenerate — only when this message is fully received */}
+                          {!('live' in msg && msg.live) && (
+                            <div className="flex items-center gap-0.5 pl-0.5">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.content).catch(() => {});
+                                  setCopiedMsgIdx(i);
+                                  setTimeout(() => setCopiedMsgIdx((prev) => prev === i ? null : prev), 2000);
+                                }}
+                                className="p-1 rounded text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors"
+                                title="Copy response"
+                              >
+                                {copiedMsgIdx === i
+                                  ? <Check size={10} className="text-teal-500" />
+                                  : <Copy size={10} />}
+                              </button>
+                              {i === allMessages.length - 1 && !isStreaming && (
+                                <button
+                                  onClick={handleRegenerate}
+                                  className="p-1 rounded text-slate-300 hover:text-violet-500 hover:bg-violet-50 transition-colors"
+                                  title="Reload — get a new response"
+                                >
+                                  <RefreshCw size={10} />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="max-w-[85%] bg-violet-600 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs leading-relaxed">
+                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        </div>
+                      )}
                       {msg.role === 'user' && (
                         <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 bg-slate-200 flex items-center justify-center">
                           <User size={10} className="text-slate-500" />
@@ -1069,6 +1217,45 @@ export function MeyvnPanel({
               </div>
             )}
 
+            {/* Engagement question — Meyvn's check-in when too much AI writing */}
+            {tab === 'write' && isGeneratingQuestion && (
+              <div className="flex items-center gap-2 px-3 py-2 border-t border-violet-100 bg-violet-50 shrink-0">
+                <Loader2 size={11} className="animate-spin text-violet-400 shrink-0" />
+                <p className="text-[10px] text-violet-500">Meyvn has a question for you…</p>
+              </div>
+            )}
+            {tab === 'write' && engagementQuestion && (
+              <div className="border-t border-violet-200 bg-violet-50 px-3 py-3 shrink-0">
+                <div className="flex items-start gap-2">
+                  <div
+                    className="w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
+                  >
+                    <Sparkles size={10} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-violet-600 mb-1">
+                      Meyvn wants your voice in this story
+                    </p>
+                    <p className="text-xs text-slate-700 leading-relaxed">{engagementQuestion}</p>
+                    <p className="text-[10px] text-violet-400 mt-1.5">
+                      Your answer will be woven naturally into the next passage.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEngagementQuestion(null);
+                      aiInsertedWordsRef.current = 0;
+                    }}
+                    className="text-slate-300 hover:text-slate-500 transition-colors shrink-0 mt-0.5"
+                    title="Dismiss"
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Input area */}
             <div className="border-t border-slate-200 p-3 space-y-2 shrink-0">
               {tab === 'write' && (
@@ -1094,7 +1281,9 @@ export function MeyvnPanel({
                 onKeyDown={handleKeyDown}
                 disabled={isStreaming}
                 placeholder={
-                  tab === 'write'
+                  tab === 'write' && engagementQuestion
+                    ? 'Your answer \u2014 Meyvn will weave it in\u2026 (Enter to generate)'
+                    : tab === 'write'
                     ? 'What should Meyvn write? (Enter to generate)'
                     : 'Ask Meyvn\u2026 (Enter to send, Shift+Enter for newline)'
                 }
@@ -1116,7 +1305,7 @@ export function MeyvnPanel({
                     className="flex-1 py-1.5 text-xs font-medium rounded-lg text-white disabled:opacity-40 transition-all"
                     style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}
                   >
-                    {tab === 'write' ? 'Write' : 'Generate'}
+                    {tab === 'write' && engagementQuestion ? 'Weave in' : tab === 'write' ? 'Write' : 'Generate'}
                   </button>
                 )}
                 <button
