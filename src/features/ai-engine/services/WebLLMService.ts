@@ -133,6 +133,7 @@ export const WebLLMService = {
   async chat(opts: {
     messages: OllamaMessage[];
     temperature?: number;
+    maxTokens?: number;
     onToken: (token: string) => void;
     onDone: (full: string) => void;
     signal?: AbortSignal;
@@ -143,6 +144,7 @@ export const WebLLMService = {
       messages: opts.messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
       stream: true,
       temperature: opts.temperature ?? 0.7,
+      ...(opts.maxTokens !== undefined ? { max_tokens: opts.maxTokens } : {}),
     });
 
     let full = '';
