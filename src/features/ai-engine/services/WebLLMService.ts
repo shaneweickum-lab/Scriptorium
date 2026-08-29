@@ -1,10 +1,11 @@
 /**
  * WebLLMService — runs small LLMs in the browser via WebGPU using MLC/WebLLM.
  *
- * Supports SmolLM2-1.7B and Qwen2.5-3B. The engine is a module-level
- * singleton so weights are downloaded once per model and cached by the
- * browser's Cache API. Dynamic import() keeps the WebLLM bundle out of the
- * main chunk until the user explicitly activates the WebGPU provider.
+ * Supports SmolLM2-1.7B, Qwen2.5-0.5B (mobile), and Qwen2.5-3B. The engine
+ * is a module-level singleton so weights are downloaded once per model and
+ * cached by the browser's Cache API. Dynamic import() keeps the WebLLM bundle
+ * out of the main chunk until the user explicitly activates the WebGPU
+ * provider.
  *
  * Switching models: call load(newModelId) — the engine resets and reloads.
  */
@@ -23,6 +24,12 @@ export interface WebLLMModelDef {
 }
 
 export const WEB_LLM_MODELS: WebLLMModelDef[] = [
+  {
+    id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC',
+    label: 'Qwen2.5 0.5B',
+    vram: '~380 MB',
+    description: 'Mobile-optimised — runs on phones and low-VRAM devices',
+  },
   {
     id: 'SmolLM2-1.7B-Instruct-q4f16_1-MLC',
     label: 'SmolLM2 1.7B',
