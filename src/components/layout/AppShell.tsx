@@ -57,16 +57,30 @@ export function AppShell() {
             )}
           </main>
           {showMeyvn && (
-            <div className="wp-panel-enter flex h-full">
-              <MeyvnPanel
-                onClose={() => setShowMeyvn(false)}
-                indexStatus={indexStatus}
-                indexProgress={indexProgress}
-                oracleProfile={oracleProfile}
-                isOracleAnalyzing={isOracleAnalyzing}
-                onRefreshOracle={analyzeNow}
-              />
-            </div>
+            <>
+              {/* Mobile: full-screen overlay */}
+              <div className="md:hidden fixed inset-0 z-50 flex flex-col wp-panel-enter">
+                <MeyvnPanel
+                  onClose={() => setShowMeyvn(false)}
+                  indexStatus={indexStatus}
+                  indexProgress={indexProgress}
+                  oracleProfile={oracleProfile}
+                  isOracleAnalyzing={isOracleAnalyzing}
+                  onRefreshOracle={analyzeNow}
+                />
+              </div>
+              {/* Desktop: side panel */}
+              <div className="hidden md:flex wp-panel-enter h-full">
+                <MeyvnPanel
+                  onClose={() => setShowMeyvn(false)}
+                  indexStatus={indexStatus}
+                  indexProgress={indexProgress}
+                  oracleProfile={oracleProfile}
+                  isOracleAnalyzing={isOracleAnalyzing}
+                  onRefreshOracle={analyzeNow}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>

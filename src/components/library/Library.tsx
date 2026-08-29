@@ -361,9 +361,6 @@ function LibrarySidebar({
               }
             />
             {label}
-            {(oracle || accent) && (
-              <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">Soon</span>
-            )}
           </button>
         ))}
       </nav>
@@ -588,7 +585,7 @@ export function Library() {
       />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-white relative">
+      <div className="flex-1 flex flex-col overflow-hidden bg-white relative pb-16 md:pb-0">
         {view === 'maven' ? (
           <div key="maven" className="wp-view-enter flex-1 flex flex-col overflow-hidden">
             <LibraryMeyvnView />
@@ -767,6 +764,26 @@ export function Library() {
       )}
       {showAchievementsModal && <AchievementsModal onClose={() => setShowAchievementsModal(false)} />}
       <ToastContainer />
+
+      {/* Mobile bottom tab bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-white border-t border-slate-200 flex items-center justify-around px-2 safe-area-bottom">
+        <button onClick={() => setView('books')} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${view === 'books' ? 'text-violet-700' : 'text-slate-400'}`}>
+          <BookOpen size={20} className={view === 'books' ? 'text-violet-600' : 'text-slate-400'} />
+          <span className="text-[9px] font-semibold">Books</span>
+        </button>
+        <button onClick={() => setView('worlds')} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${view === 'worlds' ? 'text-violet-700' : 'text-slate-400'}`}>
+          <Globe2 size={20} className={view === 'worlds' ? 'text-violet-600' : 'text-slate-400'} />
+          <span className="text-[9px] font-semibold">Worlds</span>
+        </button>
+        <button onClick={() => setView('maven')} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${view === 'maven' ? 'text-violet-700' : 'text-slate-400'}`}>
+          <Sparkles size={20} className={view === 'maven' ? 'text-violet-600' : 'text-violet-300'} />
+          <span className="text-[9px] font-semibold">Meyvn</span>
+        </button>
+        <button onClick={() => setView('training')} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${view === 'training' ? 'text-amber-700' : 'text-slate-400'}`}>
+          <Brain size={20} className={view === 'training' ? 'text-amber-500' : 'text-slate-400'} />
+          <span className="text-[9px] font-semibold">Train</span>
+        </button>
+      </nav>
     </div>
   );
 }
