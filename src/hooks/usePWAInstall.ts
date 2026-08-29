@@ -5,16 +5,19 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-type InstallMethod = 'prompt' | 'safari-mac' | 'safari-ios' | null;
+type InstallMethod = 'prompt' | 'safari-mac' | 'safari-ios' | 'ios-chrome' | null;
 
 function detectInstallMethod(): InstallMethod {
   if (typeof window === 'undefined') return null;
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as Window & { MSStream?: unknown }).MSStream;
+  // CriOS = Chrome on iOS (WebKit — cannot install PWA, must use Safari)
+  const isIOSChrome = isIOS && /CriOS/.test(ua);
   const isSafariMac =
     /Macintosh/.test(ua) &&
     /Safari/.test(ua) &&
     !/Chrome|Chromium|CriOS|OPR|Edg/.test(ua);
+  if (isIOSChrome) return 'ios-chrome';
   if (isIOS) return 'safari-ios';
   if (isSafariMac) return 'safari-mac';
   return 'prompt'; // Chrome/Edge/Firefox on Windows, Mac, Android
@@ -53,12 +56,14 @@ export function usePWAInstall() {
     }
   };
 
-  // For Chrome/Edge: show button once the browser fires beforeinstallprompt
-  // For Safari: always show the button so users can get instructions
+  // For Chrome/Edge: show button once the browser fires beforeinstallprompt.
+  // For Safari: always show so users can get instructions.
+  // ios-chrome: show so we can redirect them to Safari.
   const canInstall =
     !isInstalled &&
     (installMethod === 'safari-ios' ||
       installMethod === 'safari-mac' ||
+      installMethod === 'ios-chrome' ||
       !!installPrompt);
 
   return { canInstall, install, installMethod };
