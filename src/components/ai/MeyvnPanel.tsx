@@ -19,6 +19,7 @@ import {
   RefreshCw,
   User,
   Play,
+  Copy,
 } from 'lucide-react';
 import { useAuthorAI, type LoreProposal } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -208,6 +209,7 @@ export function MeyvnPanel({
     styleProfile,
     history,
     clearHistory,
+    undoLastTurn,
     suggest,
     cancel,
     reset,
@@ -248,6 +250,7 @@ export function MeyvnPanel({
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
   const responseRef = useRef<HTMLDivElement>(null);
+  const [copiedMsgIdx, setCopiedMsgIdx] = useState<number | null>(null);
 
   // ── Human engagement tracking ─────────────────────────────────────────────
   // Counts cumulative AI-generated words inserted into the editor since the
@@ -363,6 +366,17 @@ export function MeyvnPanel({
       setTab(next);
     }
   };
+
+  // Undo the last AI response + user prompt, then re-run it for a fresh reply
+  const handleRegenerate = useCallback(() => {
+    if (isStreaming) return;
+    reset();
+    const lastPrompt = undoLastTurn();
+    if (lastPrompt) {
+      const maxTokens = tab === 'write' ? Math.ceil(wordTarget * 1.4) : undefined;
+      suggest(lastPrompt, { maxTokens });
+    }
+  }, [isStreaming, reset, undoLastTurn, suggest, tab, wordTarget]);
 
   // ── Chat / Write submit ────────────────────────────────────────────────────
   const handleSubmit = () => {
@@ -966,23 +980,54 @@ export function MeyvnPanel({
                     </div>
                   )}
                   {allMessages.map((msg, i) => (
-                    <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div key={i} className={`flex gap-2 items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       {msg.role === 'assistant' && (
                         <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center"
                           style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
                           <Sparkles size={10} className="text-white" />
                         </div>
                       )}
-                      <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
-                        msg.role === 'user'
-                          ? 'bg-violet-600 text-white rounded-tr-sm'
-                          : 'bg-slate-100 text-slate-700 rounded-tl-sm'
-                      }`}>
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
-                        {'live' in msg && msg.live && status === 'generating' && (
-                          <span className="inline-block w-0.5 h-3.5 bg-slate-500 ml-0.5 animate-pulse align-text-bottom" />
-                        )}
-                      </div>
+                      {msg.role === 'assistant' ? (
+                        <div className="flex flex-col items-start gap-0.5 max-w-[85%]">
+                          <div className="bg-slate-100 text-slate-700 rounded-2xl rounded-tl-sm px-3 py-2 text-xs leading-relaxed">
+                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                            {'live' in msg && msg.live && status === 'generating' && (
+                              <span className="inline-block w-0.5 h-3.5 bg-slate-500 ml-0.5 animate-pulse align-text-bottom" />
+                            )}
+                          </div>
+                          {/* Copy + Regenerate — only when this message is fully received */}
+                          {!('live' in msg && msg.live) && (
+                            <div className="flex items-center gap-0.5 pl-0.5">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.content).catch(() => {});
+                                  setCopiedMsgIdx(i);
+                                  setTimeout(() => setCopiedMsgIdx((prev) => prev === i ? null : prev), 2000);
+                                }}
+                                className="p-1 rounded text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors"
+                                title="Copy response"
+                              >
+                                {copiedMsgIdx === i
+                                  ? <Check size={10} className="text-teal-500" />
+                                  : <Copy size={10} />}
+                              </button>
+                              {i === allMessages.length - 1 && !isStreaming && (
+                                <button
+                                  onClick={handleRegenerate}
+                                  className="p-1 rounded text-slate-300 hover:text-violet-500 hover:bg-violet-50 transition-colors"
+                                  title="Reload — get a new response"
+                                >
+                                  <RefreshCw size={10} />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="max-w-[85%] bg-violet-600 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs leading-relaxed">
+                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        </div>
+                      )}
                       {msg.role === 'user' && (
                         <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 bg-slate-200 flex items-center justify-center">
                           <User size={10} className="text-slate-500" />

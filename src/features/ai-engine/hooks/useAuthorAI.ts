@@ -158,6 +158,12 @@ export interface UseAuthorAIReturn {
   history: OllamaMessage[];
   /** Start a new conversation thread (clears history but keeps style profile). */
   clearHistory: () => void;
+  /**
+   * Remove the last user + assistant turn from history and return the user
+   * prompt so it can be re-submitted (regenerate flow).
+   * Returns null if there are fewer than two messages.
+   */
+  undoLastTurn: () => string | null;
 
   // ── Actions ────────────────────────────────────────────────────────────────
   /**
@@ -340,6 +346,15 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     setWebllmStatus(WebLLMService.status);
     return unsub;
   }, []);
+
+  // Auto-load the WebLLM engine when the WebGPU provider is selected —
+  // weights are browser-cached after first download so subsequent loads are fast.
+  useEffect(() => {
+    if (provider === 'webgpu' && WebLLMService.status === 'idle') {
+      loadWebLLM();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider]);
 
   // ── Refs (stable across renders, mutable without triggering re-renders) ─────
   const abortRef = useRef<AbortController | null>(null);
@@ -613,6 +628,19 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
   // ── Utilities ───────────────────────────────────────────────────────────────
   const clearHistory = useCallback(() => setHistory([]), []);
 
+  const undoLastTurn = useCallback((): string | null => {
+    const h = historyRef.current;
+    // Walk backwards to find the last user turn
+    for (let i = h.length - 1; i >= 0; i--) {
+      if (h[i].role === 'user') {
+        const lastUserPrompt = h[i].content;
+        setHistory(h.slice(0, i));
+        return lastUserPrompt;
+      }
+    }
+    return null;
+  }, []);
+
   const reset = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -673,6 +701,7 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     clearStyleProfile,
     history,
     clearHistory,
+    undoLastTurn,
     suggest,
     cancel,
     reset,
