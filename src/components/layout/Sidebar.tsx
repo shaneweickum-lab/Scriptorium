@@ -1,4 +1,4 @@
-import { PenLine, BookMarked, Download, Settings, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PenLine, BookMarked, Download, Settings, ArrowLeft, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { useLibraryStore } from '../../store/libraryStore';
 import type { ActiveView } from '../../store/uiStore';
@@ -15,6 +15,8 @@ export function Sidebar() {
   const setShowProjectSettings = useUIStore((s) => s.setShowProjectSettings);
   const showNavSidebar = useUIStore((s) => s.showNavSidebar);
   const setShowNavSidebar = useUIStore((s) => s.setShowNavSidebar);
+  const showMeyvn = useUIStore((s) => s.showMeyvn);
+  const setShowMeyvn = useUIStore((s) => s.setShowMeyvn);
   const closeBook = useLibraryStore((s) => s.closeBook);
 
   return (
@@ -60,6 +62,22 @@ export function Sidebar() {
             {!showNavSidebar && <span className="md:hidden text-[10px]">{label}</span>}
           </button>
         ))}
+
+        {/* Meyvn button — mobile only */}
+        <button
+          onClick={() => setShowMeyvn(!showMeyvn)}
+          title="Meyvn AI"
+          className={`flex items-center gap-3 transition-all rounded-xl
+            flex-col justify-center w-14 h-12 text-[10px]
+            md:hidden
+            ${showMeyvn
+              ? 'text-violet-700 bg-violet-50'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+            }`}
+        >
+          <Sparkles size={16} className={showMeyvn ? 'text-violet-600' : 'text-slate-400'} />
+          <span>Meyvn</span>
+        </button>
       </nav>
 
       {/* Footer actions */}
