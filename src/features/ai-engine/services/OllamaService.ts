@@ -109,6 +109,34 @@ interface OllamaTagsResponse {
 export const OLLAMA_DEFAULT_URL = 'http://localhost:11434';
 export const OLLAMA_DEFAULT_MODEL = 'qwen3:8b';
 
+/** All Ollama models Meyvn supports, in order of display. */
+export const OLLAMA_CHAT_MODELS = [
+  {
+    tag: 'qwen3:8b',
+    label: 'Qwen3 8B',
+    vram: '~6 GB',
+    recommended: true,
+    description: 'Best balance of quality and speed',
+    pullCmd: 'ollama pull qwen3:8b',
+  },
+  {
+    tag: 'qwen3:14b',
+    label: 'Qwen3 14B',
+    vram: '~10 GB',
+    recommended: false,
+    description: 'Higher reasoning quality, needs 16 GB+ VRAM',
+    pullCmd: 'ollama pull qwen3:14b',
+  },
+  {
+    tag: 'qwen3:32b',
+    label: 'Qwen3 32B',
+    vram: '~20 GB',
+    recommended: false,
+    description: 'Maximum quality, needs 24 GB+ VRAM or CPU offload',
+    pullCmd: 'ollama pull qwen3:32b',
+  },
+] as const;
+
 /** Candidate base URLs tried in order when auto-detecting a working host. */
 const OLLAMA_FALLBACK_URLS = [
   'http://localhost:11434',

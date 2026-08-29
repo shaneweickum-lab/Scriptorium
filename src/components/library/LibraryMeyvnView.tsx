@@ -13,10 +13,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Sparkles, Loader2, AlertCircle, CornerDownRight,
-  WifiOff, RefreshCw, SendHorizonal, X as XIcon,
+  WifiOff, RefreshCw, SendHorizonal, X as XIcon, ChevronRight,
 } from 'lucide-react';
 import { useAuthorAI } from '../../features/ai-engine/hooks/useAuthorAI';
 import { useEditorStore, type SuggestionAction } from '../../store/editorStore';
+import { OLLAMA_CHAT_MODELS } from '../../features/ai-engine/services/OllamaService';
+import { WEB_LLM_MODELS } from '../../features/ai-engine/services/WebLLMService';
+import { AISetupModal } from '../ai/AISetupModal';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -169,6 +172,8 @@ export function LibraryMeyvnView() {
     provider,
     setProvider,
     isWebGPUSupported,
+    webllmModel,
+    setWebllmModel,
     webllmStatus,
     webllmProgress,
     loadWebLLM,
@@ -176,6 +181,7 @@ export function LibraryMeyvnView() {
 
   const [tab, setTab] = useState<LibraryMeyvnTab>('chat');
   const [prompt, setPrompt] = useState('');
+  const [showAISetup, setShowAISetup] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -267,16 +273,40 @@ export function LibraryMeyvnView() {
             <span className="font-bold text-slate-800 text-sm">Meyvn</span>
           </div>
 
-          {/* Model selector */}
+          {/* Provider toggle */}
+          <div className="flex bg-slate-100 rounded-lg p-0.5 gap-0.5">
+            <button onClick={() => setProvider('ollama')}
+              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                provider === 'ollama' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+              }`}>Ollama</button>
+            <button onClick={() => setProvider('webgpu')} disabled={!isWebGPUSupported}
+              title={!isWebGPUSupported ? 'WebGPU not supported' : undefined}
+              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                provider === 'webgpu' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+              }`}>WebGPU</button>
+          </div>
+
+          {/* Model picker */}
           {provider === 'ollama' && (
-          <input
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1
-              outline-none focus:border-violet-300 focus:text-slate-600 transition-all w-32"
-            title="MeyvnAi model"
-          />
+            <select value={model} onChange={(e) => setModel(e.target.value)}
+              className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-violet-300 transition-all">
+              {OLLAMA_CHAT_MODELS.map((m) => (
+                <option key={m.tag} value={m.tag}>{m.label}</option>
+              ))}
+            </select>
           )}
+          {provider === 'webgpu' && (
+            <select value={webllmModel} onChange={(e) => setWebllmModel(e.target.value)}
+              className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-teal-300 transition-all">
+              {WEB_LLM_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>{m.label}</option>
+              ))}
+            </select>
+          )}
+          <button onClick={() => setShowAISetup(true)} title="Setup guide"
+            className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-all shrink-0">
+            <ChevronRight size={13} />
+          </button>
 
           {/* Tab toggle */}
           <div className="flex gap-0.5 bg-slate-100 rounded-lg p-0.5 ml-1">
@@ -332,78 +362,53 @@ export function LibraryMeyvnView() {
         </div>
       </div>
 
-      {/* Provider selector */}
-      <div className="shrink-0 px-6 pb-3 border-b border-slate-100">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex bg-slate-100 rounded-xl p-0.5 gap-0.5">
-            <button
-              onClick={() => setProvider('ollama')}
-              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-                provider === 'ollama'
-                  ? 'bg-white text-violet-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              Ollama · Qwen3:8B
-            </button>
-            <button
-              onClick={() => setProvider('webgpu')}
-              disabled={!isWebGPUSupported}
-              title={!isWebGPUSupported ? 'WebGPU not supported in this browser' : undefined}
-              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                provider === 'webgpu'
-                  ? 'bg-white text-teal-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              SmolLM2 · WebGPU
+      {/* ── WebGPU load / status ──────────────────────────────────────── */}
+      {provider === 'webgpu' && webllmStatus === 'idle' && (
+        <div className="shrink-0 px-6 pb-2 border-b border-slate-100">
+          <div className="max-w-3xl mx-auto rounded-xl border border-teal-200 bg-teal-50 p-3 space-y-2">
+            <p className="text-xs font-medium text-teal-700">
+              {WEB_LLM_MODELS.find((m) => m.id === webllmModel)?.label ?? 'WebGPU model'} · in-browser, no server required
+            </p>
+            <button onClick={loadWebLLM}
+              className="w-full py-1.5 rounded-lg border border-teal-300 text-xs font-semibold text-teal-700 hover:bg-teal-100 transition-all">
+              Load model (cached after first download)
             </button>
           </div>
-
-          {/* WebGPU banners */}
-          {provider === 'webgpu' && webllmStatus === 'idle' && (
-            <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50 p-3 space-y-2">
-              <p className="text-xs font-medium text-teal-700">SmolLM2-1.7B · runs entirely in your browser</p>
-              <button
-                onClick={loadWebLLM}
-                className="w-full py-1.5 rounded-lg border border-teal-300 text-xs font-semibold text-teal-700 hover:bg-teal-100 transition-all"
-              >
-                Load SmolLM2-1.7B (~900 MB, cached after first load)
-              </button>
+        </div>
+      )}
+      {provider === 'webgpu' && webllmStatus === 'loading' && (
+        <div className="shrink-0 px-6 pb-2 border-b border-slate-100">
+          <div className="max-w-3xl mx-auto rounded-xl border border-teal-200 bg-teal-50 p-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700">
+              <Loader2 size={12} className="animate-spin shrink-0" />
+              Loading {WEB_LLM_MODELS.find((m) => m.id === webllmModel)?.label ?? 'model'}…
             </div>
-          )}
-          {provider === 'webgpu' && webllmStatus === 'loading' && (
-            <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-teal-700">
-                <Loader2 size={12} className="animate-spin shrink-0" />
-                Loading SmolLM2-1.7B…
-              </div>
-              {webllmProgress && (
-                <>
-                  <div className="w-full h-1.5 bg-teal-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-teal-400 rounded-full transition-all duration-300" style={{ width: `${Math.round(webllmProgress.progress * 100)}%` }} />
-                  </div>
-                  <p className="text-[10px] text-teal-600 truncate">{webllmProgress.text}</p>
-                </>
-              )}
-            </div>
-          )}
-          {provider === 'webgpu' && webllmStatus === 'error' && (
-            <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3 space-y-2">
-              <p className="text-xs font-medium text-red-700">Failed to load WebLLM engine</p>
-              <button onClick={loadWebLLM} className="w-full py-1.5 rounded-lg border border-red-300 text-xs font-semibold text-red-700 hover:bg-red-100 transition-all flex items-center justify-center gap-1.5">
+            {webllmProgress && (
+              <>
+                <div className="w-full h-1.5 bg-teal-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-teal-400 rounded-full transition-all duration-300" style={{ width: `${Math.round(webllmProgress.progress * 100)}%` }} />
+                </div>
+                <p className="text-[10px] text-teal-600 truncate">{webllmProgress.text}</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {provider === 'webgpu' && webllmStatus === 'error' && (
+        <div className="shrink-0 px-6 pb-2 border-b border-slate-100">
+          <div className="max-w-3xl mx-auto rounded-xl border border-red-200 bg-red-50 p-3 space-y-2">
+            <p className="text-xs font-medium text-red-700">Failed to load WebLLM engine</p>
+            <div className="flex gap-2">
+              <button onClick={loadWebLLM} className="flex-1 py-1.5 rounded-lg border border-red-300 text-xs font-semibold text-red-700 hover:bg-red-100 transition-all flex items-center justify-center gap-1.5">
                 <RefreshCw size={11} />Retry
               </button>
+              <button onClick={() => setShowAISetup(true)} className="flex-1 py-1.5 rounded-lg border border-red-200 text-xs font-semibold text-red-600 hover:bg-red-50 transition-all">
+                Setup guide
+              </button>
             </div>
-          )}
-          {provider === 'webgpu' && webllmStatus === 'ready' && (
-            <div className="mt-2 flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-              <span className="text-[10px] text-slate-400">SmolLM2-1.7B ready · WebGPU</span>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Ollama connection warning ───────────────────────────────────── */}
       {provider === 'ollama' && ollamaStatus === 'unreachable' && (
@@ -413,24 +418,22 @@ export function LibraryMeyvnView() {
               <div className="flex-1 space-y-1">
                 <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
                   <AlertCircle size={12} />
-                  Ollama not detected
-                </p>
-                <p className="text-[11px] text-amber-600 leading-relaxed">
-                  Meyvn runs on Qwen3:8B via Ollama. Start Ollama, then run:
+                  Ollama not detected · localhost:11434
                 </p>
                 <pre className="text-[10px] text-amber-700 bg-amber-100 rounded-lg px-3 py-2 font-mono whitespace-pre">
-{`ollama pull qwen3:8b
-OLLAMA_ORIGINS="*" ollama serve`}
+{`OLLAMA_ORIGINS="*" ollama serve`}
                 </pre>
               </div>
-              <button
-                onClick={probeHealth}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300
-                  text-xs text-amber-700 hover:bg-amber-100 transition-all font-medium shrink-0"
-              >
-                <RefreshCw size={11} />
-                Retry
-              </button>
+              <div className="flex flex-col gap-1.5 shrink-0">
+                <button onClick={probeHealth}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 text-xs text-amber-700 hover:bg-amber-100 transition-all font-medium">
+                  <RefreshCw size={11} />Retry
+                </button>
+                <button onClick={() => setShowAISetup(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 text-xs text-amber-600 hover:bg-amber-50 transition-all font-medium">
+                  Setup guide
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -566,6 +569,8 @@ OLLAMA_ORIGINS="*" ollama serve`}
           </p>
         </div>
       </div>
+
+      {showAISetup && <AISetupModal onClose={() => setShowAISetup(false)} />}
     </div>
   );
 }
