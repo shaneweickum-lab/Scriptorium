@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   Plus, Globe2, BookOpen, Pencil, Trash2, MoreHorizontal,
-  Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload, Sparkles, Brain,
+  Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload, Sparkles, Brain, GraduationCap,
 } from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -17,6 +17,7 @@ import { EditBookModal } from './EditBookModal';
 import { NewWorldModal } from './NewWorldModal';
 import { LibraryMeyvnView } from './LibraryMeyvnView';
 import { LibraryTrainingView } from './LibraryTrainingView';
+import { LibraryCoachView } from './LibraryCoachView';
 import { IS_TAURI } from '../../features/ai-engine/services/OllamaService';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { AchievementsModal } from '../achievements/AchievementsModal';
@@ -314,7 +315,7 @@ function SafariInstallModal({ method, onClose }: { method: 'safari-mac' | 'safar
 }
 
 /* ── Sidebar ──────────────────────────────────────────────── */
-type LibraryView = 'books' | 'worlds' | 'maven' | 'training';
+type LibraryView = 'books' | 'worlds' | 'maven' | 'training' | 'coach';
 
 interface SidebarProps {
   view: LibraryView;
@@ -342,6 +343,7 @@ function LibrarySidebar({
     { id: 'worlds', icon: Globe2, label: 'World Atlas' },
     { id: 'maven', icon: Sparkles, label: 'Ask Meyvn', accent: true },
     { id: 'training', icon: Brain, label: 'Training Portal', oracle: true },
+    { id: 'coach', icon: GraduationCap, label: 'Writing Coach' },
   ];
 
   const content = (
@@ -485,7 +487,7 @@ export function Library() {
 
   const [view, setView] = useState<LibraryView>(() => {
     const initial = localStorage.getItem('wp_initial_view') as LibraryView | null;
-    if (initial && ['books', 'worlds', 'maven', 'training'].includes(initial)) {
+    if (initial && ['books', 'worlds', 'maven', 'training', 'coach'].includes(initial)) {
       localStorage.removeItem('wp_initial_view');
       return initial;
     }
@@ -613,6 +615,10 @@ export function Library() {
         ) : view === 'training' ? (
           <div key="training" className="wp-view-enter flex-1 flex flex-col overflow-hidden">
             <LibraryTrainingView />
+          </div>
+        ) : view === 'coach' ? (
+          <div key="coach" className="wp-view-enter flex-1 flex flex-col overflow-hidden">
+            <LibraryCoachView />
           </div>
         ) : (
         <div key={view} className="wp-view-enter flex-1 flex flex-col overflow-hidden">
@@ -802,6 +808,10 @@ export function Library() {
         <button onClick={() => setView('training')} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${view === 'training' ? 'text-amber-700' : 'text-slate-400'}`}>
           <Brain size={20} className={view === 'training' ? 'text-amber-500' : 'text-slate-400'} />
           <span className="text-[9px] font-semibold">Train</span>
+        </button>
+        <button onClick={() => setView('coach')} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${view === 'coach' ? 'text-teal-700' : 'text-slate-400'}`}>
+          <GraduationCap size={20} className={view === 'coach' ? 'text-teal-600' : 'text-slate-400'} />
+          <span className="text-[9px] font-semibold">Coach</span>
         </button>
       </nav>
     </div>
