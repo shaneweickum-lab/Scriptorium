@@ -41,6 +41,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSettingsStore, creativityToTemperature } from '../../../store/settingsStore';
 import {
   OllamaService,
   OllamaError,
@@ -262,12 +263,15 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     ollamaUrl = OLLAMA_DEFAULT_URL,
     topK = 3,
     minScore = 0.3,
-    temperature = 0.7,
     bookId,
     sceneText,
     sceneTitle,
     oracleProfile,
   } = options;
+
+  // Read creativity from global settings; explicit option override takes precedence
+  const aiCreativity = useSettingsStore((s) => s.settings.aiCreativity);
+  const temperature = options.temperature ?? creativityToTemperature(aiCreativity);
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [status, setStatus] = useState<AIStatus>('idle');
@@ -695,7 +699,10 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
     error,
     isStreaming: status === 'retrieving' || status === 'generating',
     model,
-    setModel,
+    setModel: (m: string) => {
+      try { localStorage.setItem('meyvn_ollama_model', m); } catch { /* ignore */ }
+      setModel(m);
+    },
     styleProfile,
     refreshStyleProfile,
     clearStyleProfile,

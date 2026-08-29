@@ -3,6 +3,7 @@ import {
   X, Sparkles, RefreshCw, Loader2, Trash2, Star, ChevronRight, Tag,
 } from 'lucide-react';
 import { useSketchpadStore } from '../../store/sketchpadStore';
+import { useSettingsStore, creativityToTemperature } from '../../store/settingsStore';
 import { useWorldStore } from '../../store/worldStore';
 import { OllamaService, OLLAMA_DEFAULT_MODEL } from '../../features/ai-engine/services/OllamaService';
 import { WebLLMService } from '../../features/ai-engine/services/WebLLMService';
@@ -63,6 +64,7 @@ export function SketchpadAIPanel({ entry, relatedIdeas, onBack }: Props) {
   const updateWorldEntry = useWorldStore((s) => s.updateEntry);
   const editingContextId = useWorldStore((s) => s.editingContextId);
 
+  const aiCreativity = useSettingsStore((s) => s.settings.aiCreativity);
   const [activeMode, setActiveMode] = useState<SketchpadAIMode | null>(null);
   const [streamedText, setStreamedText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -105,11 +107,11 @@ export function SketchpadAIPanel({ entry, relatedIdeas, onBack }: Props) {
         if (!WebLLMService.isWebGPUSupported() || WebLLMService.status !== 'ready') {
           throw new Error('WebGPU model not ready. Load a model in the Meyvn panel first.');
         }
-        await WebLLMService.chat({ messages, temperature: 0.65, onToken, onDone, signal: ctrl.signal });
+        await WebLLMService.chat({ messages, temperature: creativityToTemperature(aiCreativity), onToken, onDone, signal: ctrl.signal });
       } else {
         const modelId = localStorage.getItem('meyvn_ollama_model') ?? OLLAMA_DEFAULT_MODEL;
         const svc = new OllamaService();
-        await svc.chat({ model: modelId, messages, temperature: 0.65, onToken, onDone, signal: ctrl.signal });
+        await svc.chat({ model: modelId, messages, temperature: creativityToTemperature(aiCreativity), onToken, onDone, signal: ctrl.signal });
       }
     } catch (err) {
       if (ctrl.signal.aborted) return;

@@ -6,6 +6,42 @@
   box-sizing: border-box;
 }
 
+/* Settings: animation level overrides */
+[data-animations="reduced"] *,
+[data-animations="reduced"] *::before,
+[data-animations="reduced"] *::after {
+  animation-duration: 200ms !important;
+  transition-duration: 150ms !important;
+}
+
+[data-animations="off"] *,
+[data-animations="off"] *::before,
+[data-animations="off"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Settings: range input thumb styling */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #7c3aed;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px white, 0 0 0 3px #7c3aed40;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: none;
+  background: #7c3aed;
+  cursor: pointer;
+}
+
 html,
 body,
 #root {
