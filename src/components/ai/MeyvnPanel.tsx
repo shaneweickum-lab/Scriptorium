@@ -31,6 +31,7 @@ import { WebLLMService, WEB_LLM_MODELS } from '../../features/ai-engine/services
 import { AISetupModal } from './AISetupModal';
 import type { VectorIndexStatus, UseVectorIndexReturn } from '../../features/ai-engine/hooks/useVectorIndex';
 import type { OracleProfile } from '../../features/ai-engine/services/OracleMLService';
+import { MarkdownText } from '../common/MarkdownText';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -990,7 +991,7 @@ export function MeyvnPanel({
                       {msg.role === 'assistant' ? (
                         <div className="flex flex-col items-start gap-0.5 max-w-[85%]">
                           <div className="bg-slate-100 text-slate-700 rounded-2xl rounded-tl-sm px-3 py-2 text-xs leading-relaxed">
-                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                            <MarkdownText content={msg.content} />
                             {'live' in msg && msg.live && status === 'generating' && (
                               <span className="inline-block w-0.5 h-3.5 bg-slate-500 ml-0.5 animate-pulse align-text-bottom" />
                             )}
@@ -1024,8 +1025,8 @@ export function MeyvnPanel({
                           )}
                         </div>
                       ) : (
-                        <div className="max-w-[85%] bg-violet-600 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs leading-relaxed">
-                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        <div className="max-w-[85%] bg-violet-600 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap">
+                          {msg.content}
                         </div>
                       )}
                       {msg.role === 'user' && (
