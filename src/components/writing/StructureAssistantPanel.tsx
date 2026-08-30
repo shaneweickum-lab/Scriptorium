@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Sparkles, RefreshCw, Loader2, AlertCircle, Wifi } from 'lucide-react';
 import { useWritingStore } from '../../store/writingStore';
 import { useEditorStore } from '../../store/editorStore';
+import { useSettingsStore, creativityToTemperature } from '../../store/settingsStore';
 import { OllamaService, OLLAMA_DEFAULT_MODEL } from '../../features/ai-engine/services/OllamaService';
 import { WebLLMService } from '../../features/ai-engine/services/WebLLMService';
 import { StructureAnalysisService } from '../../features/ai-engine/services/StructureAnalysisService';
@@ -51,6 +52,7 @@ function renderAnalysis(text: string) {
 export function StructureAssistantPanel({ node, onClose }: StructureAssistantPanelProps) {
   const nodes = useWritingStore((s) => s.nodes);
   const liveContent = useEditorStore((s) => s.liveContent);
+  const aiCreativity = useSettingsStore((s) => s.settings.aiCreativity);
 
   const [streamedText, setStreamedText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -122,7 +124,7 @@ export function StructureAssistantPanel({ node, onClose }: StructureAssistantPan
         }
         await WebLLMService.chat({
           messages,
-          temperature: 0.55,
+          temperature: creativityToTemperature(aiCreativity),
           onToken: (t) => setStreamedText((s) => s + t),
           onDone: () => setIsAnalyzing(false),
           signal: ctrl.signal,
@@ -133,7 +135,7 @@ export function StructureAssistantPanel({ node, onClose }: StructureAssistantPan
         await svc.chat({
           model: modelId,
           messages,
-          temperature: 0.55,
+          temperature: creativityToTemperature(aiCreativity),
           onToken: (t) => setStreamedText((s) => s + t),
           onDone: () => setIsAnalyzing(false),
           signal: ctrl.signal,

@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { WritingSpace } from '../writing/WritingSpace';
 import { Assembly } from '../assembly/Assembly';
 import { SketchpadView } from '../sketchpad/SketchpadView';
+import { SettingsModal } from '../settings/SettingsModal';
 import { ExportModal } from '../export/ExportModal';
 import { ProjectSettings } from './ProjectSettings';
 import { ToastContainer } from '../common/Toast';
@@ -29,11 +30,20 @@ export function AppShell() {
   const showAuthModal = useUIStore((s) => s.showAuthModal);
   const authModalTab = useUIStore((s) => s.authModalTab);
   const closeAuthModal = useUIStore((s) => s.closeAuthModal);
+  const showSettingsModal = useUIStore((s) => s.showSettingsModal);
+  const setShowSettingsModal = useUIStore((s) => s.setShowSettingsModal);
 
   const initAuth = useAuthStore((s) => s.init);
 
   // Initialise Supabase auth once on mount
   useEffect(() => { initAuth(); }, [initAuth]);
+
+  // Forward the project-settings custom event (fired from GeneralSection) to open ProjectSettings
+  useEffect(() => {
+    const handler = () => setShowProjectSettings(true);
+    window.addEventListener('open-project-settings', handler);
+    return () => window.removeEventListener('open-project-settings', handler);
+  }, [setShowProjectSettings]);
 
   const activeBook = useLibraryStore((s) => s.activeBook);
   const { indexStatus, indexProgress } = useVectorIndex(activeBook?.id);
@@ -95,6 +105,7 @@ export function AppShell() {
       {showProjectSettings && <ProjectSettings onClose={() => setShowProjectSettings(false)} />}
       {showAchievementsModal && <AchievementsModal onClose={() => setShowAchievementsModal(false)} />}
       {showAuthModal && <AuthModal onClose={closeAuthModal} defaultTab={authModalTab} />}
+      {showSettingsModal && <SettingsModal onClose={() => setShowSettingsModal(false)} />}
       <ToastContainer />
     </div>
   );

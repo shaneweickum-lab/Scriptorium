@@ -2,6 +2,7 @@ import { PenLine, BookMarked, Download, Settings, ArrowLeft, ChevronLeft, Chevro
 import { useUIStore } from '../../store/uiStore';
 import { useLibraryStore } from '../../store/libraryStore';
 import type { ActiveView } from '../../store/uiStore';
+import { useSettingsStore } from '../../store/settingsStore';
 
 const navItems: { view: ActiveView; icon: typeof PenLine; label: string }[] = [
   { view: 'writing', icon: PenLine, label: 'Writing' },
@@ -13,7 +14,9 @@ export function Sidebar() {
   const activeView = useUIStore((s) => s.activeView);
   const setActiveView = useUIStore((s) => s.setActiveView);
   const setShowExportModal = useUIStore((s) => s.setShowExportModal);
-  const setShowProjectSettings = useUIStore((s) => s.setShowProjectSettings);
+  const setShowSettingsModal = useUIStore((s) => s.setShowSettingsModal);
+  // Initialise settings store so legacy keys are synced on first load
+  useSettingsStore();
   const showNavSidebar = useUIStore((s) => s.showNavSidebar);
   const setShowNavSidebar = useUIStore((s) => s.setShowNavSidebar);
   const showMeyvn = useUIStore((s) => s.showMeyvn);
@@ -94,7 +97,7 @@ export function Sidebar() {
           <Download size={16} className="text-teal-500" />
           {showNavSidebar && <span className="hidden md:inline text-sm font-medium">Export</span>}
         </button>
-        <button onClick={() => setShowProjectSettings(true)} title="Settings"
+        <button onClick={() => setShowSettingsModal(true)} title="Settings"
           className={`flex items-center gap-3 transition-all rounded-xl
             w-12 h-12 justify-center
             md:w-full md:h-auto

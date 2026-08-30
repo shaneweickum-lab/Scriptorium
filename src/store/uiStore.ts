@@ -25,6 +25,7 @@ interface UIState {
   showNavSidebar: boolean;
   showAuthModal: boolean;
   authModalTab: 'signin' | 'signup';
+  showSettingsModal: boolean;
   toasts: Toast[];
 
   setActiveView: (view: ActiveView) => void;
@@ -39,6 +40,7 @@ interface UIState {
   setShowMeyvn: (show: boolean) => void;
   setShowOutlinePanel: (show: boolean) => void;
   setShowNavSidebar: (show: boolean) => void;
+  setShowSettingsModal: (show: boolean) => void;
   openAuthModal: (tab?: 'signin' | 'signup') => void;
   closeAuthModal: () => void;
   addToast: (message: string, type?: Toast['type']) => void;
@@ -61,6 +63,7 @@ export const useUIStore = create<UIState>((set) => ({
   showNavSidebar: true,
   showAuthModal: false,
   authModalTab: 'signin' as const,
+  showSettingsModal: false,
   toasts: [],
 
   setActiveView: (view) => set({ activeView: view }),
@@ -75,6 +78,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowMeyvn: (show) => set({ showMeyvn: show }),
   setShowOutlinePanel: (show) => set({ showOutlinePanel: show }),
   setShowNavSidebar: (show) => set({ showNavSidebar: show }),
+  setShowSettingsModal: (show) => set({ showSettingsModal: show }),
   openAuthModal: (tab = 'signin') => set({ showAuthModal: true, authModalTab: tab }),
   closeAuthModal: () => set({ showAuthModal: false }),
 

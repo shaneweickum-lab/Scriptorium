@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSettingsStore } from './store/settingsStore';
 import { AppShell } from './components/layout/AppShell';
 import { Library } from './components/library/Library';
 import { WorldBibleEditorShell } from './components/library/WorldBibleEditorShell';
@@ -16,6 +17,8 @@ import { useSyncStore } from './store/syncStore';
 const LS_LANDING = 'wp_seen_landing';
 
 function App() {
+  // Initialise settings store and apply theme/animation attributes once on mount
+  useSettingsStore();
   const [showLanding, setShowLanding] = useState(() => !localStorage.getItem(LS_LANDING));
   const { isLoaded, activeBook, loadLibrary } = useLibraryStore();
   const loadWorld = useWorldStore((s) => s.loadFromDB);
