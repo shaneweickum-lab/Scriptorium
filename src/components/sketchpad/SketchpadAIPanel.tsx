@@ -3,6 +3,7 @@ import {
   X, Sparkles, RefreshCw, Loader2, Trash2, Star, ChevronRight, Tag, MessageSquare,
 } from 'lucide-react';
 import { SketchpadChatPanel } from './SketchpadChatPanel';
+import { MarkdownText } from '../common/MarkdownText';
 import { useSketchpadStore } from '../../store/sketchpadStore';
 import { useSettingsStore, creativityToTemperature } from '../../store/settingsStore';
 import { useWorldStore } from '../../store/worldStore';
@@ -23,30 +24,6 @@ const AI_MODES: { mode: SketchpadAIMode; emoji: string; desc: string }[] = [
 ];
 
 const STATUS_FLOW: SketchpadStatus[] = ['RAW', 'EXPLORING', 'KEEP', 'MAYBE', 'REVISE', 'REJECTED', 'CANON'];
-
-function renderAnalysis(text: string) {
-  return text.split('\n').map((line, i) => {
-    const bold = line.match(/^\*\*(.+?)\*\*(.*)$/);
-    if (bold) {
-      return (
-        <p key={i} className="mt-3 first:mt-0">
-          <strong className="text-slate-800 font-semibold">{bold[1]}</strong>
-          {bold[2] && <span className="text-slate-600">{bold[2]}</span>}
-        </p>
-      );
-    }
-    const numbered = line.match(/^(\d+\.\s)(.+)$/);
-    if (numbered) {
-      return (
-        <p key={i} className="text-slate-600 text-sm leading-relaxed">
-          <span className="font-semibold text-violet-600">{numbered[1]}</span>{numbered[2]}
-        </p>
-      );
-    }
-    if (line.trim() === '') return <div key={i} className="h-1" />;
-    return <p key={i} className="text-slate-600 text-sm leading-relaxed">{line}</p>;
-  });
-}
 
 interface Props {
   entry: SketchpadEntry;
@@ -335,10 +312,10 @@ export function SketchpadAIPanel({ entry, relatedIdeas, onBack }: Props) {
                 )}
               </div>
             )}
-            <div className="space-y-0.5">
-              {renderAnalysis(streamedText)}
+            <div className="text-sm text-slate-600">
+              <MarkdownText content={streamedText} />
               {isAnalyzing && (
-                <span className="inline-block w-1.5 h-4 bg-violet-400 animate-pulse rounded-sm ml-0.5 align-middle" />
+                <span className="inline-block w-1.5 h-4 bg-violet-400 animate-pulse rounded-sm ml-0.5 align-middle mt-0.5" />
               )}
             </div>
           </div>

@@ -17,32 +17,11 @@ import { WebLLMService } from '../../features/ai-engine/services/WebLLMService';
 import { StructureAnalysisService } from '../../features/ai-engine/services/StructureAnalysisService';
 import { tiptapJsonToText } from '../../utils/tiptapToHtml';
 import type { WritingNode } from '../../types';
+import { MarkdownText } from '../common/MarkdownText';
 
 interface StructureAssistantPanelProps {
   node: WritingNode;
   onClose: () => void;
-}
-
-// ---------------------------------------------------------------------------
-// Markdown-ish renderer — handles **bold** headers inline
-// ---------------------------------------------------------------------------
-
-function renderAnalysis(text: string) {
-  const lines = text.split('\n');
-  return lines.map((line, i) => {
-    // Bold header: **Some Header**
-    const headerMatch = line.match(/^\*\*(.+?)\*\*(.*)$/);
-    if (headerMatch) {
-      return (
-        <p key={i} className="mt-4 first:mt-0">
-          <strong className="text-slate-800 font-semibold">{headerMatch[1]}</strong>
-          {headerMatch[2] && <span className="text-slate-600">{headerMatch[2]}</span>}
-        </p>
-      );
-    }
-    if (line.trim() === '') return <div key={i} className="h-1" />;
-    return <p key={i} className="text-slate-600 text-sm leading-relaxed">{line}</p>;
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -212,10 +191,10 @@ export function StructureAssistantPanel({ node, onClose }: StructureAssistantPan
             </div>
           </div>
         ) : streamedText ? (
-          <div className="space-y-0.5">
-            {renderAnalysis(streamedText)}
+          <div className="text-sm text-slate-600">
+            <MarkdownText content={streamedText} />
             {isAnalyzing && (
-              <span className="inline-block w-1.5 h-4 bg-violet-400 animate-pulse rounded-sm ml-0.5 align-middle" />
+              <span className="inline-block w-1.5 h-4 bg-violet-400 animate-pulse rounded-sm ml-0.5 align-middle mt-0.5" />
             )}
           </div>
         ) : (

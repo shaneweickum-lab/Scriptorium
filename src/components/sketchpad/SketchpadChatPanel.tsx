@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Loader2, RotateCcw, MessageSquare } from 'lucide-react';
+import { MarkdownText } from '../common/MarkdownText';
 import { useSettingsStore, creativityToTemperature } from '../../store/settingsStore';
 import { OllamaService, OLLAMA_DEFAULT_MODEL } from '../../features/ai-engine/services/OllamaService';
 import { WebLLMService } from '../../features/ai-engine/services/WebLLMService';
@@ -229,14 +230,17 @@ export function SketchpadChatPanel({ entry, relatedIdeas }: Props) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap break-words ${
+              className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
                 msg.role === 'user'
-                  ? 'text-white rounded-br-sm'
+                  ? 'text-white rounded-br-sm whitespace-pre-wrap'
                   : 'bg-white border border-slate-200 text-slate-700 rounded-bl-sm shadow-sm'
               }`}
               style={msg.role === 'user' ? { background: 'linear-gradient(135deg, #7c3aed, #0d9488)' } : undefined}
             >
-              {msg.content}
+              {msg.role === 'assistant'
+                ? <MarkdownText content={msg.content} />
+                : msg.content
+              }
             </div>
           </div>
         ))}
@@ -244,10 +248,10 @@ export function SketchpadChatPanel({ entry, relatedIdeas }: Props) {
         {/* Streaming bubble */}
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="max-w-[88%] px-3 py-2 rounded-2xl rounded-bl-sm text-xs leading-relaxed bg-white border border-slate-200 text-slate-700 shadow-sm whitespace-pre-wrap break-words">
+            <div className="max-w-[88%] px-3 py-2 rounded-2xl rounded-bl-sm text-xs leading-relaxed bg-white border border-slate-200 text-slate-700 shadow-sm break-words">
               {streamingContent ? (
                 <>
-                  {streamingContent}
+                  <MarkdownText content={streamingContent} />
                   <span className="inline-block w-1 h-3 bg-violet-400 animate-pulse rounded-sm ml-0.5 align-middle" />
                 </>
               ) : (
