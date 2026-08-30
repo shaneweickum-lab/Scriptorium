@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
-  X, Sparkles, RefreshCw, Loader2, Trash2, Star, ChevronRight, Tag,
+  X, Sparkles, RefreshCw, Loader2, Trash2, Star, ChevronRight, Tag, MessageSquare,
 } from 'lucide-react';
+import { SketchpadChatPanel } from './SketchpadChatPanel';
 import { useSketchpadStore } from '../../store/sketchpadStore';
 import { useSettingsStore, creativityToTemperature } from '../../store/settingsStore';
 import { useWorldStore } from '../../store/worldStore';
@@ -65,6 +66,7 @@ export function SketchpadAIPanel({ entry, relatedIdeas, onBack }: Props) {
   const editingContextId = useWorldStore((s) => s.editingContextId);
 
   const aiCreativity = useSettingsStore((s) => s.settings.aiCreativity);
+  const [tab, setTab] = useState<'develop' | 'chat'>('develop');
   const [activeMode, setActiveMode] = useState<SketchpadAIMode | null>(null);
   const [streamedText, setStreamedText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -72,7 +74,7 @@ export function SketchpadAIPanel({ entry, relatedIdeas, onBack }: Props) {
   const [tagInput, setTagInput] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load saved analysis if available
+  // Load saved analysis if available; reset develop state on entry switch
   useEffect(() => {
     setStreamedText(entry.aiAnalysis ?? '');
     setActiveMode(null);
@@ -208,6 +210,33 @@ export function SketchpadAIPanel({ entry, relatedIdeas, onBack }: Props) {
         </div>
       </div>
 
+      {/* Tab bar */}
+      <div className="flex border-b border-slate-100 shrink-0">
+        {([
+          { id: 'develop' as const, icon: Sparkles, label: 'Develop' },
+          { id: 'chat' as const, icon: MessageSquare, label: 'Chat' },
+        ] as const).map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-semibold transition-colors border-b-2 -mb-px ${
+              tab === id
+                ? 'text-violet-700 border-violet-500'
+                : 'text-slate-400 border-transparent hover:text-slate-600'
+            }`}
+          >
+            <Icon size={11} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'chat' ? (
+        <div className="flex-1 min-h-0">
+          <SketchpadChatPanel entry={entry} relatedIdeas={relatedIdeas} />
+        </div>
+      ) : (
+      <>
       <div className="flex-1 overflow-y-auto">
         {/* Idea content */}
         <div className="px-4 py-4 border-b border-slate-100">
@@ -376,6 +405,8 @@ export function SketchpadAIPanel({ entry, relatedIdeas, onBack }: Props) {
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
