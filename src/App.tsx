@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSettingsStore } from './store/settingsStore';
+import { useAuthStore } from './store/authStore';
 import { AppShell } from './components/layout/AppShell';
 import { Library } from './components/library/Library';
 import { WorldBibleEditorShell } from './components/library/WorldBibleEditorShell';
@@ -19,6 +20,7 @@ const LS_LANDING = 'wp_seen_landing';
 function App() {
   // Initialise settings store and apply theme/animation attributes once on mount
   useSettingsStore();
+  const initAuth = useAuthStore((s) => s.init);
   const [showLanding, setShowLanding] = useState(() => !localStorage.getItem(LS_LANDING));
   const { isLoaded, activeBook, loadLibrary } = useLibraryStore();
   const loadWorld = useWorldStore((s) => s.loadFromDB);
@@ -32,12 +34,13 @@ function App() {
   const loadSync = useSyncStore((s) => s.load);
   const syncNow = useSyncStore((s) => s.syncNow);
 
-  // Bootstrap: load library + world bibles list on mount
+  // Bootstrap: load library + world bibles list + auth session on mount
   useEffect(() => {
     loadLibrary();
     loadWorldBibles();
     loadAchievements();
     loadSync();
+    initAuth();
   }, []);
 
   // Auto-sync to file 2.5 s after any writing node change

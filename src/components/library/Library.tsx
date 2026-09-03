@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Plus, Globe2, BookOpen, Pencil, Trash2, MoreHorizontal,
   Search, Star, Trophy, Download, X, Share, Settings, Menu, Upload, Sparkles, Brain, GraduationCap,
+  User, LogOut, Cloud, Loader2,
 } from 'lucide-react';
 import { FocusTimer } from '../timer/FocusTimer';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -28,6 +29,10 @@ import { getLevel, getLevelProgress } from '../../types/achievements';
 import { useStreak } from '../../store/streakStore';
 import { db } from '../../db/database';
 import { libraryRepository } from '../../db/libraryRepository';
+import { useAuthStore } from '../../store/authStore';
+import { AuthModal } from '../auth/AuthModal';
+import { listBackups, restoreBook, backupBook, type BackupSummary } from '../../services/cloudBackupService';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 /* ── Color helper ─────────────────────────────────────────── */
 function shiftColor(hex: string, amount: number): string {
@@ -467,9 +472,51 @@ function LibrarySidebar({
   );
 }
 
+/* ── Cloud Book Card ──────────────────────────────────────── */
+function CloudBookCard({ backup, isRestoring, onRestore }: {
+  backup: BackupSummary;
+  isRestoring: boolean;
+  onRestore: () => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden flex flex-col border border-dashed border-violet-200 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 duration-200">
+      <div className="relative w-full h-44 flex items-center justify-center overflow-hidden"
+        style={{ background: 'linear-gradient(145deg, #7c3aed14, #0d948814)' }}>
+        <Cloud size={52} className="text-violet-100" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="select-none text-7xl font-bold tracking-wider"
+            style={{ color: 'rgba(124,58,237,0.1)', fontFamily: 'Georgia, serif' }}>
+            {backup.title.slice(0, 2).toUpperCase()}
+          </span>
+        </div>
+        <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-semibold text-violet-600 bg-white px-1.5 py-0.5 rounded-full shadow-sm border border-violet-100">
+          <Cloud size={8} /> Cloud
+        </div>
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-bold text-slate-800 text-sm leading-snug mb-0.5 line-clamp-2">{backup.title}</h3>
+        {backup.author && <p className="text-[11px] text-slate-400 truncate">{backup.author}</p>}
+        <p className="text-[10px] text-slate-400 mt-1">
+          {backup.word_count.toLocaleString()} words · {new Date(backup.backed_up_at).toLocaleDateString()}
+        </p>
+        <button
+          onClick={onRestore}
+          disabled={isRestoring}
+          className="mt-auto pt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+          {isRestoring
+            ? <><Loader2 size={11} className="animate-spin" /> Opening…</>
+            : <><Download size={11} /> Open on this device</>
+          }
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Library ─────────────────────────────────────────── */
 export function Library() {
-  const { books, createBook, updateBook, deleteBook, openBook } = useLibraryStore();
+  const { books, createBook, updateBook, deleteBook, openBook, loadLibrary } = useLibraryStore();
   const loadWorld = useWorldStore((s) => s.loadFromDB);
   const loadWriting = useWritingStore((s) => s.loadFromDB);
   const loadAssembly = useAssemblyStore((s) => s.loadFromDB);
@@ -502,6 +549,37 @@ export function Library() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const loadFileRef = useRef<HTMLInputElement>(null);
   const addToast = useUIStore((s) => s.addToast);
+  const openAuthModal = useUIStore((s) => s.openAuthModal);
+  const closeAuthModal = useUIStore((s) => s.closeAuthModal);
+  const showAuthModal = useUIStore((s) => s.showAuthModal);
+
+  const { status, user, profile, signOut } = useAuthStore();
+  const [cloudBackups, setCloudBackups] = useState<BackupSummary[]>([]);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [backingUpAll, setBackingUpAll] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch cloud backups when auth state changes
+  useEffect(() => {
+    if (status === 'authenticated' && user) {
+      setCloudLoading(true);
+      listBackups(user.id).then((b) => { setCloudBackups(b); setCloudLoading(false); });
+    } else {
+      setCloudBackups([]);
+    }
+  }, [status, user?.id]);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!showUserMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (!userMenuRef.current?.contains(e.target as Node)) setShowUserMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showUserMenu]);
 
   const onUnlock = (name: string, xp: number, emoji: string) => addAchievementToast(name, xp, emoji);
 
@@ -572,6 +650,39 @@ export function Library() {
     }
   };
 
+  // Restore a cloud book to this device then open it
+  const handleRestoreBook = async (backup: BackupSummary) => {
+    if (books.find((b) => b.id === backup.local_id)) {
+      await handleOpenBook(backup.local_id);
+      return;
+    }
+    setRestoringId(backup.id);
+    const result = await restoreBook(backup.id);
+    if (result.ok) {
+      await loadLibrary();
+      await handleOpenBook(backup.local_id);
+    } else {
+      addToast(result.error ?? 'Restore failed', 'error');
+    }
+    setRestoringId(null);
+  };
+
+  // Back up every local book to the cloud
+  const handleBackupAll = async () => {
+    if (!user) return;
+    setBackingUpAll(true);
+    let ok = 0;
+    for (const book of books) {
+      const result = await backupBook(book.id, user);
+      if (result.ok) ok++;
+    }
+    const updated = await listBackups(user.id);
+    setCloudBackups(updated);
+    setBackingUpAll(false);
+    setShowUserMenu(false);
+    addToast(`${ok}/${books.length} ${ok === 1 ? 'book' : 'books'} backed up`);
+  };
+
   const nextBookColor = BOOK_COLORS[books.length % BOOK_COLORS.length];
   const nextWorldColor = WORLD_COLORS[worldBibles.length % WORLD_COLORS.length];
 
@@ -581,6 +692,10 @@ export function Library() {
   );
   const filteredWorlds = worldBibles.filter((w) =>
     !searchQuery || w.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const cloudOnlyBackups = cloudBackups.filter(
+    (backup) => !books.some((b) => b.id === backup.local_id),
   );
 
   const isBooks = view === 'books';
@@ -688,6 +803,52 @@ export function Library() {
               <Plus size={16} />
               <span className="hidden sm:inline">{newLabel}</span>
             </button>
+
+            {/* Account button — only shown when Supabase is configured */}
+            {isSupabaseConfigured && status !== 'loading' && (
+              status === 'unauthenticated' ? (
+                <button
+                  onClick={() => openAuthModal('signin')}
+                  title="Sign in to sync across devices"
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-full text-sm font-semibold text-slate-600
+                    border border-slate-200 hover:border-violet-300 hover:text-violet-600 hover:bg-violet-50 transition-all shrink-0">
+                  <User size={15} />
+                  <span className="hidden lg:inline">Sign In</span>
+                </button>
+              ) : (
+                <div className="relative shrink-0" ref={userMenuRef}>
+                  <button
+                    onClick={() => setShowUserMenu((v) => !v)}
+                    title={profile?.display_name ?? user?.email ?? 'Account'}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white hover:opacity-80 transition-opacity"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+                    {(profile?.display_name ?? user?.email ?? '?')[0].toUpperCase()}
+                  </button>
+                  {showUserMenu && (
+                    <div className="absolute right-0 top-11 z-50 bg-white border border-slate-200 rounded-xl shadow-xl py-1 w-56 overflow-hidden">
+                      <div className="px-3 py-2.5 border-b border-slate-100">
+                        <p className="text-xs font-semibold text-slate-700 truncate">{profile?.display_name ?? 'Account'}</p>
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{user?.email}</p>
+                      </div>
+                      <button
+                        onClick={handleBackupAll}
+                        disabled={backingUpAll || books.length === 0}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition-colors disabled:opacity-50">
+                        {backingUpAll
+                          ? <Loader2 size={12} className="animate-spin" />
+                          : <Cloud size={12} />}
+                        Back up all books
+                      </button>
+                      <button
+                        onClick={() => { signOut(); setShowUserMenu(false); }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors">
+                        <LogOut size={12} /> Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
           </div>
         </header>
 
@@ -758,6 +919,56 @@ export function Library() {
           {((isBooks && books.length === 0) || (!isBooks && worldBibles.length === 0)) && (
             <p className="text-center text-xs text-slate-400 mt-6">{emptyHint}</p>
           )}
+
+          {/* Cloud books — available on other devices */}
+          {isBooks && status === 'authenticated' && cloudOnlyBackups.length > 0 && (
+            <div className="mt-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Cloud size={14} className="text-violet-400" />
+                  <h2 className="text-sm font-bold text-slate-700">Available from Cloud</h2>
+                </div>
+                <div className="flex-1 h-px bg-slate-100" />
+                <p className="text-[10px] text-slate-400">Written on another device · click to open here</p>
+              </div>
+              {cloudLoading ? (
+                <div className="flex items-center gap-2 text-xs text-slate-400 py-4">
+                  <Loader2 size={13} className="animate-spin text-violet-400" /> Loading cloud books…
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {cloudOnlyBackups.map((backup) => (
+                    <CloudBookCard
+                      key={backup.id}
+                      backup={backup}
+                      isRestoring={restoringId === backup.id}
+                      onRestore={() => handleRestoreBook(backup)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sign-in prompt — only when Supabase is configured and user is logged out */}
+          {isBooks && isSupabaseConfigured && status === 'unauthenticated' && (
+            <div className="mt-8 p-4 rounded-2xl border border-dashed border-slate-200 bg-white flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: 'linear-gradient(135deg, #7c3aed14, #0d948814)' }}>
+                <Cloud size={18} className="text-violet-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-700">Sync across devices</p>
+                <p className="text-xs text-slate-400 mt-0.5">Sign in to back up your books and pick up where you left off on any device</p>
+              </div>
+              <button
+                onClick={() => openAuthModal('signin')}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 shrink-0"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #0d9488)' }}>
+                <User size={13} /> Sign In
+              </button>
+            </div>
+          )}
         </main>
         </>
         </div>
@@ -789,6 +1000,7 @@ export function Library() {
         <SafariInstallModal method={installMethod} onClose={() => setShowInstallModal(false)} />
       )}
       {showAchievementsModal && <AchievementsModal onClose={() => setShowAchievementsModal(false)} />}
+      {showAuthModal && <AuthModal onClose={closeAuthModal} />}
       <ToastContainer />
 
       {/* Mobile bottom tab bar */}
