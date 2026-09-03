@@ -7,6 +7,8 @@ import {
   applyPendingWrites,
   isFSASupported,
 } from '../utils/fileSync';
+import { useLibraryStore } from './libraryStore';
+import { useWritingStore } from './writingStore';
 
 interface SyncStore {
   handle: FileSystemDirectoryHandle | null;
@@ -54,6 +56,18 @@ export const useSyncStore = create<SyncStore>((set, get) => ({
     set({ syncing: true });
     try {
       const applied = await applyPendingWrites(handle);
+      if (applied > 0) {
+        // applyPendingWrites writes straight to Dexie, bypassing
+        // writingStore — refresh it so an open editor doesn't keep
+        // showing stale content, and so cloud auto-sync (which watches
+        // writingStore) notices these edits and pushes them too.
+        const activeBookId = useLibraryStore.getState().activeBook?.id;
+        if (activeBookId) {
+          const prevActiveNodeId = useWritingStore.getState().activeNodeId;
+          await useWritingStore.getState().loadFromDB(activeBookId);
+          if (prevActiveNodeId) useWritingStore.getState().setActiveNode(prevActiveNodeId);
+        }
+      }
       await syncToFile(handle);
       set({ syncing: false, lastSynced: new Date(), pendingApplied: applied });
     } catch {

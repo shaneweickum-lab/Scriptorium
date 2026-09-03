@@ -26,18 +26,22 @@ export const worldRepository = {
   },
 
   async addSection(bookId: string, name: string, icon: string = 'BookOpen'): Promise<WorldSection> {
-    const sections = await db.worldSections.where('bookId').equals(bookId).toArray();
-    const maxOrder = sections.length > 0 ? Math.max(...sections.map((s) => s.order)) : -1;
-    const section: WorldSection = {
-      id: generateId(),
-      bookId,
-      name,
-      icon,
-      order: maxOrder + 1,
-      createdAt: Date.now(),
-    };
-    await db.worldSections.add(section);
-    return section;
+    // Read-then-write inside one transaction so two rapid adds can't both
+    // compute the same order.
+    return db.transaction('rw', db.worldSections, async () => {
+      const sections = await db.worldSections.where('bookId').equals(bookId).toArray();
+      const maxOrder = sections.length > 0 ? Math.max(...sections.map((s) => s.order)) : -1;
+      const section: WorldSection = {
+        id: generateId(),
+        bookId,
+        name,
+        icon,
+        order: maxOrder + 1,
+        createdAt: Date.now(),
+      };
+      await db.worldSections.add(section);
+      return section;
+    });
   },
 
   async updateSection(id: string, updates: Partial<WorldSection>): Promise<void> {

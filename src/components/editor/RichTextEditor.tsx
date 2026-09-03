@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useCallback, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -65,11 +65,15 @@ export function RichTextEditor({
   // Keep refs to world data so the mention extension (created once) always sees the latest
   const worldEntriesRef = useRef<WorldEntry[]>(worldEntries ?? []);
   const worldSectionsRef = useRef<WorldSection[]>(worldSections ?? []);
-  worldEntriesRef.current = worldEntries ?? [];
-  worldSectionsRef.current = worldSections ?? [];
-
   const onMentionClickRef = useRef(onMentionClick);
-  onMentionClickRef.current = onMentionClick;
+
+  // Refresh the "always fresh" refs after each render (before paint) rather
+  // than during render itself — same timing, just off the render body.
+  useLayoutEffect(() => {
+    worldEntriesRef.current = worldEntries ?? [];
+    worldSectionsRef.current = worldSections ?? [];
+    onMentionClickRef.current = onMentionClick;
+  });
 
   // Find & replace state
   const [showFindReplace, setShowFindReplace] = useState(false);
@@ -83,39 +87,42 @@ export function RichTextEditor({
   const [mentionState, setMentionState] = useState<MentionSuggestionState>(INITIAL_MENTION_STATE);
   const mentionPopupRef = useRef<MentionPopupHandle>(null);
 
-  const suggestionHandlersRef = useRef<{
-    onStart?: (props: SuggestionProps<WorldEntry>) => void;
-    onUpdate?: (props: SuggestionProps<WorldEntry>) => void;
-    onKeyDown?: (props: SuggestionKeyDownProps) => boolean;
-    onExit?: () => void;
-  }>({});
-
-  suggestionHandlersRef.current.onStart = (props: SuggestionProps<WorldEntry>) => {
+  // These only ever close over the stable setMentionState setter and the
+  // stable mentionPopupRef object, so they never need to change identity —
+  // define them once instead of reassigning a ref on every render.
+  const onSuggestionStart = useCallback((props: SuggestionProps<WorldEntry>) => {
     setMentionState({
       active: true,
       items: props.items,
       selectedIndex: 0,
       command: props.command as MentionSuggestionState['command'],
     });
-  };
+  }, []);
 
-  suggestionHandlersRef.current.onUpdate = (props: SuggestionProps<WorldEntry>) => {
+  const onSuggestionUpdate = useCallback((props: SuggestionProps<WorldEntry>) => {
     setMentionState((prev) => ({
       ...prev,
       items: props.items,
       selectedIndex: 0,
       command: props.command as MentionSuggestionState['command'],
     }));
-  };
+  }, []);
 
-  suggestionHandlersRef.current.onKeyDown = ({ event }: SuggestionKeyDownProps) => {
+  const onSuggestionKeyDown = useCallback(({ event }: SuggestionKeyDownProps) => {
     if (!mentionPopupRef.current) return false;
     return mentionPopupRef.current.onKeyDown(event);
-  };
+  }, []);
 
-  suggestionHandlersRef.current.onExit = () => {
+  const onSuggestionExit = useCallback(() => {
     setMentionState(INITIAL_MENTION_STATE);
-  };
+  }, []);
+
+  const suggestionHandlersRef = useRef({
+    onStart: onSuggestionStart,
+    onUpdate: onSuggestionUpdate,
+    onKeyDown: onSuggestionKeyDown,
+    onExit: onSuggestionExit,
+  });
 
   const handleSelectEntry = useCallback(
     (entry: WorldEntry, command: (props: { id: string; label: string }) => void) => {
@@ -138,6 +145,11 @@ export function RichTextEditor({
       SearchAndReplace,
       Image.configure({ allowBase64: true, inline: false }),
       CommentMark,
+      // useEditor only reads `extensions` once at mount (no deps array
+      // passed here), so the ref reads inside these closures happen later,
+      // asynchronously, when TipTap's own suggestion plugin calls them
+      // (e.g. on "@" keystrokes) — never during a React render.
+      // eslint-disable-next-line react-hooks/refs
       Mention.configure({
         HTMLAttributes: { class: 'world-mention' },
         suggestion: {
@@ -363,7 +375,7 @@ export function RichTextEditor({
       <MentionPopup
         ref={mentionPopupRef}
         state={mentionState}
-        sections={worldSectionsRef.current}
+        sections={worldSections ?? []}
         onSelectEntry={handleSelectEntry}
       />
     </div>

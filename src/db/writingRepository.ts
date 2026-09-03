@@ -9,23 +9,27 @@ export const writingRepository = {
   },
 
   async addNode(bookId: string, parentId: string | null, type: NodeType, title?: string): Promise<WritingNode> {
-    const allNodes = await db.writingNodes.where('bookId').equals(bookId).toArray();
-    const order = getNextOrder(allNodes, parentId);
-    const node: WritingNode = {
-      id: generateId(),
-      bookId,
-      parentId,
-      type,
-      title: title || `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-      content: '',
-      order,
-      synopsis: '',
-      wordCountCache: 0,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    await db.writingNodes.add(node);
-    return node;
+    // Read-then-write inside one transaction so two rapid adds (e.g. fast
+    // double-clicks on "Add Chapter") can't both compute the same order.
+    return db.transaction('rw', db.writingNodes, async () => {
+      const allNodes = await db.writingNodes.where('bookId').equals(bookId).toArray();
+      const order = getNextOrder(allNodes, parentId);
+      const node: WritingNode = {
+        id: generateId(),
+        bookId,
+        parentId,
+        type,
+        title: title || `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+        content: '',
+        order,
+        synopsis: '',
+        wordCountCache: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      await db.writingNodes.add(node);
+      return node;
+    });
   },
 
   async updateNode(id: string, updates: Partial<WritingNode>): Promise<void> {

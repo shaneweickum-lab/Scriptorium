@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Lightbulb, Search, X, Plus } from 'lucide-react';
 import { useSketchpadStore } from '../../store/sketchpadStore';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -97,7 +97,10 @@ export function SketchpadView() {
   const [filterStatus, setFilterStatus] = useState<SketchpadStatus | 'All'>('All');
   const [search, setSearch] = useState('');
   const [newIdea, setNewIdea] = useState('');
-  const [newCategory, setNewCategory] = useState<SketchpadCategory>('Other');
+  // null = no manual pick yet, so the category tracks the auto-inferred
+  // suggestion as the user types; picking one from the dropdown "sticks"
+  // until the idea is submitted or cleared.
+  const [categoryOverride, setCategoryOverride] = useState<SketchpadCategory | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -105,12 +108,11 @@ export function SketchpadView() {
     if (activeBook?.id) loadEntries(activeBook.id);
   }, [activeBook?.id, loadEntries]);
 
-  // Auto-infer category as user types
-  useEffect(() => {
-    if (newIdea.length > 15) {
-      setNewCategory(inferCategory(newIdea));
-    }
-  }, [newIdea]);
+  const suggestedCategory = useMemo(
+    () => (newIdea.length > 15 ? inferCategory(newIdea) : 'Other'),
+    [newIdea],
+  );
+  const newCategory = categoryOverride ?? suggestedCategory;
 
   const selectedEntry = entries.find((e) => e.id === selectedId) ?? null;
   const relatedIdeas = entries
@@ -143,7 +145,7 @@ export function SketchpadView() {
     await addEntry(entry);
     setSelectedId(entry.id);
     setNewIdea('');
-    setNewCategory('Other');
+    setCategoryOverride(null);
     setIsSubmitting(false);
     setMobileView('detail');
     textareaRef.current?.focus();
@@ -196,7 +198,7 @@ export function SketchpadView() {
           <div className="flex items-center justify-between mt-2 gap-2">
             <select
               value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value as SketchpadCategory)}
+              onChange={(e) => setCategoryOverride(e.target.value as SketchpadCategory)}
               className="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-600 focus:outline-none focus:border-violet-300"
             >
               {SKETCHPAD_CATEGORIES.map((c) => (

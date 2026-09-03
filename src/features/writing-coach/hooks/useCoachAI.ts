@@ -256,14 +256,12 @@ export function useCoachAI(): UseCoachAIReturn {
       const messages = CoachingService.buildAnalysisMessages({ userText: text, subcategory });
 
       try {
-        let fullText = '';
-
         if (providerRef.current === 'webgpu') {
           await WebLLMService.chat({
             messages,
             temperature: 0.1,
             signal,
-            onToken: (t) => { fullText += t; },
+            onToken: () => {},
             onDone: (text) => {
               if (signal.aborted) return;
               setHighlights(parseHighlights(text));
@@ -275,7 +273,7 @@ export function useCoachAI(): UseCoachAIReturn {
             messages,
             temperature: 0.1,
             signal,
-            onToken: (t) => { fullText += t; },
+            onToken: () => {},
             onDone: (text) => {
               if (signal.aborted) return;
               setHighlights(parseHighlights(text));

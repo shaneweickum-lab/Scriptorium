@@ -601,12 +601,11 @@ export function useAuthorAI(options: UseAuthorAIOptions = {}): UseAuthorAIReturn
 
       const messages = RagService.buildSentinelMessages(entries, scene);
 
-      let fullText = '';
       await callLLM({
         messages,
         signal,
         temperature: 0.2, // deterministic output for structured JSON
-        onToken: (token) => { fullText += token; },
+        onToken: () => {},
         onDone: (text) => {
           if (signal.aborted) return;
           const { summary, rawProposals } = RagService.parseSentinelResponse(text);
