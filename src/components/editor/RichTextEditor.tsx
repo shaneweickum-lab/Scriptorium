@@ -346,15 +346,15 @@ export function RichTextEditor({
         />
       )}
 
-      <div className="px-4 py-1 border-t border-slate-700/30 text-xs text-slate-600 flex items-center gap-4 shrink-0">
+      <div className="px-4 py-1 border-t border-slate-100 text-xs text-slate-400 flex items-center gap-4 shrink-0">
         <span>{editor.storage.characterCount.words().toLocaleString()} words</span>
         <span>{editor.storage.characterCount.characters().toLocaleString()} characters</span>
         {totalBookWords !== undefined && (
           <>
-            <span className="text-slate-700">·</span>
-            <span className="text-slate-500">
+            <span className="text-slate-300">·</span>
+            <span>
               Book total:{' '}
-              <span className="text-slate-400 font-medium">{totalBookWords.toLocaleString()}</span> words
+              <span className="font-medium text-slate-500">{totalBookWords.toLocaleString()}</span> words
             </span>
           </>
         )}
