@@ -56,10 +56,10 @@ export function TreeNode({
       <div
         className={`group flex items-center gap-1 py-1.5 pr-2 rounded-lg cursor-pointer transition-all ${
           isActive
-            ? 'bg-violet-50 text-violet-700 border-l-2 border-violet-500 pl-[6px]'
+            ? 'bg-violet-50 text-violet-700 border-l-2 border-violet-500'
             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
         }`}
-        style={{ paddingLeft: isActive ? undefined : `${depth * 16 + 8}px` }}
+        style={{ paddingLeft: `${depth * 16 + (isActive ? 6 : 8)}px` }}
         onClick={() => setActiveNode(node.id)}
       >
         <div

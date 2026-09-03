@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star, Sparkles, User, LogOut, Cloud, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
@@ -55,11 +55,19 @@ export function TopBar() {
     e.target.value = '';
   };
 
+  // Ticks while the account menu is open so "Saved Xm ago" stays current
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!showAccountMenu) return;
+    const id = setInterval(() => setNowMs(Date.now()), 15_000);
+    return () => clearInterval(id);
+  }, [showAccountMenu]);
+
   const syncLabel = (() => {
     if (sync.status === 'pending' || sync.status === 'syncing') return 'Saving to cloud…';
     if (sync.status === 'error') return `Sync error: ${sync.error}`;
     if (sync.status === 'synced' && sync.lastSyncedAt) {
-      const mins = Math.round((Date.now() - sync.lastSyncedAt.getTime()) / 60_000);
+      const mins = Math.round((nowMs - sync.lastSyncedAt.getTime()) / 60_000);
       return mins < 1 ? 'Saved just now' : `Saved ${mins}m ago`;
     }
     return 'Auto-saving on';

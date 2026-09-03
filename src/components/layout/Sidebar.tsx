@@ -1,6 +1,5 @@
-import { PenLine, BookMarked, Download, Settings, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Lightbulb } from 'lucide-react';
+import { PenLine, BookMarked, Download, Settings, ChevronLeft, ChevronRight, Sparkles, Lightbulb } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
-import { useLibraryStore } from '../../store/libraryStore';
 import type { ActiveView } from '../../store/uiStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
@@ -21,7 +20,6 @@ export function Sidebar() {
   const setShowNavSidebar = useUIStore((s) => s.setShowNavSidebar);
   const showMeyvn = useUIStore((s) => s.showMeyvn);
   const setShowMeyvn = useUIStore((s) => s.setShowMeyvn);
-  const closeBook = useLibraryStore((s) => s.closeBook);
 
   return (
     <aside className={`
@@ -106,16 +104,6 @@ export function Sidebar() {
           <Settings size={16} className="text-slate-400" />
           {showNavSidebar && <span className="hidden md:inline text-sm font-medium">Settings</span>}
         </button>
-        <button onClick={closeBook} title="Back to Library"
-          className={`flex items-center gap-3 transition-all rounded-xl
-            w-12 h-12 justify-center
-            md:w-full md:h-auto
-            ${showNavSidebar ? 'md:px-3 md:py-2.5 md:justify-start' : 'md:justify-center md:px-0 md:py-2.5'}
-            text-slate-400 hover:text-slate-600 hover:bg-slate-50`}>
-          <ArrowLeft size={16} className="text-slate-300" />
-          {showNavSidebar && <span className="hidden md:inline text-sm font-medium">Library</span>}
-        </button>
-
         {/* Collapse / expand toggle — desktop only */}
         <button
           onClick={() => setShowNavSidebar(!showNavSidebar)}

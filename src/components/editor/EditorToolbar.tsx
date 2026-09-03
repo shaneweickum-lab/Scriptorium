@@ -35,10 +35,9 @@ function ToolBtn({
       disabled={disabled}
       className={`p-1.5 rounded transition-colors disabled:opacity-30 ${
         active
-          ? 'text-white'
-          : 'text-slate-800 hover:text-slate-900 hover:bg-slate-100'
+          ? 'bg-violet-100 text-violet-700'
+          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
       }`}
-      style={active ? { background: 'linear-gradient(135deg, #7c3aed, #0d9488)' } : undefined}
     >
       {children}
     </button>
@@ -46,7 +45,7 @@ function ToolBtn({
 }
 
 function Divider() {
-  return <div className="w-px h-5 bg-slate-200 mx-1" />;
+  return <div className="w-px h-5 bg-slate-100 mx-0.5" />;
 }
 
 export function EditorToolbar({ editor, onFindToggle, findActive, onAddComment, onToggleComments, commentsOpen }: Props) {
@@ -71,7 +70,7 @@ export function EditorToolbar({ editor, onFindToggle, findActive, onAddComment, 
     <div className="flex items-center border-b border-slate-200 bg-white">
       {/* Scrollable button area */}
       <div className="overflow-x-auto overflow-y-visible flex-1">
-        <div className="flex items-center gap-0.5 px-3 py-2 min-w-max">
+        <div className="flex items-center gap-0.5 px-3 py-1.5 min-w-max">
         {/* Undo/Redo */}
         <ToolBtn onClick={() => editor.chain().focus().undo().run()} title="Undo" disabled={!editor.can().undo()}>
           <Undo size={sz} />
@@ -124,7 +123,6 @@ export function EditorToolbar({ editor, onFindToggle, findActive, onAddComment, 
         <ToolBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Rule">
           <Minus size={sz} />
         </ToolBtn>
-        <Divider />
 
         {/* Alignment */}
         <ToolBtn onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title="Align Left">
@@ -177,7 +175,7 @@ export function EditorToolbar({ editor, onFindToggle, findActive, onAddComment, 
       </div>
 
       {/* Editor Appearance — portal-rendered so it escapes any overflow:hidden ancestors */}
-      <div ref={settingsAnchorRef} className="shrink-0 px-1.5 py-2 border-l border-slate-200">
+      <div ref={settingsAnchorRef} className="shrink-0 px-1.5 py-1.5 border-l border-slate-100">
         <ToolBtn onClick={() => setShowSettings((v) => !v)} active={showSettings} title="Editor Appearance">
           <Settings2 size={sz} />
         </ToolBtn>
