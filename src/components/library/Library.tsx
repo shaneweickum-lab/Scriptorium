@@ -31,7 +31,7 @@ import { db } from '../../db/database';
 import { libraryRepository } from '../../db/libraryRepository';
 import { useAuthStore } from '../../store/authStore';
 import { AuthModal } from '../auth/AuthModal';
-import { listBackups, restoreBook, backupBook, type BackupSummary } from '../../services/cloudBackupService';
+import { listBackups, restoreBook, type BackupSummary } from '../../services/cloudBackupService';
 import { isSupabaseConfigured } from '../../lib/supabase';
 
 /* ── Color helper ─────────────────────────────────────────── */
@@ -557,7 +557,6 @@ export function Library() {
   const [cloudBackups, setCloudBackups] = useState<BackupSummary[]>([]);
   const [cloudLoading, setCloudLoading] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
-  const [backingUpAll, setBackingUpAll] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -667,21 +666,6 @@ export function Library() {
     setRestoringId(null);
   };
 
-  // Back up every local book to the cloud
-  const handleBackupAll = async () => {
-    if (!user) return;
-    setBackingUpAll(true);
-    let ok = 0;
-    for (const book of books) {
-      const result = await backupBook(book.id, user);
-      if (result.ok) ok++;
-    }
-    const updated = await listBackups(user.id);
-    setCloudBackups(updated);
-    setBackingUpAll(false);
-    setShowUserMenu(false);
-    addToast(`${ok}/${books.length} ${ok === 1 ? 'book' : 'books'} backed up`);
-  };
 
   const nextBookColor = BOOK_COLORS[books.length % BOOK_COLORS.length];
   const nextWorldColor = WORLD_COLORS[worldBibles.length % WORLD_COLORS.length];
@@ -830,15 +814,10 @@ export function Library() {
                         <p className="text-xs font-semibold text-slate-700 truncate">{profile?.display_name ?? 'Account'}</p>
                         <p className="text-[10px] text-slate-400 truncate mt-0.5">{user?.email}</p>
                       </div>
-                      <button
-                        onClick={handleBackupAll}
-                        disabled={backingUpAll || books.length === 0}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition-colors disabled:opacity-50">
-                        {backingUpAll
-                          ? <Loader2 size={12} className="animate-spin" />
-                          : <Cloud size={12} />}
-                        Back up all books
-                      </button>
+                      <div className="flex items-center gap-2 px-3 py-2 text-[10px] text-slate-400">
+                        <Cloud size={12} className="text-violet-300 shrink-0" />
+                        Books auto-sync while writing
+                      </div>
                       <button
                         onClick={() => { signOut(); setShowUserMenu(false); }}
                         className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors">
