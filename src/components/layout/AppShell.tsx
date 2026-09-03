@@ -3,7 +3,6 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useUIStore } from '../../store/uiStore';
 import { useLibraryStore } from '../../store/libraryStore';
-import { useAuthStore } from '../../store/authStore';
 import { WritingSpace } from '../writing/WritingSpace';
 import { Assembly } from '../assembly/Assembly';
 import { SketchpadView } from '../sketchpad/SketchpadView';
@@ -32,11 +31,6 @@ export function AppShell() {
   const closeAuthModal = useUIStore((s) => s.closeAuthModal);
   const showSettingsModal = useUIStore((s) => s.showSettingsModal);
   const setShowSettingsModal = useUIStore((s) => s.setShowSettingsModal);
-
-  const initAuth = useAuthStore((s) => s.init);
-
-  // Initialise Supabase auth once on mount
-  useEffect(() => { initAuth(); }, [initAuth]);
 
   // Forward the project-settings custom event (fired from GeneralSection) to open ProjectSettings
   useEffect(() => {
