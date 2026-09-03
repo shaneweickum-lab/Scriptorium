@@ -251,6 +251,15 @@ export async function getLocalContentUpdatedAt(bookId: string): Promise<number> 
 export async function pullBookIfNewer(
   backup: BackupSummary,
 ): Promise<'pulled' | 'skipped' | 'error'> {
+  const localBook = await db.books.get(backup.local_id);
+  if (!localBook) {
+    // No local copy at all — pull unconditionally. Comparing timestamps
+    // here would wrongly skip a legacy backup row whose content_updated_at
+    // is 0 (written before that column existed), since 0 <= 0 + grace.
+    const result = await restoreBook(backup.id);
+    return result.ok ? 'pulled' : 'error';
+  }
+
   const localTimestamp = await getLocalContentUpdatedAt(backup.local_id);
   if (backup.content_updated_at <= localTimestamp + CLOCK_SKEW_GRACE_MS) {
     return 'skipped';
