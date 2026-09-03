@@ -23,11 +23,13 @@ create table if not exists public.profiles (
 alter table public.profiles enable row level security;
 
 -- Users can read their own profile
+drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own"
   on public.profiles for select
   using (auth.uid() = id);
 
 -- Users can update their own profile (display_name only; plan is server-controlled)
+drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own"
   on public.profiles for update
   using (auth.uid() = id);
@@ -82,6 +84,7 @@ create table if not exists public.books_backup (
 
 alter table public.books_backup enable row level security;
 
+drop policy if exists "books_backup_all_own" on public.books_backup;
 create policy "books_backup_all_own"
   on public.books_backup for all
   using  (auth.uid() = user_id)
@@ -105,10 +108,12 @@ create table if not exists public.usage_events (
 
 alter table public.usage_events enable row level security;
 
+drop policy if exists "usage_events_insert_own" on public.usage_events;
 create policy "usage_events_insert_own"
   on public.usage_events for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "usage_events_select_own" on public.usage_events;
 create policy "usage_events_select_own"
   on public.usage_events for select
   using (auth.uid() = user_id);
