@@ -11,7 +11,10 @@
  */
 
 import type { RealtimeChannel, User } from '@supabase/supabase-js';
-import { backupBook, listBackups, pullBookIfNewer, type BackupSummary } from './cloudBackupService';
+import {
+  backupBook, listBackups, pullBookIfNewer, getLocalContentUpdatedAt,
+  CLOCK_SKEW_GRACE_MS, type BackupSummary,
+} from './cloudBackupService';
 import { useWritingStore } from '../store/writingStore';
 import { useWorldStore } from '../store/worldStore';
 import { useAssemblyStore } from '../store/assemblyStore';
@@ -34,12 +37,23 @@ export interface SyncState {
 
 let _user: User | null = null;
 const _timers = new Map<string, ReturnType<typeof setTimeout>>();
+// Books whose push is actually in flight (network request underway) — a
+// wider window than _timers, which only covers "not fired yet".
+const _pushingBooks = new Set<string>();
 const _unsubs: (() => void)[] = [];
 const _listeners = new Set<(s: SyncState) => void>();
 let _state: SyncState = { status: 'idle', lastSyncedAt: null, error: null };
 let _channel: RealtimeChannel | null = null;
 let _reconcileInterval: ReturnType<typeof setInterval> | null = null;
 let _reconciling = false;
+// Last cloud content_updated_at we've already toasted about per book, so a
+// stale-but-unchanged active book doesn't re-toast on every reconcile pass.
+const _toastedAt = new Map<string, number>();
+// Reference-equality snapshots so a pure UI-selection change (setActiveNode,
+// setActiveEntry) doesn't schedule a needless cloud push.
+let _lastNodes: unknown = null;
+let _lastSections: unknown = null;
+let _lastEntries: unknown = null;
 
 // ─── Internal helpers — push ────────────────────────────────────────────────
 
@@ -58,20 +72,47 @@ function scheduleSync(bookId: string) {
 
   const t = setTimeout(async () => {
     _timers.delete(bookId);
-    if (!_user) return;
+    const user = _user;
+    if (!user) return;
+
+    _pushingBooks.add(bookId);
     emit({ status: 'syncing' });
-    const result = await backupBook(bookId, _user);
-    if (result.ok) {
-      emit({ status: 'synced', lastSyncedAt: new Date(), error: null });
-    } else {
-      emit({ status: 'error', error: (result as { ok: false; error: string }).error });
+    try {
+      const result = await backupBook(bookId, user);
+      // If we signed out (or a different user signed in) while this push
+      // was in flight, don't report state for a session that no longer exists.
+      if (_user !== user) return;
+      if (result.ok) {
+        emit({ status: 'synced', lastSyncedAt: new Date(), error: null });
+      } else {
+        emit({ status: 'error', error: (result as { ok: false; error: string }).error });
+      }
+    } finally {
+      _pushingBooks.delete(bookId);
     }
   }, DEBOUNCE_MS);
 
   _timers.set(bookId, t);
 }
 
-function onContentChange() {
+function onWritingChange() {
+  const { nodes } = useWritingStore.getState();
+  if (nodes === _lastNodes) return; // only activeNodeId or similar UI state changed
+  _lastNodes = nodes;
+  const bookId = useLibraryStore.getState().activeBook?.id;
+  if (bookId) scheduleSync(bookId);
+}
+
+function onWorldChange() {
+  const { sections, entries } = useWorldStore.getState();
+  if (sections === _lastSections && entries === _lastEntries) return;
+  _lastSections = sections;
+  _lastEntries = entries;
+  const bookId = useLibraryStore.getState().activeBook?.id;
+  if (bookId) scheduleSync(bookId);
+}
+
+function onAssemblyChange() {
   const bookId = useLibraryStore.getState().activeBook?.id;
   if (bookId) scheduleSync(bookId);
 }
@@ -79,23 +120,32 @@ function onContentChange() {
 // ─── Internal helpers — pull ────────────────────────────────────────────────
 
 async function reconcileBook(backup: BackupSummary) {
-  // A push for this book is in flight or about to fire — don't race it.
-  if (_timers.has(backup.local_id)) return;
+  // A push for this book is pending or actually in flight — never race it;
+  // we'll catch up on the next reconcile pass once it settles.
+  if (_timers.has(backup.local_id) || _pushingBooks.has(backup.local_id)) return;
+
+  const activeBookId = useLibraryStore.getState().activeBook?.id;
+
+  if (activeBookId === backup.local_id) {
+    // Never mutate the book currently open for editing — restoring it here
+    // would overwrite IndexedDB out from under the in-memory editor state.
+    // Just check whether the cloud is ahead and let the user know.
+    const localTimestamp = await getLocalContentUpdatedAt(backup.local_id);
+    if (backup.content_updated_at > localTimestamp + CLOCK_SKEW_GRACE_MS) {
+      if (_toastedAt.get(backup.local_id) !== backup.content_updated_at) {
+        _toastedAt.set(backup.local_id, backup.content_updated_at);
+        useUIStore.getState().addToast(
+          `"${backup.title}" was updated on another device — reopen it to see the latest changes.`,
+          'info',
+        );
+      }
+    }
+    return;
+  }
 
   const outcome = await pullBookIfNewer(backup);
   if (outcome !== 'pulled') return;
-
   await useLibraryStore.getState().loadLibrary();
-
-  // Never silently swap out the book the user currently has open — the
-  // in-memory editor state would go stale under them. Just tell them.
-  const activeBookId = useLibraryStore.getState().activeBook?.id;
-  if (activeBookId === backup.local_id) {
-    useUIStore.getState().addToast(
-      `"${backup.title}" was updated on another device — reopen it to see the latest changes.`,
-      'info',
-    );
-  }
 }
 
 async function reconcileAllBooks() {
@@ -130,10 +180,16 @@ export function startAutoSync(user: User) {
   _user = user;
   emit({ status: 'idle', error: null });
 
+  // Seed the change-detection snapshots so the first subscribe callback
+  // doesn't compare against `null` and misfire a sync with no real edit.
+  _lastNodes = useWritingStore.getState().nodes;
+  _lastSections = useWorldStore.getState().sections;
+  _lastEntries = useWorldStore.getState().entries;
+
   _unsubs.push(
-    useWritingStore.subscribe(onContentChange),
-    useWorldStore.subscribe(onContentChange),
-    useAssemblyStore.subscribe(onContentChange),
+    useWritingStore.subscribe(onWritingChange),
+    useWorldStore.subscribe(onWorldChange),
+    useAssemblyStore.subscribe(onAssemblyChange),
   );
 
   reconcileAllBooks();
@@ -145,6 +201,7 @@ export function stopAutoSync() {
   _user = null;
   _timers.forEach(clearTimeout);
   _timers.clear();
+  _toastedAt.clear();
   _unsubs.splice(0).forEach((u) => u());
   if (_channel) {
     supabase?.removeChannel(_channel);
@@ -160,18 +217,25 @@ export function stopAutoSync() {
 /** Immediately sync the active book without waiting for the debounce. */
 export async function flushSync(): Promise<void> {
   const bookId = useLibraryStore.getState().activeBook?.id;
-  if (!bookId || !_user) return;
+  const user = _user;
+  if (!bookId || !user) return;
 
   const prev = _timers.get(bookId);
   if (prev) clearTimeout(prev);
   _timers.delete(bookId);
 
+  _pushingBooks.add(bookId);
   emit({ status: 'syncing' });
-  const result = await backupBook(bookId, _user);
-  if (result.ok) {
-    emit({ status: 'synced', lastSyncedAt: new Date(), error: null });
-  } else {
-    emit({ status: 'error', error: (result as { ok: false; error: string }).error });
+  try {
+    const result = await backupBook(bookId, user);
+    if (_user !== user) return;
+    if (result.ok) {
+      emit({ status: 'synced', lastSyncedAt: new Date(), error: null });
+    } else {
+      emit({ status: 'error', error: (result as { ok: false; error: string }).error });
+    }
+  } finally {
+    _pushingBooks.delete(bookId);
   }
 }
 

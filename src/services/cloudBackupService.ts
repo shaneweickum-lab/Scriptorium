@@ -225,7 +225,7 @@ export async function restoreBook(
 
 /** How far cloud must be ahead of local before we bother pulling — absorbs
  *  clock skew between devices and avoids pulling our own just-pushed backup. */
-const CLOCK_SKEW_GRACE_MS = 1_500;
+export const CLOCK_SKEW_GRACE_MS = 1_500;
 
 export async function getLocalContentUpdatedAt(bookId: string): Promise<number> {
   const [book, writingNodes, worldEntries, assembly] = await Promise.all([

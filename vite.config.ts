@@ -9,7 +9,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' (not 'autoUpdate'): a new deploy must never silently reload
+      // the page out from under someone mid-paragraph. The app decides when
+      // to apply an update via the UpdateBanner component.
+      registerType: 'prompt',
       includeAssets: ['icons/*.png', 'IMG_4709.jpeg', 'IMG_4710.png', 'favicon.png'],
       manifest: {
         name: 'Wizards Playground',
