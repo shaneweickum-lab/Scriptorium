@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star, Sparkles, User, LogOut, Cloud } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download, Menu, BookOpen, Trophy, Star, Sparkles, User, LogOut, Cloud, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUIStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
@@ -7,7 +7,8 @@ import { useAchievementStore } from '../../store/achievementStore';
 import { useProject } from '../../hooks/useProject';
 import { getLevel, getLevelProgress } from '../../types/achievements';
 import { FocusTimer } from '../timer/FocusTimer';
-import { backupBook } from '../../services/cloudBackupService';
+import { flushSync } from '../../services/autoSyncService';
+import { useAutoSyncStatus } from '../../hooks/useAutoSyncStatus';
 
 export function TopBar() {
   const { activeBook, updateBook, closeBook } = useLibraryStore();
@@ -25,10 +26,10 @@ export function TopBar() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [backingUp, setBackingUp] = useState(false);
 
   const { user, profile, signOut } = useAuthStore();
   const openAuthModal = useUIStore((s) => s.openAuthModal);
+  const sync = useAutoSyncStatus();
 
   const { totalXP, unlocks } = useAchievementStore();
   const level = getLevel(totalXP);
@@ -54,18 +55,15 @@ export function TopBar() {
     e.target.value = '';
   };
 
-  const handleBackup = async () => {
-    if (!user || !activeBook) return;
-    setBackingUp(true);
-    const result = await backupBook(activeBook.id, user);
-    setBackingUp(false);
-    setShowAccountMenu(false);
-    if (result.ok) {
-      useUIStore.getState().addToast('Book backed up to cloud', 'success');
-    } else {
-      useUIStore.getState().addToast(result.error, 'error');
+  const syncLabel = (() => {
+    if (sync.status === 'pending' || sync.status === 'syncing') return 'Saving to cloud…';
+    if (sync.status === 'error') return `Sync error: ${sync.error}`;
+    if (sync.status === 'synced' && sync.lastSyncedAt) {
+      const mins = Math.round((Date.now() - sync.lastSyncedAt.getTime()) / 60_000);
+      return mins < 1 ? 'Saved just now' : `Saved ${mins}m ago`;
     }
-  };
+    return 'Auto-saving on';
+  })();
 
   return (
     <header className="relative z-40 h-12 bg-white border-b border-slate-200 flex items-center px-3 gap-2 shrink-0">
@@ -212,10 +210,20 @@ export function TopBar() {
               <button
                 onClick={() => setShowAccountMenu(!showAccountMenu)}
                 title={profile?.display_name ?? user.email ?? 'Account'}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 transition-all"
+                className="relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 transition-all"
               >
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-teal-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">
-                  {(profile?.display_name ?? user.email ?? '?')[0].toUpperCase()}
+                <div className="relative w-5 h-5 shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-teal-500 flex items-center justify-center text-white text-[9px] font-bold">
+                    {(profile?.display_name ?? user.email ?? '?')[0].toUpperCase()}
+                  </div>
+                  {/* Sync status dot */}
+                  {sync.status !== 'idle' && (
+                    <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+                      sync.status === 'synced' ? 'bg-green-400' :
+                      sync.status === 'error' ? 'bg-red-400' :
+                      'bg-yellow-400 animate-pulse'
+                    }`} />
+                  )}
                 </div>
                 <span className="hidden md:inline max-w-[80px] truncate">
                   {profile?.display_name ?? user.email}
@@ -225,7 +233,7 @@ export function TopBar() {
               {showAccountMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowAccountMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-52 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-56 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100">
                       <p className="text-xs font-semibold text-slate-800 truncate">
                         {profile?.display_name ?? 'Account'}
@@ -241,16 +249,26 @@ export function TopBar() {
                         </span>
                       )}
                     </div>
-                    {activeBook && (
-                      <button
-                        onClick={handleBackup}
-                        disabled={backingUp}
-                        className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition-all disabled:opacity-50"
-                      >
-                        <Cloud size={13} />
-                        {backingUp ? 'Backing up…' : 'Back up this book'}
-                      </button>
-                    )}
+                    {/* Sync status row */}
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {sync.status === 'synced' && <CheckCircle2 size={12} className="text-green-500 shrink-0" />}
+                        {sync.status === 'error' && <AlertCircle size={12} className="text-red-400 shrink-0" />}
+                        {(sync.status === 'pending' || sync.status === 'syncing') && (
+                          <RefreshCw size={12} className="text-violet-400 shrink-0 animate-spin" />
+                        )}
+                        {sync.status === 'idle' && <Cloud size={12} className="text-slate-300 shrink-0" />}
+                        <span className="text-[10px] text-slate-500 truncate">{syncLabel}</span>
+                      </div>
+                      {activeBook && sync.status !== 'syncing' && (
+                        <button
+                          onClick={() => { flushSync(); setShowAccountMenu(false); }}
+                          className="text-[10px] text-violet-500 hover:text-violet-700 shrink-0 font-medium"
+                        >
+                          Sync now
+                        </button>
+                      )}
+                    </div>
                     <button
                       onClick={() => { signOut(); setShowAccountMenu(false); }}
                       className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all"

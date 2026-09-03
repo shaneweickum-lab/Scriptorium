@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSettingsStore } from './store/settingsStore';
 import { useAuthStore } from './store/authStore';
+import { startAutoSync, stopAutoSync } from './services/autoSyncService';
+import { listBackups, restoreBook } from './services/cloudBackupService';
 import { AppShell } from './components/layout/AppShell';
 import { Library } from './components/library/Library';
 import { WorldBibleEditorShell } from './components/library/WorldBibleEditorShell';
@@ -21,6 +23,8 @@ function App() {
   // Initialise settings store and apply theme/animation attributes once on mount
   useSettingsStore();
   const initAuth = useAuthStore((s) => s.init);
+  const authStatus = useAuthStore((s) => s.status);
+  const authUser = useAuthStore((s) => s.user);
   const [showLanding, setShowLanding] = useState(() => !localStorage.getItem(LS_LANDING));
   const { isLoaded, activeBook, loadLibrary } = useLibraryStore();
   const loadWorld = useWorldStore((s) => s.loadFromDB);
@@ -56,6 +60,23 @@ function App() {
       if (timer) clearTimeout(timer);
     };
   }, [syncNow]);
+
+  // Start/stop cloud auto-sync and silently restore cloud-only books on sign-in
+  useEffect(() => {
+    if (authStatus === 'authenticated' && authUser) {
+      startAutoSync(authUser);
+      listBackups(authUser.id).then(async (backups) => {
+        const localIds = new Set(useLibraryStore.getState().books.map((b) => b.id));
+        const missing = backups.filter((b) => !localIds.has(b.local_id));
+        if (missing.length > 0) {
+          await Promise.all(missing.map((b) => restoreBook(b.id)));
+          loadLibrary();
+        }
+      });
+    } else if (authStatus === 'unauthenticated') {
+      stopAutoSync();
+    }
+  }, [authStatus, authUser?.id]);
 
   // When a book becomes active, load all its data + any linked world bible
   useEffect(() => {
