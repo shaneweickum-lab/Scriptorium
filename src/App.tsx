@@ -8,6 +8,7 @@ import { WorldBibleEditorShell } from './components/library/WorldBibleEditorShel
 import { LandingPage } from './components/landing/LandingPage';
 import { TimerController } from './components/timer/TimerController';
 import { BreakOverlay } from './components/timer/BreakOverlay';
+import { UpdateBanner } from './components/common/UpdateBanner';
 import { useLibraryStore } from './store/libraryStore';
 import { useWorldStore } from './store/worldStore';
 import { useWritingStore } from './store/writingStore';
@@ -69,6 +70,7 @@ function App() {
     } else if (authStatus === 'unauthenticated') {
       stopAutoSync();
     }
+    return () => stopAutoSync();
   }, [authStatus, authUser?.id]);
 
   // When a book becomes active, load all its data + any linked world bible
@@ -127,6 +129,7 @@ function App() {
     <>
       <TimerController />
       <BreakOverlay />
+      <UpdateBanner />
       {activeWorldBible ? <WorldBibleEditorShell /> : !activeBook ? <Library /> : <AppShell />}
     </>
   );

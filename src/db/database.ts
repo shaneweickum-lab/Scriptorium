@@ -87,6 +87,34 @@ export class ScriptoriumDB extends Dexie {
     this.version(6).stores({
       sketchpadEntries: 'id, bookId, category, status, updatedAt',
     });
+
+    // v7 schema - deduplicate any achievement rows a race condition may have
+    // written twice for the same achievementId+scopeId, before the unique
+    // index below can be created (creating a unique index over existing
+    // duplicate rows would throw). Schema itself is unchanged from v6.
+    this.version(7)
+      .stores({
+        achievementUnlocks: 'id, achievementId, scopeId, [achievementId+scopeId]',
+      })
+      .upgrade(async (tx) => {
+        const rows = await tx.table('achievementUnlocks').toArray();
+        const seen = new Set<string>();
+        for (const row of rows) {
+          const key = `${row.achievementId}::${row.scopeId}`;
+          if (seen.has(key)) {
+            await tx.table('achievementUnlocks').delete(row.id);
+          } else {
+            seen.add(key);
+          }
+        }
+      });
+
+    // v8 schema - enforce one unlock per achievement+scope at the DB level,
+    // so a race between two concurrent unlockAchievement() calls can no
+    // longer double-award XP (the second insert now throws and is ignored).
+    this.version(8).stores({
+      achievementUnlocks: 'id, achievementId, scopeId, &[achievementId+scopeId]',
+    });
   }
 }
 
