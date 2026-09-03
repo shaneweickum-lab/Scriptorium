@@ -54,6 +54,13 @@ const _toastedAt = new Map<string, number>();
 let _lastNodes: unknown = null;
 let _lastSections: unknown = null;
 let _lastEntries: unknown = null;
+// Tracks whether the CURRENTLY active book has actually been edited since it
+// became active — as opposed to merely being the book libraryStore reopened
+// from localStorage at app launch, which is untouched and perfectly safe to
+// silently refresh from the cloud. Once the user edits it, we stop touching
+// it automatically (see reconcileBook).
+let _activeBookId: string | null = null;
+let _activeBookDirty = false;
 
 // ─── Internal helpers — push ────────────────────────────────────────────────
 
@@ -95,11 +102,21 @@ function scheduleSync(bookId: string) {
   _timers.set(bookId, t);
 }
 
+/** Marks the active book dirty and returns its id, or null if none is open. */
+function markActiveBookDirty(): string | null {
+  const bookId = useLibraryStore.getState().activeBook?.id ?? null;
+  if (bookId) {
+    _activeBookId = bookId;
+    _activeBookDirty = true;
+  }
+  return bookId;
+}
+
 function onWritingChange() {
   const { nodes } = useWritingStore.getState();
   if (nodes === _lastNodes) return; // only activeNodeId or similar UI state changed
   _lastNodes = nodes;
-  const bookId = useLibraryStore.getState().activeBook?.id;
+  const bookId = markActiveBookDirty();
   if (bookId) scheduleSync(bookId);
 }
 
@@ -108,13 +125,22 @@ function onWorldChange() {
   if (sections === _lastSections && entries === _lastEntries) return;
   _lastSections = sections;
   _lastEntries = entries;
-  const bookId = useLibraryStore.getState().activeBook?.id;
+  const bookId = markActiveBookDirty();
   if (bookId) scheduleSync(bookId);
 }
 
 function onAssemblyChange() {
-  const bookId = useLibraryStore.getState().activeBook?.id;
+  const bookId = markActiveBookDirty();
   if (bookId) scheduleSync(bookId);
+}
+
+/** Resets the dirty flag whenever the active book itself changes (open/close/switch). */
+function onActiveBookSwitch() {
+  const bookId = useLibraryStore.getState().activeBook?.id ?? null;
+  if (bookId !== _activeBookId) {
+    _activeBookId = bookId;
+    _activeBookDirty = false;
+  }
 }
 
 // ─── Internal helpers — pull ────────────────────────────────────────────────
@@ -125,11 +151,13 @@ async function reconcileBook(backup: BackupSummary) {
   if (_timers.has(backup.local_id) || _pushingBooks.has(backup.local_id)) return;
 
   const activeBookId = useLibraryStore.getState().activeBook?.id;
+  const isActiveAndDirty = activeBookId === backup.local_id && _activeBookDirty;
 
-  if (activeBookId === backup.local_id) {
-    // Never mutate the book currently open for editing — restoring it here
-    // would overwrite IndexedDB out from under the in-memory editor state.
-    // Just check whether the cloud is ahead and let the user know.
+  if (isActiveAndDirty) {
+    // The user has actually typed into this book since opening it — never
+    // silently overwrite it, since that would yank content out from under
+    // the in-memory editor state. Just check whether the cloud is ahead and
+    // let the user know they should reopen it.
     const localTimestamp = await getLocalContentUpdatedAt(backup.local_id);
     if (backup.content_updated_at > localTimestamp + CLOCK_SKEW_GRACE_MS) {
       if (_toastedAt.get(backup.local_id) !== backup.content_updated_at) {
@@ -146,6 +174,23 @@ async function reconcileBook(backup: BackupSummary) {
   const outcome = await pullBookIfNewer(backup);
   if (outcome !== 'pulled') return;
   await useLibraryStore.getState().loadLibrary();
+
+  // If this book is the one currently open — e.g. libraryStore auto-reopened
+  // it from localStorage at app launch and the user hasn't touched it yet —
+  // refresh its in-memory stores too, so the fresh content actually shows up
+  // without requiring a manual close/reopen. Preserve whichever node was
+  // selected, if it still exists after the refresh.
+  if (activeBookId === backup.local_id) {
+    const prevActiveNodeId = useWritingStore.getState().activeNodeId;
+    await Promise.all([
+      useWritingStore.getState().loadFromDB(backup.local_id),
+      useWorldStore.getState().loadFromDB(backup.local_id),
+      useAssemblyStore.getState().loadFromDB(backup.local_id),
+    ]);
+    if (prevActiveNodeId && useWritingStore.getState().nodes.some((n) => n.id === prevActiveNodeId)) {
+      useWritingStore.getState().setActiveNode(prevActiveNodeId);
+    }
+  }
 }
 
 async function reconcileAllBooks() {
@@ -185,11 +230,16 @@ export function startAutoSync(user: User) {
   _lastNodes = useWritingStore.getState().nodes;
   _lastSections = useWorldStore.getState().sections;
   _lastEntries = useWorldStore.getState().entries;
+  // Whatever's already active at startAutoSync time (e.g. libraryStore just
+  // reopened it from localStorage) starts out undirtied.
+  _activeBookId = useLibraryStore.getState().activeBook?.id ?? null;
+  _activeBookDirty = false;
 
   _unsubs.push(
     useWritingStore.subscribe(onWritingChange),
     useWorldStore.subscribe(onWorldChange),
     useAssemblyStore.subscribe(onAssemblyChange),
+    useLibraryStore.subscribe(onActiveBookSwitch),
   );
 
   reconcileAllBooks();
@@ -202,6 +252,8 @@ export function stopAutoSync() {
   _timers.forEach(clearTimeout);
   _timers.clear();
   _toastedAt.clear();
+  _activeBookId = null;
+  _activeBookDirty = false;
   _unsubs.splice(0).forEach((u) => u());
   if (_channel) {
     supabase?.removeChannel(_channel);
