@@ -40,6 +40,7 @@ export interface BookBackupRow {
   author: string | null;
   word_count: number;
   data: BookBackupData;
+  content_updated_at: number;
   backed_up_at: string;
   created_at: string;
 }

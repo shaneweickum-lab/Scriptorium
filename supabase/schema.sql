@@ -82,6 +82,12 @@ create table if not exists public.books_backup (
   constraint books_backup_user_local_unique unique (user_id, local_id)
 );
 
+-- content_updated_at: epoch-ms timestamp of the most recently edited record
+-- inside this book (book/node/entry/assembly). Used to decide which device
+-- has the newer copy of a book during cross-device sync.
+alter table public.books_backup
+  add column if not exists content_updated_at bigint not null default 0;
+
 alter table public.books_backup enable row level security;
 
 drop policy if exists "books_backup_all_own" on public.books_backup;
@@ -138,3 +144,19 @@ drop trigger if exists set_profiles_updated_at on public.profiles;
 create trigger set_profiles_updated_at
   before update on public.profiles
   for each row execute procedure public.set_updated_at();
+
+
+-- ── 6. Realtime ──────────────────────────────────────────────────────────
+-- Broadcasts INSERT/UPDATE/DELETE on books_backup to subscribed clients so
+-- other devices can pull down changes moments after they're pushed, instead
+-- of waiting for the next app load. Safe to re-run.
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'books_backup'
+  ) then
+    alter publication supabase_realtime add table public.books_backup;
+  end if;
+end $$;
